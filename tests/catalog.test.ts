@@ -1,0 +1,23 @@
+import { describe, expect, it } from "vitest";
+import { CATALOG, PROVIDERS } from "@/lib/catalog";
+
+describe("catalog", () => {
+  it("has unique service ids", () => {
+    const ids = CATALOG.map((service) => service.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("only references known providers", () => {
+    const providerIds = new Set(PROVIDERS.map((provider) => provider.id));
+
+    expect(CATALOG.every((service) => providerIds.has(service.providerId))).toBe(true);
+  });
+
+  it("uses the fixed report options for every service", () => {
+    expect(
+      CATALOG.every((service) =>
+        service.reportOptions.join(",") === "slow,error,down",
+      ),
+    ).toBe(true);
+  });
+});
