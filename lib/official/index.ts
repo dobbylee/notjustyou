@@ -230,5 +230,5 @@ function createNotConnectedServiceStatus(serviceId: string): OfficialServiceStat
 }
 
 function getStatuspageCacheKey(providerId: StatuspageProviderId) {
-  return `official:v1:statuspage:${providerId}`;
+  return `official:v2:statuspage:${providerId}`;
 }

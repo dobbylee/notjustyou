@@ -3,6 +3,7 @@ export type ProviderId = "anthropic" | "openai" | "google" | "cursor";
 export type SurfaceType =
   | "web"
   | "desktop"
+  | "app"
   | "api"
   | "cli"
   | "code"
@@ -127,24 +128,27 @@ export const CATALOG = [
     reportOptions: REPORT_STATUSES,
   },
   {
-    id: "openai-codex-desktop",
+    id: "openai-codex-app",
     providerId: "openai",
-    name: "Codex Desktop",
-    surfaceType: "desktop",
+    name: "Codex App",
+    surfaceType: "app",
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "App",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
-    id: "openai-chatgpt-desktop",
+    id: "openai-chatgpt",
     providerId: "openai",
-    name: "ChatGPT Desktop",
-    surfaceType: "desktop",
-    reportOptions: REPORT_STATUSES,
-  },
-  {
-    id: "openai-chatgpt-web",
-    providerId: "openai",
-    name: "ChatGPT Web",
-    surfaceType: "web",
+    name: "ChatGPT",
+    surfaceType: "app",
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "Conversations",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -152,6 +156,11 @@ export const CATALOG = [
     providerId: "openai",
     name: "OpenAI API",
     surfaceType: "api",
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "Chat Completions",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {

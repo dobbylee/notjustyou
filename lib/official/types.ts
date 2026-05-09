@@ -50,3 +50,7 @@ export interface StatuspageSummary {
     updated_at?: string;
   }>;
 }
+
+export interface StatuspageComponentsResponse {
+  components?: StatuspageSummary["components"];
+}

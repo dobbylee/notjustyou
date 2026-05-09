@@ -30,4 +30,27 @@ describe("catalog", () => {
       ),
     ).toBe(true);
   });
+
+  it("maps OpenAI surfaces to official status components", () => {
+    const officialComponentByServiceId = new Map(
+      CATALOG.filter((service) => service.providerId === "openai").map((service) => [
+        service.id,
+        service.officialStatusRef?.kind === "statuspage_component"
+          ? service.officialStatusRef.componentName
+          : null,
+      ]),
+    );
+
+    expect(officialComponentByServiceId).toEqual(
+      new Map([
+        ["openai-codex-cli", "CLI"],
+        ["openai-codex-app", "App"],
+        ["openai-chatgpt", "Conversations"],
+        ["openai-api", "Chat Completions"],
+      ]),
+    );
+    expect(officialComponentByServiceId.has("openai-codex-desktop")).toBe(false);
+    expect(officialComponentByServiceId.has("openai-chatgpt-web")).toBe(false);
+    expect(officialComponentByServiceId.has("openai-chatgpt-desktop")).toBe(false);
+  });
 });

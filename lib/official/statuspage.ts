@@ -3,6 +3,7 @@ import type {
   OfficialComponentStatus,
   OfficialOverallStatus,
   OfficialProviderStatus,
+  StatuspageComponentsResponse,
   StatuspageSummary,
 } from "./types";
 
@@ -11,7 +12,33 @@ const FETCH_TIMEOUT_MS = 4_000;
 export async function fetchStatuspageProvider(
   providerId: StatuspageProviderId,
   url: string,
+  componentsUrl?: string,
 ): Promise<OfficialProviderStatus> {
+  const payload = await fetchStatuspageJson<StatuspageSummary>(url);
+  const updatedAt = payload.page?.updated_at ?? new Date().toISOString();
+  let components = payload.components ?? [];
+
+  if (componentsUrl) {
+    const componentsPayload =
+      await fetchStatuspageJson<StatuspageComponentsResponse>(componentsUrl);
+    components = componentsPayload.components ?? components;
+  }
+
+  return {
+    providerId,
+    overall: mapStatuspageIndicator(payload.status?.indicator),
+    source: "official",
+    updatedAt,
+    components: components.map((component) => ({
+      id: component.id,
+      name: component.name,
+      status: mapStatuspageComponentStatus(component.status),
+      updatedAt: component.updated_at ?? updatedAt,
+    })),
+  };
+}
+
+async function fetchStatuspageJson<T>(url: string): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -30,22 +57,7 @@ export async function fetchStatuspageProvider(
       throw new Error(`Status fetch failed with ${response.status}`);
     }
 
-    const payload = (await response.json()) as StatuspageSummary;
-    const updatedAt = payload.page?.updated_at ?? new Date().toISOString();
-
-    return {
-      providerId,
-      overall: mapStatuspageIndicator(payload.status?.indicator),
-      source: "official",
-      updatedAt,
-      components:
-        payload.components?.map((component) => ({
-          id: component.id,
-          name: component.name,
-          status: mapStatuspageComponentStatus(component.status),
-          updatedAt: component.updated_at ?? updatedAt,
-        })) ?? [],
-    };
+    return (await response.json()) as T;
   } finally {
     clearTimeout(timeout);
   }

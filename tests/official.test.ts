@@ -53,6 +53,43 @@ describe("official status helpers", () => {
     );
   });
 
+  it("matches OpenAI official components by name", () => {
+    const status: OfficialProviderStatus = {
+      providerId: "openai",
+      overall: "operational",
+      source: "official",
+      updatedAt: "2026-05-09T00:00:00.000Z",
+      components: [
+        {
+          id: "openai-app",
+          name: "App",
+          status: "operational",
+          updatedAt: "2026-05-09T00:00:00.000Z",
+        },
+        {
+          id: "openai-conversations",
+          name: "Conversations",
+          status: "operational",
+          updatedAt: "2026-05-09T00:00:00.000Z",
+        },
+        {
+          id: "openai-chat-completions",
+          name: "Chat Completions",
+          status: "operational",
+          updatedAt: "2026-05-09T00:00:00.000Z",
+        },
+      ],
+    };
+
+    expect(findStatuspageComponent(status, "App")?.status).toBe("operational");
+    expect(findStatuspageComponent(status, "Conversations")?.status).toBe(
+      "operational",
+    );
+    expect(findStatuspageComponent(status, "Chat Completions")?.status).toBe(
+      "operational",
+    );
+  });
+
   it("maps active Google service disruptions to degraded", () => {
     const incidents: GoogleStatusIncident[] = [
       {
