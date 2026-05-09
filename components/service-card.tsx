@@ -22,9 +22,9 @@ const reportLabels: Record<ReportStatus, string> = {
 };
 
 const reportButtonClassNames: Record<ReportStatus, string> = {
-  slow: "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100",
-  error: "border-red-200 bg-red-50 text-red-800 hover:bg-red-100",
-  down: "border-slate-300 bg-slate-950 text-white hover:bg-slate-800",
+  slow: "border-amber-200 bg-amber-50/60 text-amber-800 hover:border-amber-300 hover:bg-amber-50",
+  error: "border-red-200 bg-red-50/60 text-red-700 hover:border-red-300 hover:bg-red-50",
+  down: "border-slate-300 bg-slate-100 text-slate-900 hover:border-slate-400 hover:bg-slate-200",
 };
 
 export function ServiceCard({
@@ -36,17 +36,16 @@ export function ServiceCard({
   onReport,
 }: ServiceCardProps) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="text-base font-semibold text-slate-950">{service.name}</h2>
+    <article className="rounded-lg border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-300">
+      <div>
+        <h2 className="truncate text-base font-semibold text-slate-950">
+          {service.name}
+        </h2>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           <OfficialStatusBadge
             status={officialStatus?.overall ?? "unknown"}
             source={officialStatus?.source ?? getFallbackOfficialSource(service)}
           />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
           <CommunityStatusBadge state={summary.communityState} />
         </div>
       </div>
@@ -58,7 +57,7 @@ export function ServiceCard({
         <Metric label="Down" value={summary.counts.down} />
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-2">
+      <div className="mt-6 grid grid-cols-3 gap-2">
         {service.reportOptions.map((status) => (
           <button
             key={status}
@@ -66,7 +65,7 @@ export function ServiceCard({
             disabled={pendingStatus !== null}
             onClick={() => onReport(service.id, status)}
             className={clsx(
-              "h-10 rounded-md border px-3 text-sm font-semibold transition-colors disabled:opacity-60",
+              "h-10 rounded-md border px-3 text-sm font-semibold shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50",
               reportButtonClassNames[status],
             )}
           >
@@ -75,7 +74,7 @@ export function ServiceCard({
         ))}
       </div>
 
-      <div className="mt-3 min-h-5 text-sm text-slate-600" aria-live="polite">
+      <div className="mt-2 text-sm text-slate-600" aria-live="polite">
         {message}
       </div>
     </article>
@@ -88,7 +87,7 @@ function getFallbackOfficialSource(service: ServiceSurface) {
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+    <div className="min-w-0 rounded-md border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
       <div className="text-xs font-medium text-slate-500">{label}</div>
       <div className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
         {value}

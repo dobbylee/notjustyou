@@ -194,7 +194,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex justify-end gap-2 sm:items-center">
           <div className="min-w-36 text-right text-xs text-slate-500">
             <div>Live</div>
             <div>{summary ? `updated ${formatUpdatedAt(summary.updatedAt)}` : "loading"}</div>
@@ -203,7 +203,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
             type="button"
             onClick={() => void refreshSummary()}
             title="Refresh"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >
             <RefreshCw
               aria-hidden="true"
@@ -214,7 +214,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
             type="button"
             onClick={() => void handleCopyLink()}
             title="Copy link"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >
             <Copy aria-hidden="true" className="h-4 w-4" />
           </button>

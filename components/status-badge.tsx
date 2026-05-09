@@ -22,7 +22,7 @@ export function StatusBadge({ label, tone }: StatusBadgeProps) {
   return (
     <span
       className={clsx(
-        "inline-flex h-7 items-center rounded-md border px-2 text-xs font-medium",
+        "inline-flex h-7 items-center rounded-md border px-2 text-xs font-medium shadow-[0_1px_1px_rgba(15,23,42,0.02)]",
         toneClassNames[tone],
       )}
     >
@@ -48,7 +48,7 @@ export function OfficialStatusBadge({
   source: "official" | "not_connected";
 }) {
   if (source === "not_connected") {
-    return <StatusBadge label="Not connected" tone="gray" />;
+    return null;
   }
 
   return <StatusBadge label={getOfficialLabel(status)} tone={getOfficialTone(status)} />;
