@@ -32,17 +32,23 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
   const [messages, setMessages] = useState<MessageMap>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copyMessage, setCopyMessage] = useState("");
+  const [summaryMessage, setSummaryMessage] = useState("");
 
   const loadSummary = useCallback(async () => {
-    const response = await fetch("/api/summary", {
-      cache: "no-store",
-    });
+    try {
+      const response = await fetch("/api/summary", {
+        cache: "no-store",
+      });
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch summary");
+      if (!response.ok) {
+        throw new Error("Failed to fetch summary");
+      }
+
+      setSummary((await response.json()) as SummaryResponse);
+      setSummaryMessage("");
+    } catch {
+      setSummaryMessage("Community reports unavailable.");
     }
-
-    setSummary((await response.json()) as SummaryResponse);
   }, []);
 
   const refreshSummary = useCallback(async () => {
@@ -222,7 +228,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
       </header>
 
       <div className="min-h-6 pt-2 text-right text-sm text-slate-500" aria-live="polite">
-        {copyMessage}
+        {copyMessage || summaryMessage}
       </div>
 
       <ProviderTabs

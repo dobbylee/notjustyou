@@ -39,35 +39,48 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const storage = getReportStorage();
-  const fingerprint = getRequestFingerprint(request);
-  const dedupe = await storage.claimDedupe({
-    fingerprint,
-    serviceId: validation.service.id,
-  });
+  try {
+    const storage = await getReportStorage();
+    const fingerprint = getRequestFingerprint(request);
+    const dedupe = await storage.claimDedupe({
+      fingerprint,
+      serviceId: validation.service.id,
+    });
 
-  if (!dedupe.allowed) {
+    if (!dedupe.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          counted: false,
+          reason: "cooldown",
+          cooldownSeconds: dedupe.cooldownSeconds,
+        },
+        {
+          status: 429,
+        },
+      );
+    }
+
+    await storage.addReport({
+      serviceId: validation.service.id,
+      status: validation.status,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      counted: true,
+      cooldownSeconds: DEDUPE_TTL_SECONDS,
+    });
+  } catch {
     return NextResponse.json(
       {
         ok: false,
         counted: false,
-        reason: "cooldown",
-        cooldownSeconds: dedupe.cooldownSeconds,
+        reason: "redis_unavailable",
       },
       {
-        status: 429,
+        status: 503,
       },
     );
   }
-
-  await storage.addReport({
-    serviceId: validation.service.id,
-    status: validation.status,
-  });
-
-  return NextResponse.json({
-    ok: true,
-    counted: true,
-    cooldownSeconds: DEDUPE_TTL_SECONDS,
-  });
 }

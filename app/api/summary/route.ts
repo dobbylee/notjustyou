@@ -6,10 +6,21 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const storage = getReportStorage();
-  const summary = await storage.getSummary({
-    windowMinutes: REPORT_WINDOW_MINUTES,
-  });
+  try {
+    const storage = await getReportStorage();
+    const summary = await storage.getSummary({
+      windowMinutes: REPORT_WINDOW_MINUTES,
+    });
 
-  return NextResponse.json(summary);
+    return NextResponse.json(summary);
+  } catch {
+    return NextResponse.json(
+      {
+        error: "redis_unavailable",
+      },
+      {
+        status: 503,
+      },
+    );
+  }
 }

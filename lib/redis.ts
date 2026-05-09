@@ -1,22 +1,35 @@
-import { Redis } from "@upstash/redis";
+import { createClient } from "redis";
 
-let redis: Redis | null | undefined;
+export type RedisClient = ReturnType<typeof createClient>;
+
+let redis: Promise<RedisClient> | undefined;
 
 export function getRedis() {
-  if (redis !== undefined) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) {
-    redis = null;
-    return redis;
-  }
-
-  redis = new Redis({
-    url,
-    token,
+  redis ??= connectRedis().catch((error) => {
+    redis = undefined;
+    throw error;
   });
 
   return redis;
+}
+
+async function connectRedis() {
+  const url = process.env.REDIS_URL?.trim();
+
+  if (!url) {
+    throw new Error(
+      "REDIS_URL is required. Start local Redis with `docker compose up -d redis` and set REDIS_URL=redis://localhost:6379.",
+    );
+  }
+
+  const client = createClient({
+    url,
+  });
+
+  client.on("error", (error) => {
+    console.error("Redis client error", error);
+  });
+
+  await client.connect();
+  return client;
 }

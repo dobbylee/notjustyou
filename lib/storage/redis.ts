@@ -1,4 +1,3 @@
-import type { Redis } from "@upstash/redis";
 import { CATALOG, REPORT_STATUSES } from "../catalog";
 import {
   emptyCountsByStatus,
@@ -8,10 +7,11 @@ import {
   summarizeCounts,
 } from "../aggregation";
 import { COUNTER_TTL_SECONDS, DEDUPE_TTL_SECONDS } from "../report";
+import type { RedisClient } from "../redis";
 import type { AddReportInput, DedupeInput, DedupeResult, ReportStorage, SummaryQuery } from "./types";
 
 export class RedisReportStorage implements ReportStorage {
-  constructor(private readonly redis: Redis) {}
+  constructor(private readonly redis: RedisClient) {}
 
   async addReport(input: AddReportInput) {
     const now = input.now ?? new Date();
@@ -24,8 +24,11 @@ export class RedisReportStorage implements ReportStorage {
   async claimDedupe(input: DedupeInput): Promise<DedupeResult> {
     const key = this.getDedupeKey(input);
     const result = await this.redis.set(key, "1", {
-      ex: DEDUPE_TTL_SECONDS,
-      nx: true,
+      expiration: {
+        type: "EX",
+        value: DEDUPE_TTL_SECONDS,
+      },
+      condition: "NX",
     });
 
     if (result === "OK") {
@@ -58,8 +61,8 @@ export class RedisReportStorage implements ReportStorage {
             REPORT_STATUSES.flatMap((status) =>
               buckets.map(async (bucket) => {
                 const key = getCountKey(service.id, status, bucket);
-                const value = await this.redis.get<number>(key);
-                counts[status] += value ?? 0;
+                const value = await this.redis.get(key);
+                counts[status] += Number(value ?? 0);
               }),
             ),
           );

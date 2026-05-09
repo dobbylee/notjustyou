@@ -2,7 +2,7 @@
 
 Real-time community signal for AI tools. The MVP is a single status board where users can check recent reports and submit `Slow`, `Error`, or `Down` without signing in.
 
-This repo is currently at the MVP app stage. The local app works with in-memory storage, and production readiness depends on connecting Vercel and Upstash Redis.
+This repo is currently at the MVP app stage. The local app uses Docker Redis, and production readiness depends on connecting Vercel and Upstash Redis.
 
 ## Stack
 
@@ -10,7 +10,7 @@ This repo is currently at the MVP app stage. The local app works with in-memory 
 - React 19
 - TypeScript 6 with `ES2025`
 - Tailwind CSS 4
-- Upstash Redis with in-memory local fallback
+- Redis via `REDIS_URL` with Docker Compose locally
 - Vercel Web Analytics for traffic only
 - Vitest
 
@@ -25,22 +25,43 @@ The package manager is pinned in `package.json`.
 
 ```bash
 pnpm install
+cp .env.example .env.local
+docker compose up -d redis
 pnpm dev
 ```
 
 Open `http://localhost:3000`.
 
-Redis is optional for local development. Without Redis credentials, reports are stored in process memory and reset when the dev server restarts.
+Redis is required for local development. Without `REDIS_URL`, the app fails fast instead of falling back to process memory.
 
 ## Environment
 
-Create `.env.local` from `.env.example` when persistent local storage is needed.
+Create `.env.local` from `.env.example`.
 
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
+REDIS_URL=redis://localhost:6379
 ```
+
+`.env.local` is ignored by git. Keep local and production secrets out of the repository.
+
+## Redis
+
+Redis is required at runtime. The app does not use an in-memory fallback.
+
+Local development uses Docker Compose with `redis:8.2.5-alpine`:
+
+```bash
+docker compose up -d redis
+```
+
+Production can use Upstash Redis by setting `REDIS_URL` to the TLS Redis connection string:
+
+```bash
+REDIS_URL=rediss://default:<PASSWORD>@<DATABASE>.upstash.io:6379
+```
+
+If Redis is unavailable, report APIs return `503` instead of silently dropping to process memory.
 
 ## Scripts
 
@@ -91,7 +112,7 @@ pnpm test    # vitest
 ## Privacy Notes
 
 - No account or login is required.
-- Reports are stored as service/status counters in minute buckets.
+- Reports are stored in Redis as service/status counters in minute buckets.
 - Same-service dedupe uses a short-lived fingerprint derived from request metadata.
 - Vercel Web Analytics is used for page views and referrers only.
 - A minimal `/privacy` page should be added before public launch.
@@ -100,4 +121,4 @@ pnpm test    # vitest
 
 - `docs/` is ignored and used for local planning notes.
 - Vercel Web Analytics is used for visits/referrers only. Report behavior is visible through Redis counters and API logs.
-- Production MVP completion requires Vercel deployment, Upstash Redis env vars, Web Analytics activation, a minimal privacy page, and a production smoke test.
+- Production MVP completion requires Vercel deployment, Upstash Redis `REDIS_URL`, Web Analytics activation, a minimal privacy page, and a production smoke test.

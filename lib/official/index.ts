@@ -22,14 +22,6 @@ import type {
 
 const OFFICIAL_CACHE_TTL_SECONDS = 120;
 
-const memoryCache = new Map<
-  string,
-  {
-    expiresAt: number;
-    value: unknown;
-  }
->();
-
 interface OfficialSummaryResponse {
   updatedAt: string;
   services: OfficialServiceStatus[];
@@ -178,33 +170,18 @@ async function getCachedOfficialValue<T>(
 }
 
 async function getCachedValue<T>(cacheKey: string): Promise<T | null> {
-  const redis = getRedis();
-
-  if (redis) {
-    return redis.get<T>(cacheKey);
-  }
-
-  const cached = memoryCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.value as T;
-  }
-
-  return null;
+  const redis = await getRedis();
+  const cached = await redis.get(cacheKey);
+  return cached === null ? null : (JSON.parse(cached) as T);
 }
 
 async function setCachedValue(cacheKey: string, value: unknown) {
-  const redis = getRedis();
-
-  if (redis) {
-    await redis.set(cacheKey, value, {
-      ex: OFFICIAL_CACHE_TTL_SECONDS,
-    });
-    return;
-  }
-
-  memoryCache.set(cacheKey, {
-    value,
-    expiresAt: Date.now() + OFFICIAL_CACHE_TTL_SECONDS * 1000,
+  const redis = await getRedis();
+  await redis.set(cacheKey, JSON.stringify(value), {
+    expiration: {
+      type: "EX",
+      value: OFFICIAL_CACHE_TTL_SECONDS,
+    },
   });
 }
 
