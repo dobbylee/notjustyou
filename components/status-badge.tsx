@@ -51,9 +51,7 @@ export function OfficialStatusBadge({
     return <StatusBadge label="Not connected" tone="gray" />;
   }
 
-  return (
-    <StatusBadge label={getOfficialLabel(status)} tone={getOfficialTone(status)} />
-  );
+  return <StatusBadge label={getOfficialLabel(status)} tone={getOfficialTone(status)} />;
 }
 
 function getCommunityTone(state: CommunityState): BadgeTone {

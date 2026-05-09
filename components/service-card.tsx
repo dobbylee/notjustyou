@@ -38,12 +38,8 @@ export function ServiceCard({
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold text-slate-950">{service.name}</h2>
-          <p className="mt-1 text-sm text-slate-500">{getSurfaceLabel(service.surfaceType)}</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
           <OfficialStatusBadge
             status={officialStatus?.overall ?? "unknown"}
             source={
@@ -52,6 +48,9 @@ export function ServiceCard({
                 : "not_connected"
             }
           />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           <CommunityStatusBadge state={summary.communityState} />
         </div>
       </div>
@@ -96,21 +95,4 @@ function Metric({ label, value }: { label: string; value: number }) {
       </div>
     </div>
   );
-}
-
-function getSurfaceLabel(surfaceType: ServiceSurface["surfaceType"]) {
-  switch (surfaceType) {
-    case "api":
-      return "API";
-    case "cli":
-      return "CLI";
-    case "code":
-      return "Coding tool";
-    case "desktop":
-      return "Desktop app";
-    case "ide":
-      return "IDE";
-    case "web":
-      return "Web app";
-  }
 }
