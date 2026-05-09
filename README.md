@@ -2,7 +2,7 @@
 
 Real-time community signal for AI tools. The MVP is a single status board where users can check recent reports and submit `Slow`, `Error`, or `Down` without signing in.
 
-This repo is currently at the scaffolded MVP stage. The local app works with in-memory storage, and production readiness depends on connecting Vercel and Upstash Redis.
+This repo is currently at the MVP app stage. The local app works with in-memory storage, and production readiness depends on connecting Vercel and Upstash Redis.
 
 ## Stack
 
@@ -71,10 +71,33 @@ pnpm test    # vitest
 - 30 second polling when hidden
 - Optimistic report updates
 - Surface-level official status adapters for Claude, Cursor, Gemini Web, Gemini API, and mapped OpenAI surfaces
-- Unmapped or uncertain official status surfaces marked as `not_connected`
+- Unmapped or uncertain official status surfaces omit the official badge
+
+## Current Surfaces
+
+- Anthropic: Claude Code, Claude.ai, Claude Cowork, Claude API
+- OpenAI: Codex CLI, Codex App, ChatGPT, OpenAI API
+- Google: Gemini CLI, Antigravity, Gemini Web, Gemini API
+- Cursor: Cursor IDE, Cursor CLI
+
+## Official Status Mapping
+
+- Anthropic: Statuspage components for Claude Code, claude.ai, Claude Cowork, and Claude API
+- OpenAI: Statuspage components for CLI, App, Conversations, and Chat Completions
+- Google: Workspace Gemini for Gemini Web, Cloud Vertex Gemini API for Gemini API
+- Cursor: Statuspage components for IDE and CLI
+- Gemini CLI and Antigravity stay unmapped until there is a reliable official source
+
+## Privacy Notes
+
+- No account or login is required.
+- Reports are stored as service/status counters in minute buckets.
+- Same-service dedupe uses a short-lived fingerprint derived from request metadata.
+- Vercel Web Analytics is used for page views and referrers only.
+- A minimal `/privacy` page should be added before public launch.
 
 ## Notes
 
 - `docs/` is ignored and used for local planning notes.
 - Vercel Web Analytics is used for visits/referrers only. Report behavior is visible through Redis counters and API logs.
-- Production MVP completion requires Vercel deployment, Upstash Redis env vars, Web Analytics activation, and a production smoke test.
+- Production MVP completion requires Vercel deployment, Upstash Redis env vars, Web Analytics activation, a minimal privacy page, and a production smoke test.
