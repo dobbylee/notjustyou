@@ -72,6 +72,8 @@ function getOfficialTone(status: OfficialOverallStatus): BadgeTone {
   switch (status) {
     case "operational":
       return "green";
+    case "service_information":
+      return "blue";
     case "degraded":
       return "amber";
     case "partial_outage":
@@ -88,6 +90,8 @@ function getOfficialLabel(status: OfficialOverallStatus) {
   switch (status) {
     case "operational":
       return "Operational";
+    case "service_information":
+      return "Service information";
     case "degraded":
       return "Degraded";
     case "partial_outage":

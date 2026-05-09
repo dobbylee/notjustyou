@@ -13,6 +13,16 @@ describe("catalog", () => {
     expect(CATALOG.every((service) => providerIds.has(service.providerId))).toBe(true);
   });
 
+  it("keeps official status refs on the owning provider", () => {
+    expect(
+      CATALOG.every(
+        (service) =>
+          !service.officialStatusRef ||
+          service.officialStatusRef.providerId === service.providerId,
+      ),
+    ).toBe(true);
+  });
+
   it("uses the fixed report options for every service", () => {
     expect(
       CATALOG.every((service) =>

@@ -1,15 +1,37 @@
 export type ProviderId = "anthropic" | "openai" | "google" | "cursor";
 
-export type SurfaceType = "web" | "desktop" | "api" | "cli" | "code" | "ide";
+export type SurfaceType =
+  | "web"
+  | "desktop"
+  | "api"
+  | "cli"
+  | "code"
+  | "ide"
+  | "collaboration";
 
 export type ReportStatus = "slow" | "error" | "down";
 
-export type OfficialStatusSource = "official" | "not_connected";
+export type StatuspageProviderId = Extract<
+  ProviderId,
+  "anthropic" | "openai" | "cursor"
+>;
+
+export type OfficialStatusRef =
+  | {
+      providerId: StatuspageProviderId;
+      kind: "statuspage_component";
+      componentName: string;
+    }
+  | {
+      providerId: "google";
+      kind: "google_workspace_product" | "google_cloud_product";
+      productId: string;
+      productName: string;
+    };
 
 export interface Provider {
   id: ProviderId;
   name: string;
-  officialStatusSource: OfficialStatusSource;
 }
 
 export interface ServiceSurface {
@@ -17,7 +39,7 @@ export interface ServiceSurface {
   providerId: ProviderId;
   name: string;
   surfaceType: SurfaceType;
-  hasOfficialStatus: boolean;
+  officialStatusRef?: OfficialStatusRef;
   reportOptions: readonly ReportStatus[];
 }
 
@@ -28,22 +50,18 @@ export const PROVIDERS = [
   {
     id: "anthropic",
     name: "Anthropic",
-    officialStatusSource: "official",
   },
   {
     id: "openai",
     name: "OpenAI",
-    officialStatusSource: "official",
   },
   {
     id: "google",
     name: "Google",
-    officialStatusSource: "not_connected",
   },
   {
     id: "cursor",
     name: "Cursor",
-    officialStatusSource: "not_connected",
   },
 ] as const satisfies readonly Provider[];
 
@@ -53,23 +71,35 @@ export const CATALOG = [
     providerId: "anthropic",
     name: "Claude Code",
     surfaceType: "code",
-    hasOfficialStatus: true,
+    officialStatusRef: {
+      providerId: "anthropic",
+      kind: "statuspage_component",
+      componentName: "Claude Code",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
-    id: "anthropic-claude-desktop",
+    id: "anthropic-claude-ai",
     providerId: "anthropic",
-    name: "Claude Desktop",
-    surfaceType: "desktop",
-    hasOfficialStatus: true,
-    reportOptions: REPORT_STATUSES,
-  },
-  {
-    id: "anthropic-claude-web",
-    providerId: "anthropic",
-    name: "Claude Web",
+    name: "Claude.ai",
     surfaceType: "web",
-    hasOfficialStatus: true,
+    officialStatusRef: {
+      providerId: "anthropic",
+      kind: "statuspage_component",
+      componentName: "claude.ai",
+    },
+    reportOptions: REPORT_STATUSES,
+  },
+  {
+    id: "anthropic-claude-cowork",
+    providerId: "anthropic",
+    name: "Claude Cowork",
+    surfaceType: "collaboration",
+    officialStatusRef: {
+      providerId: "anthropic",
+      kind: "statuspage_component",
+      componentName: "Claude Cowork",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -77,7 +107,11 @@ export const CATALOG = [
     providerId: "anthropic",
     name: "Claude API",
     surfaceType: "api",
-    hasOfficialStatus: true,
+    officialStatusRef: {
+      providerId: "anthropic",
+      kind: "statuspage_component",
+      componentName: "Claude API (api.anthropic.com)",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -85,7 +119,11 @@ export const CATALOG = [
     providerId: "openai",
     name: "Codex CLI",
     surfaceType: "cli",
-    hasOfficialStatus: true,
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "CLI",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -93,7 +131,6 @@ export const CATALOG = [
     providerId: "openai",
     name: "Codex Desktop",
     surfaceType: "desktop",
-    hasOfficialStatus: true,
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -101,7 +138,6 @@ export const CATALOG = [
     providerId: "openai",
     name: "ChatGPT Desktop",
     surfaceType: "desktop",
-    hasOfficialStatus: true,
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -109,7 +145,6 @@ export const CATALOG = [
     providerId: "openai",
     name: "ChatGPT Web",
     surfaceType: "web",
-    hasOfficialStatus: true,
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -117,7 +152,6 @@ export const CATALOG = [
     providerId: "openai",
     name: "OpenAI API",
     surfaceType: "api",
-    hasOfficialStatus: true,
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -125,7 +159,6 @@ export const CATALOG = [
     providerId: "google",
     name: "Gemini CLI",
     surfaceType: "cli",
-    hasOfficialStatus: false,
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -133,7 +166,6 @@ export const CATALOG = [
     providerId: "google",
     name: "Antigravity",
     surfaceType: "code",
-    hasOfficialStatus: false,
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -141,7 +173,12 @@ export const CATALOG = [
     providerId: "google",
     name: "Gemini Web",
     surfaceType: "web",
-    hasOfficialStatus: false,
+    officialStatusRef: {
+      providerId: "google",
+      kind: "google_workspace_product",
+      productId: "npdyhgECDJ6tB66MxXyo",
+      productName: "Gemini",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -149,7 +186,12 @@ export const CATALOG = [
     providerId: "google",
     name: "Gemini API",
     surfaceType: "api",
-    hasOfficialStatus: false,
+    officialStatusRef: {
+      providerId: "google",
+      kind: "google_cloud_product",
+      productId: "Z0FZJAMvEB4j3NbCJs6B",
+      productName: "Vertex Gemini API",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -157,7 +199,11 @@ export const CATALOG = [
     providerId: "cursor",
     name: "Cursor IDE",
     surfaceType: "ide",
-    hasOfficialStatus: false,
+    officialStatusRef: {
+      providerId: "cursor",
+      kind: "statuspage_component",
+      componentName: "IDE",
+    },
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -165,7 +211,11 @@ export const CATALOG = [
     providerId: "cursor",
     name: "Cursor CLI",
     surfaceType: "cli",
-    hasOfficialStatus: false,
+    officialStatusRef: {
+      providerId: "cursor",
+      kind: "statuspage_component",
+      componentName: "CLI",
+    },
     reportOptions: REPORT_STATUSES,
   },
 ] as const satisfies readonly ServiceSurface[];

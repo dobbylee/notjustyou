@@ -57,7 +57,7 @@ pnpm test    # vitest
 - `/` status board
 - `/api/summary` recent 10 minute community report summary
 - `/api/report` report submission with 3 minute same-service dedupe
-- `/api/official` official provider status summary
+- `/api/official` official service surface status summary
 
 ## MVP Behavior
 
@@ -70,8 +70,8 @@ pnpm test    # vitest
 - 5 second polling when visible
 - 30 second polling when hidden
 - Optimistic report updates
-- OpenAI and Anthropic official status adapters
-- Google and Cursor official status marked as `not_connected`
+- Surface-level official status adapters for Claude, Cursor, Gemini Web, Gemini API, and mapped OpenAI surfaces
+- Unmapped or uncertain official status surfaces marked as `not_connected`
 
 ## Notes
 

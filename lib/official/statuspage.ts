@@ -1,9 +1,17 @@
-import type { ProviderId } from "../catalog";
-import type { OfficialOverallStatus, OfficialProviderStatus, StatuspageSummary } from "./types";
+import type { StatuspageProviderId } from "../catalog";
+import type {
+  OfficialComponentStatus,
+  OfficialOverallStatus,
+  OfficialProviderStatus,
+  StatuspageSummary,
+} from "./types";
 
 const FETCH_TIMEOUT_MS = 4_000;
 
-export async function fetchStatuspageProvider(providerId: ProviderId, url: string): Promise<OfficialProviderStatus> {
+export async function fetchStatuspageProvider(
+  providerId: StatuspageProviderId,
+  url: string,
+): Promise<OfficialProviderStatus> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -34,7 +42,8 @@ export async function fetchStatuspageProvider(providerId: ProviderId, url: strin
         payload.components?.map((component) => ({
           id: component.id,
           name: component.name,
-          status: mapComponentStatus(component.status),
+          status: mapStatuspageComponentStatus(component.status),
+          updatedAt: component.updated_at ?? updatedAt,
         })) ?? [],
     };
   } finally {
@@ -42,7 +51,24 @@ export async function fetchStatuspageProvider(providerId: ProviderId, url: strin
   }
 }
 
-function mapStatuspageIndicator(indicator: string | undefined): OfficialOverallStatus {
+export function findStatuspageComponent(
+  status: OfficialProviderStatus,
+  componentName: string,
+): OfficialComponentStatus | undefined {
+  const expectedName = normalizeComponentName(componentName);
+
+  return status.components.find(
+    (component) => normalizeComponentName(component.name) === expectedName,
+  );
+}
+
+function normalizeComponentName(name: string) {
+  return name.trim().toLowerCase();
+}
+
+export function mapStatuspageIndicator(
+  indicator: string | undefined,
+): OfficialOverallStatus {
   switch (indicator) {
     case "none":
       return "operational";
@@ -59,7 +85,9 @@ function mapStatuspageIndicator(indicator: string | undefined): OfficialOverallS
   }
 }
 
-function mapComponentStatus(status: string): OfficialOverallStatus {
+export function mapStatuspageComponentStatus(
+  status: string,
+): OfficialOverallStatus {
   switch (status) {
     case "operational":
       return "operational";

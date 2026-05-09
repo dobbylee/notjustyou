@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Activity, Copy, RefreshCw } from "lucide-react";
 import type { Provider, ProviderId, ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { SummaryResponse } from "@/lib/aggregation";
-import type { OfficialProviderStatus } from "@/lib/official/types";
+import type { OfficialServiceStatus } from "@/lib/official/types";
 import { getCommunityState, getTotalReports } from "@/lib/scoring";
 import { ProviderTabs } from "./provider-tabs";
 import { ServiceCard } from "./service-card";
@@ -16,7 +16,7 @@ interface StatusDashboardProps {
 
 interface OfficialSummaryResponse {
   updatedAt: string;
-  providers: OfficialProviderStatus[];
+  services: OfficialServiceStatus[];
 }
 
 type PendingMap = Record<string, ReportStatus | null>;
@@ -99,8 +99,10 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
     return new Map(summary?.services.map((service) => [service.serviceId, service]));
   }, [summary]);
 
-  const officialByProviderId = useMemo(() => {
-    return new Map(official?.providers.map((provider) => [provider.providerId, provider]));
+  const officialByServiceId = useMemo(() => {
+    return new Map(
+      official?.services?.map((service) => [service.serviceId, service]) ?? [],
+    );
   }, [official]);
 
   const selectedServices = services.filter(
@@ -233,7 +235,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
         {selectedServices.map((service) => {
           const serviceSummary =
             summariesByServiceId.get(service.id) ?? createEmptyServiceSummary(service.id);
-          const officialStatus = officialByProviderId.get(service.providerId);
+          const officialStatus = officialByServiceId.get(service.id);
 
           return (
             <ServiceCard

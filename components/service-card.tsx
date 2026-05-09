@@ -3,13 +3,13 @@
 import { clsx } from "clsx";
 import type { ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { ServiceSummary } from "@/lib/aggregation";
-import type { OfficialProviderStatus } from "@/lib/official/types";
+import type { OfficialServiceStatus } from "@/lib/official/types";
 import { CommunityStatusBadge, OfficialStatusBadge } from "./status-badge";
 
 interface ServiceCardProps {
   service: ServiceSurface;
   summary: ServiceSummary;
-  officialStatus: OfficialProviderStatus | undefined;
+  officialStatus: OfficialServiceStatus | undefined;
   pendingStatus: ReportStatus | null;
   message: string | undefined;
   onReport: (serviceId: string, status: ReportStatus) => void;
@@ -42,11 +42,7 @@ export function ServiceCard({
           <h2 className="text-base font-semibold text-slate-950">{service.name}</h2>
           <OfficialStatusBadge
             status={officialStatus?.overall ?? "unknown"}
-            source={
-              service.hasOfficialStatus
-                ? officialStatus?.source ?? "official"
-                : "not_connected"
-            }
+            source={officialStatus?.source ?? getFallbackOfficialSource(service)}
           />
         </div>
 
@@ -84,6 +80,10 @@ export function ServiceCard({
       </div>
     </article>
   );
+}
+
+function getFallbackOfficialSource(service: ServiceSurface) {
+  return service.officialStatusRef ? "official" : "not_connected";
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
