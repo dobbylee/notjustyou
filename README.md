@@ -2,8 +2,6 @@
 
 Real-time community signal for AI tools. The MVP is a single status board where users can check recent reports and submit `Slow`, `Error`, or `Down` without signing in.
 
-This repo is currently at the MVP app stage. The local app uses Docker Redis, and production readiness depends on connecting Vercel and Upstash Redis.
-
 ## Stack
 
 - Next.js 16 App Router
@@ -63,6 +61,17 @@ REDIS_URL=rediss://default:<PASSWORD>@<DATABASE>.upstash.io:6379
 
 If Redis is unavailable, report APIs return `503` instead of silently dropping to process memory.
 
+## Deployment
+
+Set these environment variables in production:
+
+```bash
+NEXT_PUBLIC_APP_URL=https://your-domain.example
+REDIS_URL=rediss://default:<PASSWORD>@<DATABASE>.upstash.io:6379
+```
+
+The app is designed for Vercel. Enable Vercel Web Analytics if you want traffic and referrer data.
+
 ## Scripts
 
 ```bash
@@ -118,8 +127,13 @@ pnpm test    # vitest
 - Vercel Web Analytics is used for page views and referrers only.
 - A minimal `/privacy` page explains what the MVP stores.
 
-## Notes
+## Contributing
 
-- `docs/` is ignored and used for local planning notes.
-- Vercel Web Analytics is used for visits/referrers only. Report behavior is visible through Redis counters and API logs.
-- Production MVP completion requires Vercel deployment, Upstash Redis `REDIS_URL`, Web Analytics activation, and a production smoke test.
+- Run `pnpm lint`, `pnpm test`, and `pnpm build` before opening a pull request.
+- Service surfaces live in `lib/catalog.ts`.
+- Report options are intentionally limited to `Slow`, `Error`, and `Down`.
+- Keep official status and community reports separate in UI and API changes.
+
+## License
+
+MIT
