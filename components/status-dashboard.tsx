@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Activity, Copy, RefreshCw } from "lucide-react";
 import type { Provider, ProviderId, ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { SummaryResponse } from "@/lib/aggregation";
@@ -256,6 +257,12 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
           );
         })}
       </section>
+
+      <footer className="mt-auto border-t border-slate-200 py-5 text-sm text-slate-500">
+        <Link href="/privacy" className="hover:text-slate-950">
+          Privacy
+        </Link>
+      </footer>
     </main>
   );
 }
