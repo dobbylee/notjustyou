@@ -49,30 +49,34 @@ export class RedisReportStorage implements ReportStorage {
   async getSummary(input: SummaryQuery) {
     const now = input.now ?? new Date();
     const buckets = getRecentMinuteBuckets(input.windowMinutes, now);
+    const keySpecs = CATALOG.flatMap((service) =>
+      REPORT_STATUSES.flatMap((status) =>
+        buckets.map((bucket) => ({
+          serviceId: service.id,
+          status,
+          key: getCountKey(service.id, status, bucket),
+        })),
+      ),
+    );
+    const values = await this.redis.mGet(keySpecs.map((spec) => spec.key));
+    const countsByServiceId = new Map(
+      CATALOG.map((service) => [service.id, emptyCountsByStatus()]),
+    );
+
+    keySpecs.forEach((spec, index) => {
+      const counts = countsByServiceId.get(spec.serviceId);
+      if (!counts) return;
+
+      counts[spec.status] += Number(values[index] ?? 0);
+    });
 
     return {
       windowMinutes: input.windowMinutes,
       updatedAt: now.toISOString(),
-      services: await Promise.all(
-        CATALOG.map(async (service) => {
-          const counts = emptyCountsByStatus();
-
-          await Promise.all(
-            REPORT_STATUSES.flatMap((status) =>
-              buckets.map(async (bucket) => {
-                const key = getCountKey(service.id, status, bucket);
-                const value = await this.redis.get(key);
-                counts[status] += Number(value ?? 0);
-              }),
-            ),
-          );
-
-          return {
-            serviceId: service.id,
-            ...summarizeCounts(counts),
-          };
-        }),
-      ),
+      services: CATALOG.map((service) => ({
+        serviceId: service.id,
+        ...summarizeCounts(countsByServiceId.get(service.id) ?? emptyCountsByStatus()),
+      })),
     };
   }
 
