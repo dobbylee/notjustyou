@@ -76,6 +76,7 @@ pnpm test    # vitest
 ## App Surface
 
 - `/` status board
+- `/privacy` privacy notes
 - `/api/summary` recent 10 minute community report summary
 - `/api/report` report submission with 3 minute same-service dedupe
 - `/api/official` official service surface status summary
@@ -115,10 +116,10 @@ pnpm test    # vitest
 - Reports are stored in Redis as service/status counters in minute buckets.
 - Same-service dedupe uses a short-lived fingerprint derived from request metadata.
 - Vercel Web Analytics is used for page views and referrers only.
-- A minimal `/privacy` page should be added before public launch.
+- A minimal `/privacy` page explains what the MVP stores.
 
 ## Notes
 
 - `docs/` is ignored and used for local planning notes.
 - Vercel Web Analytics is used for visits/referrers only. Report behavior is visible through Redis counters and API logs.
-- Production MVP completion requires Vercel deployment, Upstash Redis `REDIS_URL`, Web Analytics activation, a minimal privacy page, and a production smoke test.
+- Production MVP completion requires Vercel deployment, Upstash Redis `REDIS_URL`, Web Analytics activation, and a production smoke test.
