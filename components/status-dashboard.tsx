@@ -23,6 +23,8 @@ interface OfficialSummaryResponse {
 type PendingMap = Record<string, ReportStatus | null>;
 type MessageMap = Record<string, string>;
 
+const GITHUB_URL = "https://github.com/dobbylee/notjustyou";
+
 export function StatusDashboard({ providers, services }: StatusDashboardProps) {
   const [selectedProviderId, setSelectedProviderId] = useState<ProviderId>(
     providers[0]?.id ?? "anthropic",
@@ -258,8 +260,19 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
         })}
       </section>
 
-      <footer className="mt-auto border-t border-slate-200 py-5 text-sm text-slate-500">
-        <Link href="/privacy" className="hover:text-slate-950">
+      <footer className="mt-auto flex justify-between border-t border-slate-200 py-5 text-sm text-slate-500">
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="underline-offset-4 hover:text-slate-950 hover:underline"
+        >
+          GitHub
+        </a>
+        <Link
+          href="/privacy"
+          className="underline-offset-4 hover:text-slate-950 hover:underline"
+        >
           Privacy
         </Link>
       </footer>
