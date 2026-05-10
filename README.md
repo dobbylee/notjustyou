@@ -66,7 +66,7 @@ If Redis is unavailable, report APIs return `503` instead of silently dropping t
 Set these environment variables in production:
 
 ```bash
-NEXT_PUBLIC_APP_URL=https://your-domain.example
+NEXT_PUBLIC_APP_URL=https://notjustyou.dev
 REDIS_URL=rediss://default:<PASSWORD>@<DATABASE>.upstash.io:6379
 ```
 
