@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Activity, Copy, RefreshCw } from "lucide-react";
 import type { Provider, ProviderId, ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { SummaryResponse } from "@/lib/aggregation";
+import type { ClickEventInput } from "@/lib/clicks";
 import type { OfficialServiceStatus } from "@/lib/official/types";
 import { getCommunityState, getTotalReports } from "@/lib/scoring";
 import { ProviderTabs } from "./provider-tabs";
@@ -118,7 +119,27 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
     (service) => service.providerId === selectedProviderId,
   );
 
+  function handleSelectProvider(providerId: ProviderId) {
+    recordClick({
+      event: "provider_tab",
+      providerId,
+    });
+    setSelectedProviderId(providerId);
+  }
+
+  async function handleRefreshClick() {
+    recordClick({
+      event: "refresh_button",
+    });
+    await refreshSummary();
+  }
+
   async function handleReport(serviceId: string, status: ReportStatus) {
+    recordClick({
+      event: "report_button",
+      serviceId,
+      status,
+    });
     setPending((current) => ({
       ...current,
       [serviceId]: status,
@@ -181,6 +202,9 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
   }
 
   async function handleCopyLink() {
+    recordClick({
+      event: "copy_link",
+    });
     await navigator.clipboard.writeText(window.location.href);
     setCopyMessage("Copied");
     window.setTimeout(() => setCopyMessage(""), 1800);
@@ -210,7 +234,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
           </div>
           <button
             type="button"
-            onClick={() => void refreshSummary()}
+            onClick={() => void handleRefreshClick()}
             title="Refresh"
             className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >
@@ -237,7 +261,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
       <ProviderTabs
         providers={providers}
         selectedProviderId={selectedProviderId}
-        onSelect={setSelectedProviderId}
+        onSelect={handleSelectProvider}
       />
 
       <section className="grid gap-4 py-5 md:grid-cols-2">
@@ -344,4 +368,17 @@ function formatUpdatedAt(isoTimestamp: string) {
   if (diffSeconds < 60) return `${diffSeconds}s ago`;
 
   return `${Math.floor(diffSeconds / 60)}m ago`;
+}
+
+function recordClick(input: ClickEventInput) {
+  void fetch("/api/clicks", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(input),
+    keepalive: true,
+  }).catch(() => {
+    // Click analytics should never block the report flow.
+  });
 }
