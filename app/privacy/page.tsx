@@ -52,8 +52,9 @@ export default function PrivacyPage() {
           <h2 className="text-base font-semibold text-slate-950">Analytics</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Vercel Web Analytics may be used to understand page views, referrers,
-            and basic traffic patterns. Report behavior is measured through API
-            responses and aggregate counters.
+            and basic traffic patterns. Button clicks are stored as aggregate
+            Redis counters for report buttons, provider tabs, refresh, and copy
+            link actions.
           </p>
         </section>
       </article>

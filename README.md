@@ -39,6 +39,7 @@ Create `.env.local` from `.env.example`.
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 REDIS_URL=redis://localhost:6379
+ANALYTICS_READ_TOKEN=replace-me
 ```
 
 `.env.local` is ignored by git. Keep local and production secrets out of the repository.
@@ -68,6 +69,7 @@ Set these environment variables in production:
 ```bash
 NEXT_PUBLIC_APP_URL=https://notjustyou.dev
 REDIS_URL=rediss://default:<PASSWORD>@<DATABASE>.upstash.io:6379
+ANALYTICS_READ_TOKEN=<LONG_RANDOM_TOKEN>
 ```
 
 The app is designed for Vercel. Enable Vercel Web Analytics if you want traffic and referrer data.
@@ -88,6 +90,7 @@ pnpm test    # vitest
 - `/privacy` privacy notes
 - `/api/summary` recent 10 minute community report summary
 - `/api/report` report submission with 3 minute same-service dedupe
+- `/api/clicks` aggregate button click counters, with token-protected reads
 - `/api/official` official service surface status summary
 
 ## MVP Behavior
@@ -101,6 +104,7 @@ pnpm test    # vitest
 - 5 second polling when visible
 - 30 second polling when hidden
 - Optimistic report updates
+- Aggregate Redis counters for report button, provider tab, refresh, and copy clicks
 - Surface-level official status adapters for Claude, Cursor, Gemini Web, Gemini API, and mapped OpenAI surfaces
 - Unmapped or uncertain official status surfaces omit the official badge
 
@@ -123,6 +127,7 @@ pnpm test    # vitest
 
 - No account or login is required.
 - Reports are stored in Redis as service/status counters in minute buckets.
+- Button clicks are stored in Redis as aggregate counters in hourly buckets.
 - Same-service dedupe uses a short-lived fingerprint derived from request metadata.
 - Vercel Web Analytics is used for page views and referrers only.
 - A minimal `/privacy` page explains what the MVP stores.

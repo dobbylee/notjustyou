@@ -1,5 +1,12 @@
 import { CATALOG, REPORT_STATUSES } from "../catalog";
 import {
+  CLICK_COUNTER_TTL_SECONDS,
+  getClickCountKey,
+  getClickMetricSpecs,
+  getClickHourBucket,
+  getRecentClickHourBuckets,
+} from "../clicks";
+import {
   emptyCountsByStatus,
   getCountKey,
   getMinuteBucket,
@@ -8,7 +15,15 @@ import {
 } from "../aggregation";
 import { COUNTER_TTL_SECONDS, DEDUPE_TTL_SECONDS } from "../report";
 import type { RedisClient } from "../redis";
-import type { AddReportInput, DedupeInput, DedupeResult, ReportStorage, SummaryQuery } from "./types";
+import type {
+  AddClickInput,
+  AddReportInput,
+  ClickSummaryQuery,
+  DedupeInput,
+  DedupeResult,
+  ReportStorage,
+  SummaryQuery,
+} from "./types";
 
 export class RedisReportStorage implements ReportStorage {
   constructor(private readonly redis: RedisClient) {}
@@ -19,6 +34,14 @@ export class RedisReportStorage implements ReportStorage {
 
     await this.redis.incr(key);
     await this.redis.expire(key, COUNTER_TTL_SECONDS);
+  }
+
+  async addClick(input: AddClickInput) {
+    const now = input.now ?? new Date();
+    const key = getClickCountKey(input.metricId, getClickHourBucket(now));
+
+    await this.redis.incr(key);
+    await this.redis.expire(key, CLICK_COUNTER_TTL_SECONDS);
   }
 
   async claimDedupe(input: DedupeInput): Promise<DedupeResult> {
@@ -43,6 +66,36 @@ export class RedisReportStorage implements ReportStorage {
     return {
       allowed: false,
       cooldownSeconds: Math.max(ttl, 1),
+    };
+  }
+
+  async getClickSummary(input: ClickSummaryQuery) {
+    const now = input.now ?? new Date();
+    const buckets = getRecentClickHourBuckets(input.windowHours, now);
+    const specs = getClickMetricSpecs();
+    const keySpecs = specs.flatMap((spec) =>
+      buckets.map((bucket) => ({
+        metricId: spec.id,
+        key: getClickCountKey(spec.id, bucket),
+      })),
+    );
+    const values = await this.redis.mGet(keySpecs.map((spec) => spec.key));
+    const totalsByMetricId = new Map(specs.map((spec) => [spec.id, 0]));
+
+    keySpecs.forEach((spec, index) => {
+      totalsByMetricId.set(
+        spec.metricId,
+        (totalsByMetricId.get(spec.metricId) ?? 0) + Number(values[index] ?? 0),
+      );
+    });
+
+    return {
+      windowHours: input.windowHours,
+      updatedAt: now.toISOString(),
+      metrics: specs.map((spec) => ({
+        ...spec,
+        total: totalsByMetricId.get(spec.id) ?? 0,
+      })),
     };
   }
 
