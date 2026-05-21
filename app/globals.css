@@ -1,16 +1,51 @@
 @import "tailwindcss";
 
+
 :root {
   color-scheme: light;
-  --background: #f5f7f8;
+  --background: #fbf5eb;
   --foreground: #17191c;
   --muted: #5e6872;
-  --line: #d9e0e4;
-  --panel: #ffffff;
-  --green: #16825d;
-  --amber: #a66300;
-  --red: #b42318;
-  --blue: #2563eb;
+  --line: rgba(23, 25, 28, 0.08);
+  --panel: rgba(255, 255, 255, 0.75);
+  
+  /* Status Colors */
+  --green: #10b981;
+  --green-bg: rgba(16, 185, 129, 0.08);
+  --green-border: rgba(16, 185, 129, 0.2);
+  
+  --blue: #3b82f6;
+  --blue-bg: rgba(59, 130, 246, 0.08);
+  --blue-border: rgba(59, 130, 246, 0.2);
+  
+  --amber: #d97706;
+  --amber-bg: rgba(217, 119, 6, 0.08);
+  --amber-border: rgba(217, 119, 6, 0.2);
+  
+  --red: #ef4444;
+  --red-bg: rgba(239, 68, 68, 0.08);
+  --red-border: rgba(239, 68, 68, 0.2);
+  
+  --gray: #6b7280;
+  --gray-bg: rgba(107, 114, 128, 0.08);
+  --gray-border: rgba(107, 114, 128, 0.2);
+
+  /* Button Pastels (Option E style) */
+  --slow-button-bg: rgba(255, 138, 76, 0.1);
+  --slow-button-bg-hover: rgba(255, 138, 76, 0.2);
+  --slow-button-border: rgba(255, 138, 76, 0.2);
+  --slow-button-text: #e65100;
+
+  --error-button-bg: rgba(244, 63, 94, 0.08);
+  --error-button-bg-hover: rgba(244, 63, 94, 0.18);
+  --error-button-border: rgba(244, 63, 94, 0.25);
+  --error-button-text: #be123c;
+
+  --down-button-bg: rgba(59, 130, 246, 0.08);
+  --down-button-bg-hover: rgba(59, 130, 246, 0.18);
+  --down-button-border: rgba(59, 130, 246, 0.22);
+  --down-button-text: #1d4ed8;
+  --down-button-label-text: #1d4ed8;
 }
 
 * {
@@ -19,18 +54,37 @@
 
 html {
   min-height: 100%;
-  background: var(--background);
+  background-color: var(--background);
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
+}
+
+/* Glassmorphism card utilities */
+.glass-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 10px 30px -10px rgba(0, 0, 0, 0.02),
+    0 1px 3px 0 rgba(0, 0, 0, 0.01),
+    0 0 20px 0 rgba(219, 234, 254, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.04),
+    0 1px 3px 0 rgba(0, 0, 0, 0.01),
+    0 0 25px 0 rgba(244, 63, 94, 0.12);
 }
 
 button,

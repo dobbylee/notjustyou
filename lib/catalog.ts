@@ -164,9 +164,9 @@ export const CATALOG = [
     reportOptions: REPORT_STATUSES,
   },
   {
-    id: "google-gemini-cli",
+    id: "google-antigravity-cli",
     providerId: "google",
-    name: "Gemini CLI",
+    name: "Antigravity CLI",
     surfaceType: "cli",
     reportOptions: REPORT_STATUSES,
   },
@@ -174,7 +174,14 @@ export const CATALOG = [
     id: "google-antigravity",
     providerId: "google",
     name: "Antigravity",
-    surfaceType: "code",
+    surfaceType: "app",
+    reportOptions: REPORT_STATUSES,
+  },
+  {
+    id: "google-antigravity-ide",
+    providerId: "google",
+    name: "Antigravity IDE",
+    surfaceType: "ide",
     reportOptions: REPORT_STATUSES,
   },
   {

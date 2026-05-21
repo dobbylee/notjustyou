@@ -15,20 +15,26 @@ export function ProviderTabs({
   onSelect,
 }: ProviderTabsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto border-b border-slate-200">
+    <div className="flex gap-6 overflow-x-auto border-b border-slate-200 pb-px">
       {providers.map((provider) => (
         <button
           key={provider.id}
           type="button"
           onClick={() => onSelect(provider.id)}
           className={clsx(
-            "h-11 shrink-0 border-b-2 px-3 text-sm font-medium transition-colors",
+            "relative h-12 shrink-0 text-base font-bold tracking-tight transition-colors duration-200 focus-visible:outline-none",
             provider.id === selectedProviderId
-              ? "border-slate-950 text-slate-950"
-              : "border-transparent text-slate-500 hover:text-slate-950",
+              ? "text-slate-950"
+              : "text-slate-400 hover:text-slate-900",
           )}
         >
           {provider.name}
+          {provider.id === selectedProviderId && (
+            <span
+              className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-slate-950"
+              style={{ transform: "translateY(1px)" }}
+            />
+          )}
         </button>
       ))}
     </div>

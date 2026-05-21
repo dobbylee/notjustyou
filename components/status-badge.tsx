@@ -11,18 +11,18 @@ interface StatusBadgeProps {
 }
 
 const toneClassNames: Record<BadgeTone, string> = {
-  green: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  blue: "border-blue-200 bg-blue-50 text-blue-800",
-  amber: "border-amber-200 bg-amber-50 text-amber-800",
-  red: "border-red-200 bg-red-50 text-red-800",
-  gray: "border-slate-200 bg-slate-50 text-slate-700",
+  green: "border-[var(--green-border)] bg-[var(--green-bg)] text-[var(--green)]",
+  blue: "border-[var(--blue-border)] bg-[var(--blue-bg)] text-[var(--blue)]",
+  amber: "border-[var(--amber-border)] bg-[var(--amber-bg)] text-[var(--amber)]",
+  red: "border-[var(--red-border)] bg-[var(--red-bg)] text-[var(--red)]",
+  gray: "border-[var(--gray-border)] bg-[var(--gray-bg)] text-[var(--gray)]",
 };
 
 export function StatusBadge({ label, tone }: StatusBadgeProps) {
   return (
     <span
       className={clsx(
-        "inline-flex h-7 items-center rounded-md border px-2 text-xs font-medium shadow-[0_1px_1px_rgba(15,23,42,0.02)]",
+        "inline-flex h-6 items-center rounded-full border px-2.5 text-[11px] font-semibold tracking-tight transition-all duration-200 shadow-sm",
         toneClassNames[tone],
       )}
     >
