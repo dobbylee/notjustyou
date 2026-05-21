@@ -26,19 +26,19 @@ const reportButtonClassNames: Record<
   { container: string; top: string; bottom: string }
 > = {
   slow: {
-    container: "border-[var(--slow-button-border)] hover:border-[var(--slow-button-text)]/40",
+    container: "border-[var(--slow-button-border)] bg-white/30 backdrop-blur-xs hover:border-[var(--slow-button-text)]/50 hover:bg-white/50",
     top: "bg-[var(--slow-button-bg)] text-[var(--slow-button-text)]",
-    bottom: "text-slate-800 bg-[var(--slow-button-bg)]/20",
+    bottom: "text-slate-900 bg-white/40",
   },
   error: {
-    container: "border-[var(--error-button-border)] hover:border-[var(--error-button-text)]/40",
+    container: "border-[var(--error-button-border)] bg-white/30 backdrop-blur-xs hover:border-[var(--error-button-text)]/50 hover:bg-white/50",
     top: "bg-[var(--error-button-bg)] text-[var(--error-button-text)]",
-    bottom: "text-slate-800 bg-[var(--error-button-bg)]/20",
+    bottom: "text-slate-900 bg-white/40",
   },
   down: {
-    container: "border-[var(--down-button-border)] hover:border-[var(--down-button-text)]/40",
+    container: "border-[var(--down-button-border)] bg-white/30 backdrop-blur-xs hover:border-[var(--down-button-text)]/50 hover:bg-white/50",
     top: "bg-[var(--down-button-bg)] text-[var(--down-button-text)]",
-    bottom: "text-slate-800 bg-[var(--down-button-bg)]/20",
+    bottom: "text-slate-900 bg-white/40",
   },
 };
 
@@ -51,7 +51,7 @@ export function ServiceCard({
   onReport,
 }: ServiceCardProps) {
   return (
-    <article className="rounded-2xl border border-white/50 bg-[var(--panel)] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.015)] backdrop-blur-md transition-all duration-300 hover:border-slate-300/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.035)]">
+    <article className="glass-card rounded-2xl p-5">
       <div className="flex items-center justify-between gap-3 pb-1">
         <h2 className="min-w-0 truncate text-lg font-bold tracking-tight text-slate-900">
           {service.name}
