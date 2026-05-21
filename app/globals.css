@@ -38,10 +38,10 @@
   --error-button-border: rgba(244, 63, 94, 0.3);
   --error-button-text: #be123c;
 
-  --down-button-bg: #1e3a8a;
-  --down-button-border: rgba(30, 58, 138, 0.35);
-  --down-button-text: #f0f7ff;
-  --down-button-label-text: #1e3a8a;
+  --down-button-bg: #1e40af;
+  --down-button-border: rgba(30, 64, 175, 0.35);
+  --down-button-text: #ffffff;
+  --down-button-label-text: #1e40af;
 }
 
 * {
