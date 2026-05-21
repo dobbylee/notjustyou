@@ -93,7 +93,7 @@ export function ServiceCard({
             <span className={clsx("absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider leading-none border shadow-2xs backdrop-blur-xs", reportButtonClassNames[status].label)}>
               {pendingStatus === status ? "Sending" : reportLabels[status]}
             </span>
-            <span className={clsx("text-xl font-extrabold tabular-nums leading-none mt-1", reportButtonClassNames[status].count)}>
+            <span className={clsx("text-2xl font-extrabold tabular-nums leading-none mt-1", reportButtonClassNames[status].count)}>
               {summary.counts[status]}
             </span>
           </button>
