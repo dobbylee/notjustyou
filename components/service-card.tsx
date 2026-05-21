@@ -23,22 +23,22 @@ const reportLabels: Record<ReportStatus, string> = {
 
 const reportButtonClassNames: Record<
   ReportStatus,
-  { container: string; top: string; bottom: string }
+  { container: string; label: string; count: string }
 > = {
   slow: {
-    container: "border-[var(--slow-button-border)] bg-white/30 backdrop-blur-xs hover:border-[var(--slow-button-text)]/50 hover:bg-white/50",
-    top: "bg-[var(--slow-button-bg)] text-[var(--slow-button-text)]",
-    bottom: "text-slate-900 bg-white/40",
+    container: "border-[var(--slow-button-border)] bg-[var(--slow-button-bg)] hover:bg-[var(--slow-button-bg)]/80 hover:border-[var(--slow-button-text)]/40",
+    label: "text-[var(--slow-button-text)] border-[var(--slow-button-border)] bg-white/95",
+    count: "text-[var(--slow-button-text)]",
   },
   error: {
-    container: "border-[var(--error-button-border)] bg-white/30 backdrop-blur-xs hover:border-[var(--error-button-text)]/50 hover:bg-white/50",
-    top: "bg-[var(--error-button-bg)] text-[var(--error-button-text)]",
-    bottom: "text-slate-900 bg-white/40",
+    container: "border-[var(--error-button-border)] bg-[var(--error-button-bg)] hover:bg-[var(--error-button-bg)]/80 hover:border-[var(--error-button-text)]/40",
+    label: "text-[var(--error-button-text)] border-[var(--error-button-border)] bg-white/95",
+    count: "text-[var(--error-button-text)]",
   },
   down: {
-    container: "border-[var(--down-button-border)] bg-white/30 backdrop-blur-xs hover:border-[var(--down-button-text)]/50 hover:bg-white/50",
-    top: "bg-[var(--down-button-bg)] text-[var(--down-button-text)]",
-    bottom: "text-slate-900 bg-white/40",
+    container: "border-[var(--down-button-border)] bg-[var(--down-button-bg)] hover:bg-[var(--down-button-bg)]/80 hover:border-[var(--down-button-text)]/40",
+    label: "text-[var(--down-button-text)] border-[var(--down-button-border)] bg-white/95",
+    count: "text-[var(--down-button-text)]",
   },
 };
 
@@ -77,7 +77,7 @@ export function ServiceCard({
         <CommunityStatusBadge state={summary.communityState} />
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-5 grid grid-cols-3 gap-2">
         {service.reportOptions.map((status) => (
           <button
             key={status}
@@ -86,14 +86,14 @@ export function ServiceCard({
             onClick={() => onReport(service.id, status)}
             aria-label={`Report ${service.name} as ${reportLabels[status].toLowerCase()}. Current count ${summary.counts[status]}.`}
             className={clsx(
-              "flex flex-col overflow-hidden rounded-xl border text-center shadow-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]",
+              "relative flex flex-col justify-center items-center overflow-visible rounded-xl border text-center pt-2.5 pb-2 min-h-[64px] shadow-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]",
               reportButtonClassNames[status].container,
             )}
           >
-            <span className={clsx("w-full py-1 text-[10px] font-bold uppercase tracking-wider border-b border-inherit", reportButtonClassNames[status].top)}>
+            <span className={clsx("absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider leading-none border shadow-2xs backdrop-blur-xs", reportButtonClassNames[status].label)}>
               {pendingStatus === status ? "Sending" : reportLabels[status]}
             </span>
-            <span className={clsx("w-full py-1.5 text-lg font-bold tabular-nums leading-none flex items-center justify-center grow", reportButtonClassNames[status].bottom)}>
+            <span className={clsx("text-xl font-extrabold tabular-nums leading-none mt-1", reportButtonClassNames[status].count)}>
               {summary.counts[status]}
             </span>
           </button>
