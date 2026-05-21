@@ -36,8 +36,8 @@ const reportButtonClassNames: Record<
     count: "text-[var(--error-button-text)]",
   },
   down: {
-    container: "border-[var(--down-button-border)] bg-[var(--down-button-bg)] hover:bg-[var(--down-button-bg)]/80 hover:border-[var(--down-button-text)]/40",
-    label: "text-[var(--down-button-text)] border-[var(--down-button-border)] bg-white/95",
+    container: "border-[var(--down-button-border)] bg-[var(--down-button-bg)] hover:bg-[var(--down-button-bg)]/90 hover:border-[var(--down-button-label-text)]/40",
+    label: "text-[var(--down-button-label-text)] border-[var(--down-button-border)] bg-white/95",
     count: "text-[var(--down-button-text)]",
   },
 };
@@ -86,11 +86,11 @@ export function ServiceCard({
             onClick={() => onReport(service.id, status)}
             aria-label={`Report ${service.name} as ${reportLabels[status].toLowerCase()}. Current count ${summary.counts[status]}.`}
             className={clsx(
-              "relative flex flex-col justify-center items-center overflow-visible rounded-xl border text-center pt-2.5 pb-2 min-h-[64px] shadow-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]",
+              "relative flex flex-col justify-center items-center overflow-visible rounded-xl border text-center pt-3 pb-2 min-h-[64px] shadow-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]",
               reportButtonClassNames[status].container,
             )}
           >
-            <span className={clsx("absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider leading-none border shadow-2xs backdrop-blur-xs", reportButtonClassNames[status].label)}>
+            <span className={clsx("absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider leading-none border shadow-2xs backdrop-blur-xs", reportButtonClassNames[status].label)}>
               {pendingStatus === status ? "Sending" : reportLabels[status]}
             </span>
             <span className={clsx("text-xl font-extrabold tabular-nums leading-none mt-1", reportButtonClassNames[status].count)}>
