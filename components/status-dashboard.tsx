@@ -211,50 +211,55 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-8 sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-4 border-b border-slate-200/50 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
-            <Activity aria-hidden="true" className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-blue-600 uppercase">
+            <Activity aria-hidden="true" className="h-3.5 w-3.5 animate-pulse" />
             <span>Live community signal</span>
           </div>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950 sm:text-4xl">
+          <h1 className="mt-2.5 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             Not Just You
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+          <p className="mt-2 max-w-xl text-sm font-medium leading-relaxed text-slate-400">
             Check whether AI tools are acting up for other users, then report what
             you are seeing.
           </p>
         </div>
 
-        <div className="flex justify-end gap-2 sm:items-center">
-          <div className="min-w-36 text-right text-xs text-slate-500">
-            <div>Live</div>
-            <div>{summary ? `updated ${formatUpdatedAt(summary.updatedAt)}` : "loading"}</div>
+        <div className="flex justify-end gap-3 sm:items-center">
+          <div className="min-w-36 text-right text-xs font-semibold text-slate-400">
+            <div className="flex items-center justify-end gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+              <span>Live</span>
+            </div>
+            <div className="mt-0.5 text-[10px] text-slate-500/70 font-medium">
+              {summary ? `updated ${formatUpdatedAt(summary.updatedAt)}` : "loading"}
+            </div>
           </div>
           <button
             type="button"
             onClick={() => void handleRefreshClick()}
             title="Refresh"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >
             <RefreshCw
               aria-hidden="true"
-              className={isRefreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"}
+              className={isRefreshing ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"}
             />
           </button>
           <button
             type="button"
             onClick={() => void handleCopyLink()}
             title="Copy link"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >
-            <Copy aria-hidden="true" className="h-4 w-4" />
+            <Copy aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         </div>
       </header>
 
-      <div className="min-h-6 pt-2 text-right text-sm text-slate-500" aria-live="polite">
+      <div className="min-h-6 pt-2 text-right text-xs font-semibold text-slate-400" aria-live="polite">
         {copyMessage || summaryMessage}
       </div>
 
@@ -284,7 +289,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
         })}
       </section>
 
-      <footer className="mt-auto flex justify-between border-t border-slate-200 py-5 text-sm text-slate-500">
+      <footer className="mt-auto flex justify-between border-t border-slate-200/50 py-6 text-xs font-semibold text-slate-400">
         <a
           href={GITHUB_URL}
           target="_blank"
