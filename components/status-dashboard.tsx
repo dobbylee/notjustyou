@@ -261,7 +261,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
           >
             <svg
               aria-hidden="true"
-              className="h-3.5 w-3.5"
+              className="h-[18px] w-[18px]"
               viewBox="0 0 24 24"
               fill="currentColor"
             >
