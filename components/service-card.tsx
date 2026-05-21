@@ -26,17 +26,17 @@ const reportButtonClassNames: Record<
   { container: string; label: string; count: string }
 > = {
   slow: {
-    container: "border-[var(--slow-button-border)] bg-[var(--slow-button-bg)] hover:bg-[var(--slow-button-bg)]/80 hover:border-[var(--slow-button-text)]/40",
+    container: "border-[var(--slow-button-border)] bg-[var(--slow-button-bg)] hover:bg-[var(--slow-button-bg-hover)] hover:border-[var(--slow-button-text)]/40",
     label: "text-[var(--slow-button-text)] border-[var(--slow-button-border)] bg-white/95",
     count: "text-[var(--slow-button-text)]",
   },
   error: {
-    container: "border-[var(--error-button-border)] bg-[var(--error-button-bg)] hover:bg-[var(--error-button-bg)]/80 hover:border-[var(--error-button-text)]/40",
+    container: "border-[var(--error-button-border)] bg-[var(--error-button-bg)] hover:bg-[var(--error-button-bg-hover)] hover:border-[var(--error-button-text)]/40",
     label: "text-[var(--error-button-text)] border-[var(--error-button-border)] bg-white/95",
     count: "text-[var(--error-button-text)]",
   },
   down: {
-    container: "border-[var(--down-button-border)] bg-[var(--down-button-bg)] hover:bg-[var(--down-button-bg)]/90 hover:border-[var(--down-button-label-text)]/40",
+    container: "border-[var(--down-button-border)] bg-[var(--down-button-bg)] hover:bg-[var(--down-button-bg-hover)] hover:border-[var(--down-button-label-text)]/40",
     label: "text-[var(--down-button-label-text)] border-[var(--down-button-border)] bg-white/95",
     count: "text-[var(--down-button-text)]",
   },
@@ -86,7 +86,7 @@ export function ServiceCard({
             onClick={() => onReport(service.id, status)}
             aria-label={`Report ${service.name} as ${reportLabels[status].toLowerCase()}. Current count ${summary.counts[status]}.`}
             className={clsx(
-              "relative flex flex-col justify-center items-center overflow-visible rounded-xl border text-center pt-3 pb-2 min-h-[64px] shadow-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]",
+              "relative flex flex-col justify-center items-center overflow-visible rounded-xl border text-center pt-3 pb-2 min-h-[64px] shadow-xs backdrop-blur-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]",
               reportButtonClassNames[status].container,
             )}
           >

@@ -30,18 +30,21 @@
   --gray-border: rgba(107, 114, 128, 0.2);
 
   /* Button Pastels (Option E style) */
-  --slow-button-bg: #ffedd5;
-  --slow-button-border: rgba(249, 115, 22, 0.3);
+  --slow-button-bg: rgba(255, 237, 213, 0.45);
+  --slow-button-bg-hover: rgba(255, 237, 213, 0.65);
+  --slow-button-border: rgba(249, 115, 22, 0.35);
   --slow-button-text: #c2410c;
 
-  --error-button-bg: #ffe4e6;
-  --error-button-border: rgba(244, 63, 94, 0.3);
+  --error-button-bg: rgba(255, 228, 230, 0.45);
+  --error-button-bg-hover: rgba(255, 228, 230, 0.65);
+  --error-button-border: rgba(244, 63, 94, 0.35);
   --error-button-text: #be123c;
 
-  --down-button-bg: #075985;
-  --down-button-border: rgba(7, 89, 133, 0.35);
-  --down-button-text: #ffffff;
-  --down-button-label-text: #075985;
+  --down-button-bg: rgba(224, 242, 254, 0.45);
+  --down-button-bg-hover: rgba(224, 242, 254, 0.65);
+  --down-button-border: rgba(14, 165, 233, 0.35);
+  --down-button-text: #0369a1;
+  --down-button-label-text: #0369a1;
 }
 
 * {
