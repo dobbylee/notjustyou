@@ -21,10 +21,25 @@ const reportLabels: Record<ReportStatus, string> = {
   down: "Down",
 };
 
-const reportButtonClassNames: Record<ReportStatus, string> = {
-  slow: "border-amber-200 bg-amber-50/60 text-amber-800 hover:border-amber-300 hover:bg-amber-50",
-  error: "border-red-200 bg-red-50/60 text-red-700 hover:border-red-300 hover:bg-red-50",
-  down: "border-slate-300 bg-slate-100 text-slate-900 hover:border-slate-400 hover:bg-slate-200",
+const reportButtonClassNames: Record<
+  ReportStatus,
+  { container: string; top: string; bottom: string }
+> = {
+  slow: {
+    container: "border-[var(--slow-button-border)] hover:border-[var(--slow-button-text)]/40",
+    top: "bg-[var(--slow-button-bg)] text-[var(--slow-button-text)]",
+    bottom: "text-slate-800 bg-[var(--slow-button-bg)]/20",
+  },
+  error: {
+    container: "border-[var(--error-button-border)] hover:border-[var(--error-button-text)]/40",
+    top: "bg-[var(--error-button-bg)] text-[var(--error-button-text)]",
+    bottom: "text-slate-800 bg-[var(--error-button-bg)]/20",
+  },
+  down: {
+    container: "border-[var(--down-button-border)] hover:border-[var(--down-button-text)]/40",
+    top: "bg-[var(--down-button-bg)] text-[var(--down-button-text)]",
+    bottom: "text-slate-800 bg-[var(--down-button-bg)]/20",
+  },
 };
 
 export function ServiceCard({
@@ -36,25 +51,25 @@ export function ServiceCard({
   onReport,
 }: ServiceCardProps) {
   return (
-    <article className="rounded-lg border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-300">
+    <article className="rounded-2xl border border-white/50 bg-[var(--panel)] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.015)] backdrop-blur-md transition-all duration-300 hover:border-slate-300/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.035)]">
       <div className="flex items-center justify-between gap-3 pb-1">
-        <h2 className="min-w-0 truncate text-xl font-semibold text-slate-950">
+        <h2 className="min-w-0 truncate text-lg font-bold tracking-tight text-slate-900">
           {service.name}
         </h2>
 
         <div
-          className="inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-slate-200/80 bg-slate-50/70 px-2 text-xs font-medium text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+          className="inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-slate-200/50 bg-slate-50/50 px-2.5 text-[10px] font-semibold text-slate-400"
           aria-label={`Last 10 minutes: ${summary.total} reports`}
         >
           <span>Last 10 min</span>
-          <span className="font-semibold tabular-nums text-slate-950">
+          <span className="font-bold tabular-nums text-slate-600">
             {summary.total}
           </span>
           <span>reports</span>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 overflow-hidden pb-1">
+      <div className="mt-3 flex items-center gap-1.5 overflow-hidden pb-1">
         <OfficialStatusBadge
           status={officialStatus?.overall ?? "unknown"}
           source={officialStatus?.source ?? getFallbackOfficialSource(service)}
@@ -71,21 +86,21 @@ export function ServiceCard({
             onClick={() => onReport(service.id, status)}
             aria-label={`Report ${service.name} as ${reportLabels[status].toLowerCase()}. Current count ${summary.counts[status]}.`}
             className={clsx(
-              "flex min-h-14 min-w-0 flex-col items-center justify-center rounded-md border px-2.5 py-2 text-center shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50",
-              reportButtonClassNames[status],
+              "flex flex-col overflow-hidden rounded-xl border text-center shadow-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]",
+              reportButtonClassNames[status].container,
             )}
           >
-            <span className="max-w-full truncate text-xs font-semibold">
+            <span className={clsx("w-full py-1 text-[10px] font-bold uppercase tracking-wider border-b border-inherit", reportButtonClassNames[status].top)}>
               {pendingStatus === status ? "Sending" : reportLabels[status]}
             </span>
-            <span className="mt-0.5 text-lg font-semibold tabular-nums leading-none">
+            <span className={clsx("w-full py-1.5 text-lg font-bold tabular-nums leading-none flex items-center justify-center grow", reportButtonClassNames[status].bottom)}>
               {summary.counts[status]}
             </span>
           </button>
         ))}
       </div>
 
-      <div className="mt-2 text-sm text-slate-600" aria-live="polite">
+      <div className="mt-2 text-xs text-slate-500" aria-live="polite">
         {message}
       </div>
     </article>
