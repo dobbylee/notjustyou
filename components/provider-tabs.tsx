@@ -15,14 +15,14 @@ export function ProviderTabs({
   onSelect,
 }: ProviderTabsProps) {
   return (
-    <div className="flex gap-6 overflow-x-auto border-b border-slate-200/50 pb-px">
+    <div className="flex gap-6 overflow-x-auto border-b border-slate-200 pb-px">
       {providers.map((provider) => (
         <button
           key={provider.id}
           type="button"
           onClick={() => onSelect(provider.id)}
           className={clsx(
-            "relative h-10 shrink-0 text-sm font-semibold tracking-tight transition-colors duration-200 focus-visible:outline-none",
+            "relative h-12 shrink-0 text-base font-bold tracking-tight transition-colors duration-200 focus-visible:outline-none",
             provider.id === selectedProviderId
               ? "text-slate-950"
               : "text-slate-400 hover:text-slate-900",
