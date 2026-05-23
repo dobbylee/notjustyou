@@ -12,7 +12,7 @@ const lora = Lora({
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const title = "Not Just You";
 const description =
-  "Check real-time community reports for AI tools and report Slow, Error, or Down without signing in.";
+  "AI outage reports for ChatGPT, Claude, Gemini, Cursor, and coding tools.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
