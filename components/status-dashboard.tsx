@@ -235,6 +235,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
           </div>
           <button
             type="button"
+            aria-label="Refresh"
             onClick={() => void handleRefreshClick()}
             title="Refresh"
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
@@ -246,6 +247,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
           </button>
           <button
             type="button"
+            aria-label="Copy link"
             onClick={() => void handleCopyLink()}
             title="Copy link"
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
@@ -256,6 +258,7 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
+            aria-label="GitHub repository"
             title="GitHub repository"
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >

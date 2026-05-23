@@ -20,6 +20,7 @@ export function ProviderTabs({
         <button
           key={provider.id}
           type="button"
+          aria-pressed={provider.id === selectedProviderId}
           onClick={() => onSelect(provider.id)}
           className={clsx(
             "relative h-12 shrink-0 text-base font-bold tracking-tight transition-colors duration-200 focus-visible:outline-none",
