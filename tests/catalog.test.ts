@@ -53,4 +53,40 @@ describe("catalog", () => {
     expect(officialComponentByServiceId.has("openai-chatgpt-web")).toBe(false);
     expect(officialComponentByServiceId.has("openai-chatgpt-desktop")).toBe(false);
   });
+
+  it("keeps the Google service catalog organized by current surfaces", () => {
+    expect(
+      CATALOG.filter((service) => service.providerId === "google").map((service) => ({
+        id: service.id,
+        name: service.name,
+        surfaceType: service.surfaceType,
+      })),
+    ).toEqual([
+      {
+        id: "google-antigravity-cli",
+        name: "Antigravity CLI",
+        surfaceType: "cli",
+      },
+      {
+        id: "google-antigravity",
+        name: "Antigravity",
+        surfaceType: "app",
+      },
+      {
+        id: "google-antigravity-ide",
+        name: "Antigravity IDE",
+        surfaceType: "ide",
+      },
+      {
+        id: "google-gemini-web",
+        name: "Gemini Web",
+        surfaceType: "web",
+      },
+      {
+        id: "google-gemini-api",
+        name: "Gemini API",
+        surfaceType: "api",
+      },
+    ]);
+  });
 });
