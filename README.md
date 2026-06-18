@@ -112,7 +112,7 @@ pnpm test    # vitest
 
 - Anthropic: Claude Code, Claude.ai, Claude Cowork, Claude API
 - OpenAI: Codex CLI, Codex App, ChatGPT, OpenAI API
-- Google: Gemini CLI, Antigravity, Gemini Web, Gemini API
+- Google: Antigravity CLI, Antigravity, Antigravity IDE, Gemini Web, Gemini API
 - Cursor: Cursor IDE, Cursor CLI
 
 ## Official Status Mapping
@@ -121,7 +121,7 @@ pnpm test    # vitest
 - OpenAI: Statuspage components for CLI, App, Conversations, and Chat Completions
 - Google: Workspace Gemini for Gemini Web, Cloud Vertex Gemini API for Gemini API
 - Cursor: Statuspage components for IDE and CLI
-- Gemini CLI and Antigravity stay unmapped until there is a reliable official source
+- Antigravity CLI, Antigravity, and Antigravity IDE stay unmapped until there is a reliable official source
 
 ## Privacy Notes
 
