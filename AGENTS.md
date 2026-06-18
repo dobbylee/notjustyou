@@ -63,3 +63,45 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+## 5. Repository Workflow
+
+Use the repository workflow even for small changes unless the user explicitly asks otherwise.
+
+- Work on a branch, open a PR, and merge through GitHub for committed changes.
+- Do not commit directly to `main`.
+- Do not use Conventional Commit prefixes in commit or PR titles. Avoid prefixes such as `feat:`, `fix:`, `docs:`, `chore:`, or `test:`.
+- Do not put internal phase names in commit or PR titles.
+- Title commits and PRs by the user-visible or maintainer-visible change.
+- Good examples:
+  - `Update Google surfaces and license holder`
+  - `Add signal schema validation`
+  - `Add Redis signal counters`
+- Bad examples:
+  - `docs: update README`
+  - `Phase 1 signal schema`
+  - `chore: cleanup`
+- PR bodies should include Summary, Verification, and Privacy impact when relevant.
+
+## 6. Product Boundaries
+
+Not Just You must stay privacy-safe and source-aware.
+
+- Keep manual community reports, official status, and installed-client signals separate in storage, API contracts, tests, and backend aggregation.
+- Do not extend `/api/report` into automatic telemetry.
+- Add installed-client telemetry through dedicated signal contracts and endpoints.
+- It is acceptable for the dashboard to show a unified "recent problem signals" summary, but it must preserve source breakdown such as community reports, installed signals, and official status.
+- Do not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, or machine/user names.
+- If a change adds or changes collected fields, document the data boundary and add focused tests.
+
+## 7. Project Harness
+
+Before implementation work expands, keep the harness current.
+
+- `AGENTS.md` is the source for Codex and other LLM-agent behavior in this repository.
+- `CONTRIBUTING.md` is the public contributor workflow.
+- `.github/pull_request_template.md` is the PR checklist.
+- `README.md` should remain useful to a first-time open-source user.
+- `docs/architecture.md` and `docs/signals.md` hold durable public design notes.
+- `local-docs/` is ignored and may hold local research, planning notes, and temporary implementation plans.
+- Run `pnpm lint`, `pnpm test`, and `pnpm run build` before PRs unless the change clearly cannot affect code and the user accepts a narrower check.
