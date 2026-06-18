@@ -1,6 +1,69 @@
 # Not Just You
 
-Real-time community signal for AI tools. The MVP is a single status board where users can check recent reports and submit `Slow`, `Error`, or `Down` without signing in.
+Not Just You is a privacy-safe status board for AI tools. It helps users see whether a problem is isolated to them or showing up across a wider surface.
+
+The current MVP is a public dashboard with anonymous community reports and official provider status badges. Planned installed-client signals will stay opt-in and metadata-only.
+
+## Project Status
+
+Current:
+
+- Anonymous `Slow`, `Error`, and `Down` community reports
+- Recent 10 minute community report summaries
+- Official status badges for mapped provider surfaces
+- Redis-backed counters and short dedupe windows
+- No account or login requirement
+
+Planned:
+
+- Installed-client signal schema and privacy scanner
+- Dedicated `/api/signals` APIs
+- Dashboard source breakdown for community reports, official status, and installed signals
+- CLI and read-only MCP status lookup
+- API middleware collectors for OpenAI API, Claude API, and Gemini API
+
+Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
+
+## Privacy Boundary
+
+Not Just You should collect the smallest metadata needed to show service-level status.
+
+Currently collected:
+
+- Service id
+- Report option: `Slow`, `Error`, or `Down`
+- Minute-bucketed counters
+- Short-lived same-service dedupe fingerprint. Request metadata can be processed to create this hash, but raw IP, user agent, and language values are not stored.
+- Aggregate button click counters
+- Vercel Web Analytics page views and referrers
+
+Planned installed-client signals may collect:
+
+- Service id
+- Symptom category
+- Status code
+- Duration
+- Short error code
+- Random installation id
+- Client version
+- Coarse region hint
+
+Not collected:
+
+- Prompt text
+- Request or response bodies
+- Headers
+- API keys
+- Cookies
+- Source files or diffs
+- Clipboard content
+- Exact IP addresses
+- Account emails
+- Machine names or local usernames
+
+Manual community reports, official status, and installed-client signals remain separate in storage and API contracts. The dashboard may show a unified recent problem summary, but it must keep source breakdown visible.
+
+See [docs/architecture.md](docs/architecture.md) and [docs/signals.md](docs/signals.md) for the durable design notes.
 
 ## Stack
 
@@ -8,7 +71,7 @@ Real-time community signal for AI tools. The MVP is a single status board where 
 - React 19
 - TypeScript 6 with `ES2025`
 - Tailwind CSS 4
-- Redis via `REDIS_URL` with Docker Compose locally
+- Redis via `REDIS_URL`
 - Vercel Web Analytics for traffic only
 - Vitest
 
@@ -16,6 +79,7 @@ Real-time community signal for AI tools. The MVP is a single status board where 
 
 - Node `>=20.9.0`
 - pnpm `10.30.3`
+- Redis
 
 The package manager is pinned in `package.json`.
 
@@ -60,7 +124,7 @@ Production can use Upstash Redis by setting `REDIS_URL` to the TLS Redis connect
 REDIS_URL=rediss://default:<PASSWORD>@<DATABASE>.upstash.io:6379
 ```
 
-If Redis is unavailable, report APIs return `503` instead of silently dropping to process memory.
+If Redis is unavailable, report APIs return `503` instead of silently dropping data.
 
 ## Deployment
 
@@ -93,21 +157,6 @@ pnpm test    # vitest
 - `/api/clicks` aggregate button click counters, with token-protected reads
 - `/api/official` official service surface status summary
 
-## MVP Behavior
-
-- Provider tabs
-- Product surface cards
-- `Slow`, `Error`, `Down` reports
-- Recent 10 minute report counts
-- Community state from absolute report counts
-- Same-service dedupe for 3 minutes per fingerprint
-- 5 second polling when visible
-- 30 second polling when hidden
-- Optimistic report updates
-- Aggregate Redis counters for report button, provider tab, refresh, and copy clicks
-- Surface-level official status adapters for Claude, Cursor, Gemini Web, Gemini API, and mapped OpenAI surfaces
-- Unmapped or uncertain official status surfaces omit the official badge
-
 ## Current Surfaces
 
 - Anthropic: Claude Code, Claude.ai, Claude Cowork, Claude API
@@ -123,21 +172,21 @@ pnpm test    # vitest
 - Cursor: Statuspage components for IDE and CLI
 - Antigravity CLI, Antigravity, and Antigravity IDE stay unmapped until there is a reliable official source
 
-## Privacy Notes
-
-- No account or login is required.
-- Reports are stored in Redis as service/status counters in minute buckets.
-- Button clicks are stored in Redis as aggregate counters in hourly buckets.
-- Same-service dedupe uses a short-lived fingerprint derived from request metadata.
-- Vercel Web Analytics is used for page views and referrers only.
-- A minimal `/privacy` page explains what the MVP stores.
+Unmapped or uncertain official status surfaces omit the official badge.
 
 ## Contributing
 
-- Run `pnpm lint`, `pnpm test`, and `pnpm build` before opening a pull request.
-- Service surfaces live in `lib/catalog.ts`.
-- Report options are intentionally limited to `Slow`, `Error`, and `Down`.
-- Keep official status and community reports separate in UI and API changes.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
+
+Baseline checks:
+
+```bash
+pnpm lint
+pnpm test
+pnpm run build
+```
+
+Commit and PR titles should describe the actual change without Conventional Commit prefixes or internal phase names.
 
 ## License
 
