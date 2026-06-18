@@ -25,7 +25,7 @@ The product has three source families:
 
 These families must stay separate in storage, API contracts, tests, and backend aggregation.
 
-The dashboard may show a unified recent problem summary when it helps users understand volume, but it must keep source breakdown visible. For example:
+The dashboard may show a unified recent problem summary when it helps users understand volume, but that summary is presentation-only and must keep source breakdown available. A compact card can show the combined count first, then expose the breakdown on hover, focus, or tap. For example:
 
 ```text
 18 recent problem signals
@@ -67,3 +67,13 @@ The durable order is:
 7. Add vendor plugins only after local preview, redaction, and consent flows are clear.
 
 Browser extensions, WebSocket transport, and durable event warehouses are later work.
+
+## Expansion Gates
+
+Redis hot counters remain the v1 path for fresh dashboard state.
+
+Add Postgres or Neon only when the product needs history beyond hot windows, trend charts, incident grouping, collector version analysis, or abuse review workflows. Keep prompt, body, header, file, exact IP, and account data out of durable storage.
+
+Evaluate ClickHouse or Tinybird only if event volume or analytics query shape grows beyond what Postgres can comfortably handle.
+
+Start with dashboard polling and CLI short polling. Add SSE only if tool-local status UX needs push updates. Evaluate WebSocket or managed realtime only after polling/SSE are insufficient and long-lived connection hosting has a clear owner.
