@@ -62,6 +62,10 @@ interface ProblemSignalInput {
 
 `collectorId` should be derived from the collector token server-side, not accepted in the request body.
 
+Collector token lookup keys should use a server secret based HMAC. Raw collector tokens should not be stored.
+
+Installation ids should be random local ids. Server-side dedupe and approximate unique counts should store only a derived hash or HMAC, not the raw installation id.
+
 ## Validation Rules
 
 Planned validation order:
@@ -70,15 +74,19 @@ Planned validation order:
 2. Parse JSON.
 3. Run a recursive sensitive-key scan.
 4. Validate against a strict schema.
-5. Look up the collector token hash.
+5. Look up the collector token HMAC.
 6. Check active/revoked collector state.
 7. Check source and service allowlists.
 8. Apply rate limits.
-9. Normalize timestamps.
+9. Check timestamp skew and normalize timestamps.
 10. Write aggregate counters.
 11. Return success without echoing raw event data.
 
 Unknown fields should be rejected.
+
+`observedAt` should not be trusted blindly. The first implementation should reject stale values older than 15 minutes and reject values more than 2 minutes in the future.
+
+Collector registration also needs abuse protection. Token and installation limits can be hard limits; service-wide aggregate guards should start as soft guards so an attacker cannot block legitimate signals for a service.
 
 ## Sensitive Data Rules
 
@@ -102,12 +110,13 @@ The exact key `code` is sensitive, but substrings such as `statusCode` and `erro
 
 ## Display Rules
 
-The UI can show exact counts because count volume is useful to users. It should still make provenance clear:
+The UI can show exact counts because count volume is useful to users. The compact default can show a combined recent signal count, but source breakdown must remain visible through hover, focus, or tap:
 
+- combined recent problem signal count
 - community report counts
 - installed signal counts
 - approximate unique installation counts
-- official status
+- official status outside the combined count
 
 Use wording that reflects confidence:
 
