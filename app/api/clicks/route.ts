@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { CLICK_WINDOW_HOURS, validateClickEvent } from "@/lib/clicks";
+import { hasReadAccess } from "@/lib/read-access";
 import { getReportStorage } from "@/lib/storage";
 
 export const runtime = "nodejs";
@@ -87,12 +88,4 @@ export async function GET(request: NextRequest) {
       },
     );
   }
-}
-
-function hasReadAccess(request: NextRequest) {
-  const token = process.env.ANALYTICS_READ_TOKEN?.trim();
-
-  if (!token) return false;
-
-  return request.headers.get("authorization") === `Bearer ${token}`;
 }
