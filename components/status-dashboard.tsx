@@ -7,6 +7,7 @@ import type { Provider, ProviderId, ReportStatus, ServiceSurface } from "@/lib/c
 import type { SummaryResponse } from "@/lib/aggregation";
 import type { ClickEventInput } from "@/lib/clicks";
 import type { OfficialServiceStatus } from "@/lib/official/types";
+import type { SignalSummaryResponse } from "@/lib/signals/aggregation";
 import { getCommunityState, getTotalReports } from "@/lib/scoring";
 import { ProviderTabs } from "./provider-tabs";
 import { ServiceCard } from "./service-card";
@@ -31,6 +32,9 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
     providers[0]?.id ?? "anthropic",
   );
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [signalSummary, setSignalSummary] = useState<SignalSummaryResponse | null>(
+    null,
+  );
   const [official, setOfficial] = useState<OfficialSummaryResponse | null>(null);
   const [pending, setPending] = useState<PendingMap>({});
   const [messages, setMessages] = useState<MessageMap>({});
@@ -40,15 +44,28 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
 
   const loadSummary = useCallback(async () => {
     try {
-      const response = await fetch("/api/summary", {
-        cache: "no-store",
-      });
+      const [summaryResult, signalResult] = await Promise.allSettled([
+        fetch("/api/summary", {
+          cache: "no-store",
+        }),
+        fetch("/api/signals/summary", {
+          cache: "no-store",
+        }),
+      ]);
 
-      if (!response.ok) {
+      if (summaryResult.status === "rejected") {
         throw new Error("Failed to fetch summary");
       }
 
-      setSummary((await response.json()) as SummaryResponse);
+      const summaryResponse = summaryResult.value;
+      if (!summaryResponse.ok) {
+        throw new Error("Failed to fetch summary");
+      }
+
+      setSummary((await summaryResponse.json()) as SummaryResponse);
+      if (signalResult.status === "fulfilled" && signalResult.value.ok) {
+        setSignalSummary((await signalResult.value.json()) as SignalSummaryResponse);
+      }
       setSummaryMessage("");
     } catch {
       setSummaryMessage("Community reports unavailable.");
@@ -114,6 +131,12 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
       official?.services?.map((service) => [service.serviceId, service]) ?? [],
     );
   }, [official]);
+
+  const signalSummaryByServiceId = useMemo(() => {
+    return new Map(
+      signalSummary?.services.map((service) => [service.serviceId, service]) ?? [],
+    );
+  }, [signalSummary]);
 
   const selectedServices = services.filter(
     (service) => service.providerId === selectedProviderId,
@@ -289,12 +312,14 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
           const serviceSummary =
             summariesByServiceId.get(service.id) ?? createEmptyServiceSummary(service.id);
           const officialStatus = officialByServiceId.get(service.id);
+          const installedSignals = signalSummaryByServiceId.get(service.id);
 
           return (
             <ServiceCard
               key={service.id}
               service={service}
               summary={serviceSummary}
+              signalSummary={installedSignals}
               officialStatus={officialStatus}
               pendingStatus={pending[service.id] ?? null}
               message={messages[service.id]}

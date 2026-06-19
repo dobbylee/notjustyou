@@ -49,6 +49,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={service}
         summary={summary}
+        signalSummary={undefined}
         officialStatus={officialStatus}
         pendingStatus={null}
         message="Thanks - counted."
@@ -76,6 +77,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={service}
         summary={summary}
+        signalSummary={undefined}
         officialStatus={officialStatus}
         pendingStatus="slow"
         message={undefined}
@@ -107,6 +109,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={serviceWithoutOfficial}
         summary={{ ...summary, serviceId: "google-antigravity" }}
+        signalSummary={undefined}
         officialStatus={undefined}
         pendingStatus={null}
         message={undefined}
@@ -116,5 +119,59 @@ describe("ServiceCard", () => {
 
     expect(screen.queryByText("Unknown")).not.toBeInTheDocument();
     expect(screen.getByText("No significant reports")).toBeInTheDocument();
+  });
+
+  it("shows installed signal breakdown only when installed signals exist", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ServiceCard
+        service={service}
+        summary={summary}
+        signalSummary={{
+          serviceId: "anthropic-claude-code",
+          countsBySource: {
+            api_middleware: 4,
+            cli_hook: 0,
+            ide_extension: 0,
+            browser_extension: 0,
+            mcp_monitor: 0,
+            local_probe: 0,
+          },
+          countsBySymptom: {
+            slow: 0,
+            error: 0,
+            down: 0,
+            rate_limited: 4,
+            auth_error: 0,
+            model_unavailable: 0,
+            network_error: 0,
+            tool_failure: 0,
+            permission_blocked: 0,
+            unknown: 0,
+          },
+          total: 4,
+          uniqueInstallationsApprox: 2,
+          lastSignal: {
+            symptom: "rate_limited",
+            source: "api_middleware",
+            observedAt: "2026-05-09T00:00:00.000Z",
+          },
+        }}
+        officialStatus={officialStatus}
+        pendingStatus={null}
+        message={undefined}
+        onReport={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByText("7 recent problem signals"));
+
+    expect(
+      screen.getByText(
+        "Community reports 3 · Installed signals 4 · Unique installations 2 · Official operational",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Last installed signal: rate limited")).toBeInTheDocument();
   });
 });

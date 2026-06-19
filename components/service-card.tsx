@@ -4,11 +4,13 @@ import { clsx } from "clsx";
 import type { ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { ServiceSummary } from "@/lib/aggregation";
 import type { OfficialServiceStatus } from "@/lib/official/types";
+import type { SignalServiceSummary } from "@/lib/signals/aggregation";
 import { CommunityStatusBadge, OfficialStatusBadge } from "./status-badge";
 
 interface ServiceCardProps {
   service: ServiceSurface;
   summary: ServiceSummary;
+  signalSummary?: SignalServiceSummary;
   officialStatus: OfficialServiceStatus | undefined;
   pendingStatus: ReportStatus | null;
   message: string | undefined;
@@ -45,11 +47,15 @@ const reportButtonClassNames: Record<
 export function ServiceCard({
   service,
   summary,
+  signalSummary,
   officialStatus,
   pendingStatus,
   message,
   onReport,
 }: ServiceCardProps) {
+  const installedSignalTotal = signalSummary?.total ?? 0;
+  const recentProblemSignalTotal = summary.total + installedSignalTotal;
+
   return (
     <article className="glass-card rounded-2xl p-5">
       <div className="flex items-center justify-between gap-3 pb-1">
@@ -76,6 +82,27 @@ export function ServiceCard({
         />
         <CommunityStatusBadge state={summary.communityState} />
       </div>
+
+      {signalSummary && installedSignalTotal > 0 ? (
+        <details className="group mt-3 rounded-lg border border-slate-200/70 bg-white/55 px-3 py-2 text-xs text-slate-600">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25">
+            <span>{recentProblemSignalTotal} recent problem signals</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 group-open:text-slate-500">
+              Breakdown
+            </span>
+          </summary>
+          <div className="mt-2 leading-relaxed text-slate-500">
+            Community reports {summary.total} · Installed signals {installedSignalTotal} ·
+            Unique installations {signalSummary.uniqueInstallationsApprox} · Official{" "}
+            {formatOfficialStatus(officialStatus)}
+          </div>
+          {signalSummary.lastSignal ? (
+            <div className="mt-1 font-medium text-slate-500">
+              Last installed signal: {signalSummary.lastSignal.symptom.replaceAll("_", " ")}
+            </div>
+          ) : null}
+        </details>
+      ) : null}
 
       <div className="mt-5 grid grid-cols-3 gap-2">
         {service.reportOptions.map((status) => (
@@ -109,4 +136,8 @@ export function ServiceCard({
 
 function getFallbackOfficialSource(service: ServiceSurface) {
   return service.officialStatusRef ? "official" : "not_connected";
+}
+
+function formatOfficialStatus(officialStatus: OfficialServiceStatus | undefined) {
+  return officialStatus?.overall?.replaceAll("_", " ") ?? "not connected";
 }
