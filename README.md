@@ -11,14 +11,13 @@ Current:
 - Anonymous `Slow`, `Error`, and `Down` community reports
 - Recent 10 minute community report summaries
 - Official status badges for mapped provider surfaces
+- Opt-in installed-client signal APIs for metadata-only problem signals
+- Dashboard source breakdown for community reports, installed signals, and official status
 - Redis-backed counters and short dedupe windows
 - No account or login requirement
 
 Planned:
 
-- Installed-client signal schema and privacy scanner
-- Dedicated `/api/signals` APIs
-- Dashboard source breakdown for community reports, official status, and installed signals
 - CLI and read-only MCP status lookup
 - API middleware collectors for OpenAI API, Claude API, and Gemini API
 
@@ -32,21 +31,13 @@ Currently collected:
 
 - Service id
 - Report option: `Slow`, `Error`, or `Down`
+- Installed-client symptom category
+- Installed-client status code, duration, short error code, client version, and coarse region hint when submitted
+- Random installed-client installation id, stored only through server-side derived hashes for aggregation
 - Minute-bucketed counters
 - Short-lived same-service dedupe fingerprint. Request metadata can be processed to create this hash, but raw IP, user agent, and language values are not stored.
 - Aggregate button click counters
 - Vercel Web Analytics page views and referrers
-
-Planned installed-client signals may collect:
-
-- Service id
-- Symptom category
-- Status code
-- Duration
-- Short error code
-- Random installation id
-- Client version
-- Coarse region hint
 
 Not collected:
 
@@ -104,6 +95,7 @@ Create `.env.local` from `.env.example`.
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 REDIS_URL=redis://localhost:6379
 ANALYTICS_READ_TOKEN=replace-me
+NOTJUSTYOU_SIGNAL_SECRET=replace-with-local-random-secret
 ```
 
 `.env.local` is ignored by git. Keep local and production secrets out of the repository.
@@ -134,6 +126,7 @@ Set these environment variables in production:
 NEXT_PUBLIC_APP_URL=https://notjustyou.dev
 REDIS_URL=rediss://default:<PASSWORD>@<DATABASE>.upstash.io:6379
 ANALYTICS_READ_TOKEN=<LONG_RANDOM_TOKEN>
+NOTJUSTYOU_SIGNAL_SECRET=<LONG_RANDOM_SECRET>
 ```
 
 The app is designed for Vercel. Enable Vercel Web Analytics if you want traffic and referrer data.
@@ -156,6 +149,10 @@ pnpm test    # vitest
 - `/api/report` report submission with 3 minute same-service dedupe
 - `/api/clicks` aggregate button click counters, with token-protected reads
 - `/api/official` official service surface status summary
+- `/api/collectors/register` anonymous installed-client collector registration
+- `/api/collectors/heartbeat` installed-client collector heartbeat
+- `/api/signals` metadata-only installed-client signal submission
+- `/api/signals/summary` installed-client signal summary
 
 ## Current Surfaces
 
