@@ -35,6 +35,19 @@ Official status: operational
 
 Avoid presenting mixed sources as a single undifferentiated report count.
 
+## Product Analytics And Monitoring
+
+`/api/clicks` is product interaction analytics. It records aggregate dashboard interactions such as report buttons, provider tabs, refresh, and copy-link actions. It is useful for understanding whether users interact with the product, but it is not the operational monitoring surface.
+
+Operational checks should use dedicated read APIs:
+
+- `/api/health` for app and Redis availability.
+- `/api/monitoring` for token-protected aggregate operational counts.
+- `/api/summary` for community report state.
+- `/api/signals/summary` for installed-client signal state.
+
+Do not extend click tracking into operational telemetry, collector health, API latency, Redis diagnostics, or abuse monitoring. Keep those concerns in dedicated monitoring or signal contracts so product analytics does not become a mixed-purpose data sink.
+
 ## Privacy Boundary
 
 Not Just You should collect the smallest metadata needed to show service-level status.
