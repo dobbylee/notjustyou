@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm run build:cli && next build",
+    "build:cli": "pnpm --filter @notjustyou/cli build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run"
