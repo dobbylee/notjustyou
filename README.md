@@ -18,7 +18,7 @@ Current:
 
 Planned:
 
-- CLI and read-only MCP status lookup
+- Read-only MCP status lookup
 - API middleware collectors for OpenAI API, Claude API, and Gemini API
 
 Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
@@ -140,6 +140,19 @@ pnpm start   # start production server after build
 pnpm lint    # eslint
 pnpm test    # vitest
 ```
+
+## CLI Status Lookup
+
+The workspace includes a read-only local CLI package for checking Not Just You status from a terminal.
+
+```bash
+pnpm --filter @notjustyou/cli build
+node packages/notjustyou-cli/dist/index.js status --base-url http://localhost:3000
+node packages/notjustyou-cli/dist/index.js status openai-api --base-url http://localhost:3000
+node packages/notjustyou-cli/dist/index.js status openai-api --watch
+```
+
+The CLI reads public status summaries only. It does not submit reports or installed-client signals.
 
 ## App Surface
 
