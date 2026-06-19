@@ -87,6 +87,10 @@ Use the repository workflow even for small changes unless the user explicitly as
 
 Not Just You must stay privacy-safe and source-aware.
 
+- Treat the repository as fully public open source. Assume any committed code, docs, examples, test fixtures, logs, URLs, tokens, credentials, operational procedures, and comments can be read by anyone.
+- Do not commit real secrets, private operational runbooks, private endpoint details, internal monitoring tokens, personal account identifiers, local machine paths, or security-sensitive instructions that would help misuse production systems.
+- Public docs should be user-centered. `README.md` should explain what the project is, how to run it, what APIs exist at a product level, and the public privacy boundary. Do not use it as an implementation diary, QA log, private operations guide, or place to accumulate per-change manual test notes.
+- Put temporary plans, local QA notes, private operational notes, and implementation finish records in ignored `local-docs/` unless the information is intentionally public and useful to contributors.
 - Keep manual community reports, official status, and installed-client signals separate in storage, API contracts, tests, and backend aggregation.
 - Do not extend `/api/report` into automatic telemetry.
 - Add installed-client telemetry through dedicated signal contracts and endpoints.

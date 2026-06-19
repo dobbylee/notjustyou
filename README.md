@@ -153,6 +153,8 @@ pnpm test    # vitest
 - `/api/collectors/heartbeat` installed-client collector heartbeat
 - `/api/signals` metadata-only installed-client signal submission
 - `/api/signals/summary` installed-client signal summary
+- `/api/health` app and Redis health check
+- `/api/monitoring` token-protected aggregate operational summary
 
 ## Current Surfaces
 
