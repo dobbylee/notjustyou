@@ -4,6 +4,56 @@ Not Just You is a privacy-safe status board for AI tools. It helps users see whe
 
 The current MVP is a public dashboard with anonymous community reports and official provider status badges. Planned installed-client signals will stay opt-in and metadata-only.
 
+## Use Not Just You
+
+Use the public dashboard at `https://notjustyou.dev`.
+
+Use the read-only CLI from a terminal:
+
+```bash
+npm install -g @notjustyou/cli
+njy status
+njy status openai-api
+njy status openai-api --watch
+```
+
+Expected quick check:
+
+```bash
+njy --help
+njy status openai-api
+```
+
+Use the read-only MCP server with AI clients that support stdio MCP tools:
+
+```bash
+npm install -g @notjustyou/mcp
+```
+
+Example MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "notjustyou": {
+      "command": "notjustyou-mcp",
+      "env": {
+        "NOTJUSTYOU_BASE_URL": "https://notjustyou.dev"
+      }
+    }
+  }
+}
+```
+
+MCP tools:
+
+- `list_surfaces`
+- `get_surface_status`
+- `get_recent_signals`
+- `explain_privacy`
+
+The CLI and MCP server read public status summaries only. They do not submit reports or installed-client signals, and they do not require collector credentials.
+
 ## Project Status
 
 Current:
@@ -55,6 +105,27 @@ Not collected:
 Manual community reports, official status, and installed-client signals remain separate in storage and API contracts. The dashboard may show a unified recent problem summary, but it must keep source breakdown visible.
 
 See [docs/architecture.md](docs/architecture.md) and [docs/signals.md](docs/signals.md) for the durable design notes.
+
+## Current Surfaces
+
+- Anthropic: Claude Code, Claude.ai, Claude Cowork, Claude API
+- OpenAI: Codex CLI, Codex App, ChatGPT, OpenAI API
+- Google: Antigravity CLI, Antigravity, Antigravity IDE, Gemini Web, Gemini API
+- Cursor: Cursor IDE, Cursor CLI
+
+## Official Status Mapping
+
+- Anthropic: Statuspage components for Claude Code, claude.ai, Claude Cowork, and Claude API
+- OpenAI: Statuspage components for CLI, App, Conversations, and Chat Completions
+- Google: Workspace Gemini for Gemini Web, Cloud Vertex Gemini API for Gemini API
+- Cursor: Statuspage components for IDE and CLI
+- Antigravity CLI, Antigravity, and Antigravity IDE stay unmapped until there is a reliable official source
+
+Unmapped or uncertain official status surfaces omit the official badge.
+
+## Develop Or Self-Host
+
+Use this section if you are contributing, running a fork locally, or deploying your own instance.
 
 ## Stack
 
@@ -141,20 +212,7 @@ pnpm lint    # eslint
 pnpm test    # vitest
 ```
 
-## CLI Status Lookup
-
-The read-only CLI checks Not Just You status from a terminal.
-
-Install from npm after the package is published:
-
-```bash
-npm install -g @notjustyou/cli
-njy status
-njy status openai-api
-njy status openai-api --watch
-```
-
-Run from a workspace checkout:
+Run the CLI from a workspace checkout:
 
 ```bash
 pnpm --filter @notjustyou/cli build
@@ -163,50 +221,14 @@ node packages/notjustyou-cli/dist/index.js status openai-api --base-url http://l
 node packages/notjustyou-cli/dist/index.js status openai-api --watch
 ```
 
-The CLI reads public status summaries only. It does not submit reports or installed-client signals.
-
-## MCP Status Lookup
-
-The read-only MCP server works with AI clients that support stdio MCP tools.
-
-Install from npm after the package is published:
-
-```bash
-npm install -g @notjustyou/mcp
-```
-
-Example MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "notjustyou": {
-      "command": "notjustyou-mcp",
-      "env": {
-        "NOTJUSTYOU_BASE_URL": "https://notjustyou.dev"
-      }
-    }
-  }
-}
-```
-
-Run from a workspace checkout:
+Run the MCP server from a workspace checkout:
 
 ```bash
 pnpm --filter @notjustyou/mcp build
 NOTJUSTYOU_BASE_URL=http://localhost:3000 node packages/notjustyou-mcp/dist/index.js
 ```
 
-Tools:
-
-- `list_surfaces`
-- `get_surface_status`
-- `get_recent_signals`
-- `explain_privacy`
-
-The MCP server reads public status summaries only. It does not expose a signal submission tool or require collector credentials.
-
-## App Surface
+## Public API Surface
 
 - `/` status board
 - `/privacy` privacy notes
@@ -220,23 +242,6 @@ The MCP server reads public status summaries only. It does not expose a signal s
 - `/api/signals/summary` installed-client signal summary
 - `/api/health` app and Redis health check
 - `/api/monitoring` token-protected aggregate operational summary
-
-## Current Surfaces
-
-- Anthropic: Claude Code, Claude.ai, Claude Cowork, Claude API
-- OpenAI: Codex CLI, Codex App, ChatGPT, OpenAI API
-- Google: Antigravity CLI, Antigravity, Antigravity IDE, Gemini Web, Gemini API
-- Cursor: Cursor IDE, Cursor CLI
-
-## Official Status Mapping
-
-- Anthropic: Statuspage components for Claude Code, claude.ai, Claude Cowork, and Claude API
-- OpenAI: Statuspage components for CLI, App, Conversations, and Chat Completions
-- Google: Workspace Gemini for Gemini Web, Cloud Vertex Gemini API for Gemini API
-- Cursor: Statuspage components for IDE and CLI
-- Antigravity CLI, Antigravity, and Antigravity IDE stay unmapped until there is a reliable official source
-
-Unmapped or uncertain official status surfaces omit the official badge.
 
 ## Contributing
 
