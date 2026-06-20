@@ -33,7 +33,7 @@
     }
   },
   "bin": {
-    "notjustyou-mcp": "./dist/index.js"
+    "notjustyou-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
