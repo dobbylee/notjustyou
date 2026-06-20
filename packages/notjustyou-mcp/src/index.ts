@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
+import { fileURLToPath } from "node:url";
 import {
   handleJsonRpcMessage,
   parseJsonRpcLine,
@@ -39,7 +41,17 @@ async function handleLine(line: string) {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+export function isDirectRun(metaUrl: string, argvPath = process.argv[1]) {
+  if (!argvPath) return false;
+
+  try {
+    return realpathSync(argvPath) === realpathSync(fileURLToPath(metaUrl));
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectRun(import.meta.url)) {
   main().catch((error: unknown) => {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;

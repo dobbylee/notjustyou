@@ -143,7 +143,18 @@ pnpm test    # vitest
 
 ## CLI Status Lookup
 
-The workspace includes a read-only local CLI package for checking Not Just You status from a terminal.
+The read-only CLI checks Not Just You status from a terminal.
+
+Install from npm after the package is published:
+
+```bash
+npm install -g @notjustyou/cli
+njy status
+njy status openai-api
+njy status openai-api --watch
+```
+
+Run from a workspace checkout:
 
 ```bash
 pnpm --filter @notjustyou/cli build
@@ -156,7 +167,30 @@ The CLI reads public status summaries only. It does not submit reports or instal
 
 ## MCP Status Lookup
 
-The workspace includes a read-only MCP server for AI clients that support stdio MCP tools.
+The read-only MCP server works with AI clients that support stdio MCP tools.
+
+Install from npm after the package is published:
+
+```bash
+npm install -g @notjustyou/mcp
+```
+
+Example MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "notjustyou": {
+      "command": "notjustyou-mcp",
+      "env": {
+        "NOTJUSTYOU_BASE_URL": "https://notjustyou.dev"
+      }
+    }
+  }
+}
+```
+
+Run from a workspace checkout:
 
 ```bash
 pnpm --filter @notjustyou/mcp build

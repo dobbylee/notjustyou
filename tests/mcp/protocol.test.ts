@@ -1,4 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import { mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { isDirectRun } from "@/packages/notjustyou-mcp/src/index";
 import {
   handleJsonRpcMessage,
   serializeJsonRpcMessage,
@@ -207,6 +212,27 @@ describe("MCP JSON-RPC protocol", () => {
     expect(serializeJsonRpcMessage({ jsonrpc: "2.0", id: 1, result: {} })).toBe(
       '{"jsonrpc":"2.0","id":1,"result":{}}\n',
     );
+  });
+
+  it("recognizes npm bin symlinks as direct runs", () => {
+    const target = join(mkdtempSync(join(tmpdir(), "njy-mcp-test-")), "index.js");
+    const link = join(
+      mkdtempSync(join(tmpdir(), "njy-mcp-bin-test-")),
+      "notjustyou-mcp",
+    );
+
+    writeFileSync(target, "");
+    symlinkSync(target, link);
+
+    expect(isDirectRun(pathToFileURL(target).href, link)).toBe(true);
+  });
+
+  it("does not throw when an importing process has a missing argv path", () => {
+    const target = join(mkdtempSync(join(tmpdir(), "njy-mcp-test-")), "index.js");
+
+    writeFileSync(target, "");
+
+    expect(isDirectRun(pathToFileURL(target).href, "not-a-file")).toBe(false);
   });
 });
 

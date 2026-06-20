@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
+import { fileURLToPath } from "node:url";
 import { fetchStatusData } from "./api.js";
 import { formatStatus } from "./format.js";
 
@@ -90,7 +92,17 @@ Examples:
   njy status openai-api --watch`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+export function isDirectRun(metaUrl: string, argvPath = process.argv[1]) {
+  if (!argvPath) return false;
+
+  try {
+    return realpathSync(argvPath) === realpathSync(fileURLToPath(metaUrl));
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectRun(import.meta.url)) {
   main().then(
     (exitCode) => {
       process.exitCode = exitCode;
