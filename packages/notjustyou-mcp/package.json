@@ -1,13 +1,47 @@
 {
   "name": "@notjustyou/mcp",
   "version": "0.1.0",
-  "private": true,
+  "description": "Read-only MCP server for Not Just You AI service status lookup.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dobbylee/notjustyou.git",
+    "directory": "packages/notjustyou-mcp"
+  },
+  "homepage": "https://github.com/dobbylee/notjustyou#readme",
+  "bugs": {
+    "url": "https://github.com/dobbylee/notjustyou/issues"
+  },
+  "keywords": [
+    "ai-status",
+    "mcp",
+    "status",
+    "notjustyou"
+  ],
   "type": "module",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "bin": {
     "notjustyou-mcp": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "prepack": "pnpm run build",
+    "pack:dry-run": "pnpm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=20.9.0"

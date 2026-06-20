@@ -1,16 +1,49 @@
 {
   "name": "@notjustyou/cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "Read-only command line status lookup for Not Just You AI service surfaces.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dobbylee/notjustyou.git",
+    "directory": "packages/notjustyou-cli"
+  },
+  "homepage": "https://github.com/dobbylee/notjustyou#readme",
+  "bugs": {
+    "url": "https://github.com/dobbylee/notjustyou/issues"
+  },
+  "keywords": [
+    "ai-status",
+    "status",
+    "cli",
+    "notjustyou"
+  ],
   "type": "module",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "bin": {
     "njy": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "prepack": "pnpm run build",
+    "pack:dry-run": "pnpm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=20.9.0"
   }
 }
-
