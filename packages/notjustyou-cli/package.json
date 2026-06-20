@@ -33,7 +33,7 @@
     }
   },
   "bin": {
-    "njy": "./dist/index.js"
+    "njy": "dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
