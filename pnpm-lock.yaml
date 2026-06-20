@@ -78,6 +78,8 @@ importers:
 
   packages/notjustyou-cli: {}
 
+  packages/notjustyou-mcp: {}
+
 packages:
 
   '@adobe/css-tools@4.5.0':

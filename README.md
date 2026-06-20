@@ -13,12 +13,12 @@ Current:
 - Official status badges for mapped provider surfaces
 - Opt-in installed-client signal APIs for metadata-only problem signals
 - Dashboard source breakdown for community reports, installed signals, and official status
+- Read-only MCP status lookup
 - Redis-backed counters and short dedupe windows
 - No account or login requirement
 
 Planned:
 
-- Read-only MCP status lookup
 - API middleware collectors for OpenAI API, Claude API, and Gemini API
 
 Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
@@ -153,6 +153,24 @@ node packages/notjustyou-cli/dist/index.js status openai-api --watch
 ```
 
 The CLI reads public status summaries only. It does not submit reports or installed-client signals.
+
+## MCP Status Lookup
+
+The workspace includes a read-only MCP server for AI clients that support stdio MCP tools.
+
+```bash
+pnpm --filter @notjustyou/mcp build
+NOTJUSTYOU_BASE_URL=http://localhost:3000 node packages/notjustyou-mcp/dist/index.js
+```
+
+Tools:
+
+- `list_surfaces`
+- `get_surface_status`
+- `get_recent_signals`
+- `explain_privacy`
+
+The MCP server reads public status summaries only. It does not expose a signal submission tool or require collector credentials.
 
 ## App Surface
 
