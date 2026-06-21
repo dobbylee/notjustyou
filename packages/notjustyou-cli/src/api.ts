@@ -1,7 +1,9 @@
 import type {
   CommunitySummaryResponse,
+  CollectorRegistrationResponse,
   InstalledSignalSummaryResponse,
   OfficialSummaryResponse,
+  SignalSource,
   StatusData,
 } from "./types.js";
 
@@ -34,8 +36,51 @@ export function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.replace(/\/+$/, "");
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
+export async function registerCollector(input: {
+  baseUrl: string;
+  source: SignalSource;
+  serviceIds: string[];
+  clientName: string;
+  clientVersion: string;
+}) {
+  return fetchJson<CollectorRegistrationResponse>(
+    `${normalizeBaseUrl(input.baseUrl)}/api/collectors/register`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        source: input.source,
+        serviceIds: input.serviceIds,
+        clientName: input.clientName,
+        clientVersion: input.clientVersion,
+      }),
+    },
+  );
+}
+
+export async function checkCollectorToken(input: {
+  baseUrl: string;
+  collectorToken: string;
+  clientVersion: string;
+}) {
+  await fetchJson(`${normalizeBaseUrl(input.baseUrl)}/api/collectors/heartbeat`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${input.collectorToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      installationId: "doctor-readiness-check",
+      clientVersion: input.clientVersion,
+    }),
+  });
+}
+
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
+    ...init,
     cache: "no-store",
   });
 
@@ -45,4 +90,3 @@ async function fetchJson<T>(url: string): Promise<T> {
 
   return (await response.json()) as T;
 }
-

@@ -8,7 +8,7 @@ The current MVP is a public dashboard with anonymous community reports and offic
 
 Use the public dashboard at `https://notjustyou.dev`.
 
-Use the read-only CLI from a terminal:
+Use the CLI from a terminal:
 
 ```bash
 npm install -g @notjustyou/cli
@@ -23,6 +23,14 @@ Expected quick check:
 njy --help
 njy status openai-api
 ```
+
+Prepare a local machine for future opt-in SDK collectors:
+
+```bash
+njy setup
+```
+
+`setup` registers an anonymous collector, saves the collector token only in the local Not Just You config file, and runs a lightweight readiness check. The token is not printed. Future SDK collectors reuse this local config.
 
 Use the read-only MCP server with AI clients that support stdio MCP tools:
 
@@ -52,7 +60,7 @@ MCP tools:
 - `get_recent_signals`
 - `explain_privacy`
 
-The CLI and MCP server read public status summaries only. They do not submit reports or installed-client signals, and they do not require collector credentials.
+The MCP server reads public status summaries only. The CLI can also register an anonymous collector for future opt-in SDK use, but it does not submit reports or installed-client signals by itself.
 
 ## Project Status
 
@@ -219,6 +227,14 @@ pnpm --filter @notjustyou/cli build
 node packages/notjustyou-cli/dist/index.js status --base-url http://localhost:3000
 node packages/notjustyou-cli/dist/index.js status openai-api --base-url http://localhost:3000
 node packages/notjustyou-cli/dist/index.js status openai-api --watch
+```
+
+Advanced CLI diagnostics:
+
+```bash
+node packages/notjustyou-cli/dist/index.js register --source api_middleware --service openai-api --base-url http://localhost:3000
+node packages/notjustyou-cli/dist/index.js doctor --base-url http://localhost:3000
+node packages/notjustyou-cli/dist/index.js payload-preview --fixture ./signal.json
 ```
 
 Run the MCP server from a workspace checkout:
