@@ -51,3 +51,38 @@ export interface StatusData {
   installedSignals: InstalledSignalSummaryResponse | null;
   official: OfficialSummaryResponse | null;
 }
+
+export type SignalSource =
+  | "api_middleware"
+  | "cli_hook"
+  | "ide_extension"
+  | "browser_extension"
+  | "mcp_monitor"
+  | "local_probe";
+
+export interface CollectorRegistrationResponse {
+  collectorId: string;
+  collectorToken: string;
+  expiresAt: string | null;
+}
+
+export interface CliConfig {
+  configVersion: number;
+  baseUrl: string;
+  collectorId: string;
+  collectorToken: string;
+  source: SignalSource;
+  serviceIds: string[];
+  clientName: string;
+  clientVersion: string;
+}
+
+export type PayloadPreviewResult =
+  | {
+      ok: true;
+      payload: Record<string, unknown>;
+    }
+  | {
+      ok: false;
+      reason: string;
+    };
