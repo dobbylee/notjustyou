@@ -58,3 +58,17 @@ await recordAiCall(
 ```
 
 Without `slowAfterMs`, successful calls do not submit a signal.
+
+## Retry And Coalescing
+
+Not Just You signal submission uses a bounded in-memory queue. The queue stores
+only sanitized signal payloads, never provider errors, prompts, bodies, headers,
+or tokens.
+
+The SDK retries signal submission only. It never retries the wrapped AI API
+call. Retryable signal failures use bounded attempts, exponential backoff with
+jitter, and server `retryAfterSeconds` when present.
+
+Repeated local failure signals are coalesced for 30 seconds by service id,
+source, symptom, status code, and sanitized error code. Coalescing limits noisy
+repeated failures without changing the wrapped call result.
