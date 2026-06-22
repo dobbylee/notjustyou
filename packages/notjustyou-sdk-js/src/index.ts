@@ -1,5 +1,6 @@
 import { readSdkConfig } from "./config.js";
 import { normalizeOpenAiError } from "./normalize.js";
+import { enqueueSignal, scheduleSignalQueueDrain } from "./queue.js";
 import { canSendToBaseUrl, sendSignal } from "./sender.js";
 import type { ProblemSignalPayload, RecordAiCallOptions } from "./types.js";
 
@@ -71,12 +72,26 @@ async function submitBestEffort(
     if (!config) return;
     if (!canSendToBaseUrl(config.baseUrl, options.baseUrl)) return;
 
-    await sendSignal(config, {
+    const payload = {
       ...partialPayload,
       installationId: config.installationId,
       clientVersion: config.clientVersion,
-    });
+    };
+
+    if (!enqueueSignal(payload)) return;
+
+    scheduleSignalQueueDrain(sendQueuedSignal);
   } catch {
     return;
   }
+}
+
+async function sendQueuedSignal(payload: ProblemSignalPayload) {
+  const config = readSdkConfig();
+  if (!config) return;
+  if (config.source !== "api_middleware" || !config.serviceIds.includes(payload.serviceId)) {
+    return;
+  }
+
+  await sendSignal(config, payload);
 }

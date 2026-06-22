@@ -3,6 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { recordAiCall } from "@/packages/notjustyou-sdk-js/src/index";
+import {
+  enqueueSignal,
+  getSignalQueueSnapshot,
+  resetSignalQueueForTests,
+  scheduleSignalQueueDrain,
+} from "@/packages/notjustyou-sdk-js/src/queue";
+import type { ProblemSignalPayload } from "@/packages/notjustyou-sdk-js/src/types";
 
 const originalConfigPath = process.env.NOTJUSTYOU_CONFIG_PATH;
 
@@ -15,8 +22,10 @@ beforeEach(() => {
 
 afterEach(() => {
   process.env.NOTJUSTYOU_CONFIG_PATH = originalConfigPath;
+  resetSignalQueueForTests();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe("recordAiCall", () => {
@@ -189,7 +198,15 @@ describe("recordAiCall", () => {
 
     await recordAiCall({ serviceId: "openai-api", slowAfterMs: 0 }, () => "first");
     await waitForSignalTask();
-    await recordAiCall({ serviceId: "openai-api", slowAfterMs: 0 }, () => "second");
+    const providerError = Object.assign(new Error("not collected"), {
+      status: 503,
+      code: "server_error",
+    });
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw providerError;
+      }),
+    ).rejects.toBe(providerError);
     await waitForSignalTask();
 
     const firstPayload = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
@@ -218,6 +235,277 @@ describe("recordAiCall", () => {
     ).resolves.toBe("ok");
 
     await waitForSignalTask();
+  });
+
+  it("retries signal submission using retryAfterSeconds without retrying the wrapped call", async () => {
+    vi.useFakeTimers();
+    const providerCall = vi.fn(() => {
+      throw Object.assign(new Error("not collected"), { status: 429 });
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: false, retryAfterSeconds: 2 }), {
+          status: 429,
+        }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true })));
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig();
+
+    await expect(recordAiCall({ serviceId: "openai-api" }, providerCall)).rejects.toThrow(
+      "not collected",
+    );
+    expect(providerCall).toHaveBeenCalledTimes(1);
+
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(providerCall).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(providerCall).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not delay new ready signals behind an existing retry timer", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: false, retryAfterSeconds: 30 }), {
+          status: 429,
+        }),
+      )
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true })));
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig();
+    const firstError = Object.assign(new Error("first"), {
+      status: 429,
+      code: "rate_limit_a",
+    });
+    const secondError = Object.assign(new Error("second"), {
+      status: 429,
+      code: "rate_limit_b",
+    });
+
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw firstError;
+      }),
+    ).rejects.toBe(firstError);
+
+    await vi.advanceTimersToNextTimerAsync();
+    await vi.advanceTimersToNextTimerAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw secondError;
+      }),
+    ).rejects.toBe(secondError);
+
+    await vi.advanceTimersToNextTimerAsync();
+    await vi.advanceTimersToNextTimerAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("stores only sanitized signal payloads while queued for retry", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: false }), { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig();
+    const providerError = Object.assign(new Error("do not store"), {
+      status: 503,
+      code: "server_error",
+      headers: { authorization: "secret" },
+      request: { body: "prompt" },
+      response: { body: "completion" },
+    });
+
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw providerError;
+      }),
+    ).rejects.toBe(providerError);
+
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
+
+    const queued = getSignalQueueSnapshot();
+    expect(queued).toHaveLength(1);
+    expect(queued[0].attempts).toBe(1);
+    expect(queued[0].payload).toMatchObject({
+      serviceId: "openai-api",
+      source: "api_middleware",
+      symptom: "error",
+      statusCode: 503,
+      errorCode: "server_error",
+    });
+    expect(JSON.stringify(queued)).not.toContain("do not store");
+    expect(JSON.stringify(queued)).not.toContain("authorization");
+    expect(JSON.stringify(queued)).not.toContain("prompt");
+    expect(JSON.stringify(queued)).not.toContain("completion");
+  });
+
+  it("coalesces repeated identical local failures within the suppression window", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig();
+    const firstError = Object.assign(new Error("first"), {
+      status: 503,
+      code: "server_error",
+    });
+    const secondError = Object.assign(new Error("second"), {
+      status: 503,
+      code: "server_error",
+    });
+
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw firstError;
+      }),
+    ).rejects.toBe(firstError);
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw secondError;
+      }),
+    ).rejects.toBe(secondError);
+
+    await waitForSignalTask();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not coalesce opt-in slow signals", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig();
+
+    await recordAiCall({ serviceId: "openai-api", slowAfterMs: 0 }, () => "first");
+    await recordAiCall({ serviceId: "openai-api", slowAfterMs: 0 }, () => "second");
+
+    await waitForSignalTask();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("allows repeated failure signals after the suppression window expires", () => {
+    expect(enqueueSignal(makePayload(), 1000)).toBe(true);
+    expect(enqueueSignal(makePayload(), 1000 + 29_999)).toBe(false);
+    expect(enqueueSignal(makePayload(), 1000 + 30_000)).toBe(true);
+  });
+
+  it("does not coalesce distinct failure keys", () => {
+    expect(enqueueSignal(makePayload({ errorCode: "server_error_a" }), 1000)).toBe(true);
+    expect(enqueueSignal(makePayload({ errorCode: "server_error_b" }), 1000)).toBe(true);
+
+    expect(getSignalQueueSnapshot()).toHaveLength(2);
+  });
+
+  it("keeps the in-memory queue bounded", () => {
+    for (let index = 0; index < 60; index += 1) {
+      enqueueSignal(makePayload({ errorCode: `server_error_${index}` }), 1000 + index);
+    }
+
+    const queued = getSignalQueueSnapshot();
+    expect(queued).toHaveLength(50);
+    expect(queued[0].payload.errorCode).toBe("server_error_10");
+    expect(queued[49].payload.errorCode).toBe("server_error_59");
+  });
+
+  it("drops non-retryable signal responses", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ ok: false }), { status: 400 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig();
+    const providerError = Object.assign(new Error("not collected"), {
+      status: 503,
+      code: "server_error",
+    });
+
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw providerError;
+      }),
+    ).rejects.toBe(providerError);
+
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getSignalQueueSnapshot()).toHaveLength(0);
+  });
+
+  it("drops queued signals after max attempts", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ ok: false }), { status: 503 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig();
+    const providerError = Object.assign(new Error("not collected"), {
+      status: 503,
+      code: "server_error",
+    });
+
+    await expect(
+      recordAiCall({ serviceId: "openai-api" }, () => {
+        throw providerError;
+      }),
+    ).rejects.toBe(providerError);
+
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
+    await vi.advanceTimersByTimeAsync(1200);
+    await vi.advanceTimersByTimeAsync(2400);
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(getSignalQueueSnapshot()).toHaveLength(0);
+  });
+
+  it("caps retry scheduling at queue TTL", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+    enqueueSignal(makePayload(), Date.now());
+
+    scheduleSignalQueueDrain(async () => {
+      throw {
+        retryable: true,
+        retryAfterMs: 60 * 60 * 1000,
+      };
+    });
+
+    await vi.runOnlyPendingTimersAsync();
+
+    const queued = getSignalQueueSnapshot();
+    expect(queued).toHaveLength(1);
+    expect(queued[0].nextAttemptAt).toBe(queued[0].expiresAt);
+  });
+
+  it("uses jittered exponential backoff when retryAfterSeconds is absent", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    enqueueSignal(makePayload(), Date.now());
+
+    scheduleSignalQueueDrain(async () => {
+      throw {
+        retryable: true,
+      };
+    });
+
+    await vi.runOnlyPendingTimersAsync();
+
+    const queued = getSignalQueueSnapshot();
+    expect(queued).toHaveLength(1);
+    expect(queued[0].nextAttemptAt - Date.now()).toBe(1100);
   });
 
   it("defers config writes until after returning the wrapped value", async () => {
@@ -287,6 +575,7 @@ async function captureFailurePayload(errorShape: Record<string, unknown>) {
 
 async function waitForSignalTask() {
   await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function writeConfig(overrides: Record<string, unknown> = {}) {
@@ -315,4 +604,19 @@ function writeConfig(overrides: Record<string, unknown> = {}) {
 
 function readStoredConfig() {
   return JSON.parse(readFileSync(process.env.NOTJUSTYOU_CONFIG_PATH!, "utf8"));
+}
+
+function makePayload(overrides: Partial<ProblemSignalPayload> = {}): ProblemSignalPayload {
+  return {
+    serviceId: "openai-api",
+    source: "api_middleware",
+    symptom: "error",
+    observedAt: "2026-06-22T00:00:00.000Z",
+    durationMs: 100,
+    statusCode: 503,
+    errorCode: "server_error",
+    installationId: "installation-test",
+    clientVersion: "0.1.0",
+    ...overrides,
+  };
 }
