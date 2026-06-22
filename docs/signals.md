@@ -20,14 +20,14 @@ Official status:
 
 Installed-client signals:
 
-- planned opt-in metadata from SDK middleware, CLI hooks, plugins, browser extensions, MCP monitors, or local probes
+- opt-in metadata from SDK middleware, CLI hooks, plugins, browser extensions, MCP monitors, or local probes
 - should use dedicated signal endpoints
 - must not reuse `/api/report`
 - v1 should start with API middleware and local tooling; browser extension and MCP monitor sources are future-capable schema values, not first implementation targets
 
-## Planned Installed Signal Shape
+## Installed Signal Shape
 
-The planned installed-client signal input is metadata-only:
+The installed-client signal input is metadata-only:
 
 ```ts
 interface ProblemSignalInput {

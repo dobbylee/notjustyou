@@ -2,7 +2,7 @@
 
 Not Just You is a privacy-safe status board for AI tools. It helps users see whether a problem is isolated to them or showing up across a wider surface.
 
-The current MVP is a public dashboard with anonymous community reports and official provider status badges. Planned installed-client signals will stay opt-in and metadata-only.
+The current MVP is a public dashboard with anonymous community reports, official provider status badges, and opt-in metadata-only installed-client signals.
 
 ## Use Not Just You
 
@@ -24,13 +24,13 @@ njy --help
 njy status openai-api
 ```
 
-Prepare a local machine for future opt-in SDK collectors:
+Prepare a local machine for opt-in SDK collectors:
 
 ```bash
 njy setup
 ```
 
-`setup` registers an anonymous collector, saves the collector token only in the local Not Just You config file, and runs a lightweight readiness check. The token is not printed. Future SDK collectors reuse this local config.
+`setup` registers an anonymous collector, saves the collector token only in the local Not Just You config file, and runs a lightweight readiness check. The token is not printed. SDK collectors reuse this local config.
 
 Use the read-only MCP server with AI clients that support stdio MCP tools:
 
@@ -60,7 +60,7 @@ MCP tools:
 - `get_recent_signals`
 - `explain_privacy`
 
-The MCP server reads public status summaries only. The CLI can also register an anonymous collector for future opt-in SDK use, but it does not submit reports or installed-client signals by itself.
+The MCP server reads public status summaries only. The CLI can also register an anonymous collector for opt-in SDK use, but it does not submit reports or installed-client signals by itself.
 
 ## Project Status
 
@@ -72,12 +72,15 @@ Current:
 - Opt-in installed-client signal APIs for metadata-only problem signals
 - Dashboard source breakdown for community reports, installed signals, and official status
 - Read-only MCP status lookup
+- OpenAI-only Node SDK core for metadata-only API middleware signals
 - Redis-backed counters and short dedupe windows
 - No account or login requirement
 
 Planned:
 
-- API middleware collectors for OpenAI API, Claude API, and Gemini API
+- SDK retry, backoff, and local coalescing
+- API middleware adapters for Claude API and Gemini API
+- Public SDK docs and release hardening
 
 Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
 
@@ -242,6 +245,12 @@ Run the MCP server from a workspace checkout:
 ```bash
 pnpm --filter @notjustyou/mcp build
 NOTJUSTYOU_BASE_URL=http://localhost:3000 node packages/notjustyou-mcp/dist/index.js
+```
+
+Build the SDK package from a workspace checkout:
+
+```bash
+pnpm --filter @notjustyou/sdk-js build
 ```
 
 ## Public API Surface

@@ -9,9 +9,10 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm run build:cli && pnpm run build:mcp && next build",
+    "build": "pnpm run build:cli && pnpm run build:mcp && pnpm run build:sdk && next build",
     "build:cli": "pnpm --filter @notjustyou/cli build",
     "build:mcp": "pnpm --filter @notjustyou/mcp build",
+    "build:sdk": "pnpm --filter @notjustyou/sdk-js build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run"
