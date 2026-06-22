@@ -1,6 +1,6 @@
 # Architecture
 
-Not Just You is a public status board for AI tools. The product combines community reporting, official provider status, and planned opt-in installed-client signals without treating those sources as the same kind of data.
+Not Just You is a public status board for AI tools. The product combines community reporting, official provider status, and opt-in installed-client signals without treating those sources as the same kind of data.
 
 ## Current Product
 
@@ -21,7 +21,7 @@ The product has three source families:
 | --- | --- | --- | --- |
 | Manual community reports | `POST /api/report`, `GET /api/summary` | report counters | user-submitted recent reports |
 | Official status | `GET /api/official` | official status cache | provider status badge |
-| Installed-client signals | planned `/api/signals` APIs | signal counters | opt-in metadata-only problem signals |
+| Installed-client signals | `/api/signals` APIs | signal counters | opt-in metadata-only problem signals |
 
 These families must stay separate in storage, API contracts, tests, and backend aggregation.
 
