@@ -272,14 +272,6 @@ pnpm --filter @notjustyou/sdk-js build
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
-Baseline checks:
-
-```bash
-pnpm lint
-pnpm test
-pnpm run build
-```
-
 Commit and PR titles should describe the actual change without Conventional Commit prefixes or internal phase names.
 
 ## License

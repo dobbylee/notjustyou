@@ -9,11 +9,9 @@
 
 ## Verification
 
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm run build`
+- [ ] Baseline repository verification from `AGENTS.md` is complete, or skipped/narrowed with rationale below
 
-If a check is skipped, explain why:
+If verification is skipped or narrowed, explain why:
 
 -
 

@@ -6,7 +6,7 @@ Not Just You is a privacy-safe status board for AI tools. Contributions should k
 
 1. Create a branch from `main`.
 2. Make the smallest change that solves the issue.
-3. Run the relevant verification commands.
+3. Run the repository verification required by `AGENTS.md`.
 4. Open a pull request.
 5. Merge through GitHub after review or explicit approval.
 
@@ -37,15 +37,8 @@ Avoid:
 
 ## Verification
 
-Run these before opening a PR when the change can affect code or documentation accuracy:
-
-```bash
-pnpm lint
-pnpm test
-pnpm run build
-```
-
-If a check is skipped, state why in the PR.
+Use `AGENTS.md` as the source of truth for baseline repository verification.
+If a check is skipped or narrowed, state why in the PR.
 
 ## Privacy And Data Boundaries
 
@@ -83,4 +76,3 @@ Keep public documentation practical:
 - `README.md` should help a new user understand and run the project.
 - `docs/architecture.md` should describe durable system boundaries.
 - `docs/signals.md` should describe signal contracts and privacy rules.
-- `local-docs/` is ignored and may hold local research, planning notes, and temporary implementation plans.
