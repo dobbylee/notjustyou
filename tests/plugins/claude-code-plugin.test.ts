@@ -3,13 +3,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const pluginRoot = join(process.cwd(), "packages/notjustyou-claude-code-plugin");
+const marketplaceRoot = join(process.cwd(), ".claude-plugin");
 
 describe("Claude Code status plugin", () => {
   it("declares a status-only Claude Code plugin manifest", () => {
     const manifest = readJson(".claude-plugin/plugin.json");
 
     expect(manifest).toMatchObject({
-      name: "notjustyou-status",
+      name: "notjustyou",
       description:
         "Adds a read-only Not Just You status skill and MCP status tools for Claude Code surfaces.",
       version: "0.1.0",
@@ -23,7 +24,7 @@ describe("Claude Code status plugin", () => {
 
     expect(mcpConfig).toEqual({
       mcpServers: {
-        notjustyou: {
+        status: {
           command: "npx",
           args: ["-y", "@notjustyou/mcp@0.1.0"],
           env: {
@@ -52,20 +53,48 @@ describe("Claude Code status plugin", () => {
   it("limits the status skill to Not Just You read-only MCP tools", () => {
     const skill = readFileSync(join(pluginRoot, "skills/status/SKILL.md"), "utf8");
 
-    expect(skill).toContain("mcp__plugin_notjustyou-status_notjustyou__list_surfaces");
+    expect(skill).toContain("mcp__plugin_notjustyou_status__list_surfaces");
     expect(skill).toContain(
-      "mcp__plugin_notjustyou-status_notjustyou__get_surface_status",
+      "mcp__plugin_notjustyou_status__get_surface_status",
     );
     expect(skill).toContain(
-      "mcp__plugin_notjustyou-status_notjustyou__get_recent_signals",
+      "mcp__plugin_notjustyou_status__get_recent_signals",
     );
     expect(skill).toContain(
-      "mcp__plugin_notjustyou-status_notjustyou__explain_privacy",
+      "mcp__plugin_notjustyou_status__explain_privacy",
     );
     expect(skill).toContain(
       "disallowed-tools: Read Grep Glob Bash Edit Write MultiEdit NotebookRead NotebookEdit WebFetch WebSearch",
     );
     expect(skill).toContain("This status-only plugin must not submit signals");
+  });
+
+  it("publishes the plugin through the Not Just You marketplace catalog", () => {
+    const marketplace = JSON.parse(
+      readFileSync(join(marketplaceRoot, "marketplace.json"), "utf8"),
+    );
+    const packageJson = JSON.parse(readFileSync(join(pluginRoot, "package.json"), "utf8"));
+
+    expect(marketplace).toMatchObject({
+      name: "notjustyou",
+      plugins: [
+        {
+          name: "notjustyou",
+          source: {
+            source: "npm",
+            package: "@notjustyou/claude-code-plugin",
+            version: "0.1.0",
+          },
+        },
+      ],
+    });
+    expect(marketplace.plugins[0].name).toBe(readJson(".claude-plugin/plugin.json").name);
+    expect(marketplace.plugins[0].source.package).toBe(packageJson.name);
+    expect(marketplace.plugins[0].source.version).toBe(packageJson.version);
+    expect(packageJson.private).not.toBe(true);
+    expect(packageJson.publishConfig).toEqual({
+      access: "public",
+    });
   });
 });
 

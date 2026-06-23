@@ -1,7 +1,7 @@
 ---
 description: Check Not Just You public AI service status for OpenAI, Anthropic Claude, Google Gemini, Cursor, and related coding surfaces. Use when the user asks if an AI service is down, degraded, rate limited, or showing recent problem signals.
 argument-hint: "[service id or provider]"
-allowed-tools: mcp__plugin_notjustyou-status_notjustyou__list_surfaces mcp__plugin_notjustyou-status_notjustyou__get_surface_status mcp__plugin_notjustyou-status_notjustyou__get_recent_signals mcp__plugin_notjustyou-status_notjustyou__explain_privacy
+allowed-tools: mcp__plugin_notjustyou_status__list_surfaces mcp__plugin_notjustyou_status__get_surface_status mcp__plugin_notjustyou_status__get_recent_signals mcp__plugin_notjustyou_status__explain_privacy
 disallowed-tools: Read Grep Glob Bash Edit Write MultiEdit NotebookRead NotebookEdit WebFetch WebSearch
 ---
 

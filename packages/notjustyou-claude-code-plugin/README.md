@@ -5,9 +5,29 @@ Code tab in the Claude Desktop app.
 
 ## What It Provides
 
-- A `/notjustyou-status:status` skill for AI service status checks.
+- A `/notjustyou:status` skill for AI service status checks.
 - A bundled read-only Not Just You MCP server configuration.
 - Public status lookups for community reports, installed-client signal aggregates, and official status summaries.
+
+## Install
+
+After the marketplace and npm package are published:
+
+```text
+/plugin marketplace add dobbylee/notjustyou
+/plugin install notjustyou@notjustyou
+/reload-plugins
+```
+
+Then run:
+
+```text
+/notjustyou:status openai-api
+```
+
+In the Claude Desktop app, use the Code tab's plugin manager to add the
+marketplace, install the plugin, and enable it. This plugin is for Claude Code
+surfaces, not the general Claude chat tab.
 
 ## Local Test
 
@@ -18,12 +38,8 @@ claude --plugin-dir ./packages/notjustyou-claude-code-plugin
 Then run:
 
 ```text
-/notjustyou-status:status openai-api
+/notjustyou:status openai-api
 ```
-
-In the Claude Desktop app, use the Code tab's plugin manager to install and
-enable the plugin. This plugin is for Claude Code surfaces, not the general
-Claude chat tab.
 
 ## Privacy Boundary
 
