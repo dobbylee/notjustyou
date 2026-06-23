@@ -1,10 +1,14 @@
-export type SupportedServiceId = "openai-api";
+export type SupportedServiceId =
+  | "anthropic-claude-api"
+  | "google-gemini-api"
+  | "openai-api";
 
 export type SignalSymptom =
   | "slow"
   | "error"
   | "rate_limited"
   | "auth_error"
+  | "model_unavailable"
   | "network_error"
   | "unknown";
 

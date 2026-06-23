@@ -117,6 +117,178 @@ describe("recordAiCall", () => {
     });
   });
 
+  it("maps Anthropic overloaded and server errors to error", async () => {
+    const overloaded = await captureFailurePayload(
+      {
+        status: 529,
+        type: "overloaded_error",
+      },
+      "anthropic-claude-api",
+      ["anthropic-claude-api"],
+    );
+    const server = await captureFailurePayload(
+      {
+        status: 500,
+        error: { type: "api_error" },
+      },
+      "anthropic-claude-api",
+      ["anthropic-claude-api"],
+    );
+
+    expect(overloaded).toMatchObject({
+      serviceId: "anthropic-claude-api",
+      symptom: "error",
+      statusCode: 529,
+      errorCode: "overloaded_error",
+    });
+    expect(server).toMatchObject({
+      serviceId: "anthropic-claude-api",
+      symptom: "error",
+      statusCode: 500,
+      errorCode: "api_error",
+    });
+  });
+
+  it("maps Anthropic auth and billing errors to auth_error", async () => {
+    const auth = await captureFailurePayload(
+      {
+        status: 401,
+        type: "authentication_error",
+      },
+      "anthropic-claude-api",
+      ["anthropic-claude-api"],
+    );
+    const billing = await captureFailurePayload(
+      {
+        status: 400,
+        type: "billing_error",
+      },
+      "anthropic-claude-api",
+      ["anthropic-claude-api"],
+    );
+
+    expect(auth).toMatchObject({
+      symptom: "auth_error",
+      statusCode: 401,
+      errorCode: "authentication_error",
+    });
+    expect(billing).toMatchObject({
+      symptom: "auth_error",
+      statusCode: 400,
+      errorCode: "billing_error",
+    });
+  });
+
+  it("maps Gemini quota and rate errors to rate_limited", async () => {
+    const quota = await captureFailurePayload(
+      {
+        error: {
+          code: 429,
+          status: "RESOURCE_EXHAUSTED",
+          message: "do not collect",
+        },
+      },
+      "google-gemini-api",
+      ["google-gemini-api"],
+    );
+    const rate = await captureFailurePayload(
+      {
+        status: 429,
+        code: "rateLimitExceeded",
+      },
+      "google-gemini-api",
+      ["google-gemini-api"],
+    );
+
+    expect(quota).toMatchObject({
+      symptom: "rate_limited",
+      statusCode: 429,
+      errorCode: "RESOURCE_EXHAUSTED",
+    });
+    expect(rate).toMatchObject({
+      symptom: "rate_limited",
+      statusCode: 429,
+      errorCode: "rateLimitExceeded",
+    });
+  });
+
+  it("maps Gemini model unavailable errors to model_unavailable", async () => {
+    const payload = await captureFailurePayload(
+      {
+        error: {
+          code: 404,
+          status: "MODEL_NOT_FOUND",
+          message: "do not collect",
+        },
+      },
+      "google-gemini-api",
+      ["google-gemini-api"],
+    );
+
+    expect(payload).toMatchObject({
+      serviceId: "google-gemini-api",
+      symptom: "model_unavailable",
+      statusCode: 404,
+      errorCode: "MODEL_NOT_FOUND",
+    });
+  });
+
+  it("maps Gemini 404 errors without provider status to model_unavailable", async () => {
+    const payload = await captureFailurePayload(
+      {
+        status: 404,
+      },
+      "google-gemini-api",
+      ["google-gemini-api"],
+    );
+
+    expect(payload).toMatchObject({
+      serviceId: "google-gemini-api",
+      symptom: "model_unavailable",
+      statusCode: 404,
+    });
+    expect(payload).not.toHaveProperty("errorCode");
+  });
+
+  it("does not send provider-specific sensitive fixture fields", async () => {
+    const payload = await captureFailurePayload(
+      {
+        status: 429,
+        error: {
+          status: "RESOURCE_EXHAUSTED",
+          message: "prompt leaked in provider message",
+          response: { body: "completion" },
+        },
+        request: { body: "prompt" },
+        response: { body: "completion" },
+        headers: { authorization: "secret" },
+        token: "secret-token",
+        code: "quota exceeded",
+        diff: "private diff",
+        fileContent: "private file",
+        email: "person@example.com",
+      },
+      "google-gemini-api",
+      ["google-gemini-api"],
+    );
+    const serialized = JSON.stringify(payload);
+
+    expect(payload).toMatchObject({
+      serviceId: "google-gemini-api",
+      symptom: "rate_limited",
+      statusCode: 429,
+      errorCode: "RESOURCE_EXHAUSTED",
+    });
+    expect(serialized).not.toContain("prompt");
+    expect(serialized).not.toContain("completion");
+    expect(serialized).not.toContain("authorization");
+    expect(serialized).not.toContain("secret-token");
+    expect(serialized).not.toContain("quota exceeded");
+    expect(serialized).not.toContain("private diff");
+    expect(serialized).not.toContain("private file");
+    expect(serialized).not.toContain("person@example.com");
+  });
+
   it("sends an opt-in slow signal when duration crosses the threshold", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
@@ -157,14 +329,14 @@ describe("recordAiCall", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("does not send for a non-OpenAI service id at runtime", async () => {
+  it("does not send for an unsupported service id at runtime", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
 
     await expect(
       recordAiCall(
-        { serviceId: "anthropic-claude-api", slowAfterMs: 0 } as never,
+        { serviceId: "anthropic-claude-code", slowAfterMs: 0 } as never,
         () => "ok",
       ),
     ).resolves.toBe("ok");
@@ -172,6 +344,30 @@ describe("recordAiCall", () => {
     await waitForSignalTask();
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("does not enqueue supported services missing from the config allowlist", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig({ serviceIds: ["openai-api"] });
+
+    const providerError = Object.assign(new Error("not collected"), {
+      error: {
+        code: 429,
+        status: "RESOURCE_EXHAUSTED",
+      },
+    });
+
+    await expect(
+      recordAiCall({ serviceId: "google-gemini-api" }, () => {
+        throw providerError;
+      }),
+    ).rejects.toBe(providerError);
+
+    await waitForSignalTask();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(getSignalQueueSnapshot()).toHaveLength(0);
   });
 
   it("does not send authorization to a base URL that differs from config", async () => {
@@ -556,14 +752,18 @@ describe("recordAiCall", () => {
   });
 });
 
-async function captureFailurePayload(errorShape: Record<string, unknown>) {
+async function captureFailurePayload(
+  errorShape: Record<string, unknown>,
+  serviceId: "anthropic-claude-api" | "google-gemini-api" | "openai-api" = "openai-api",
+  serviceIds: string[] = ["openai-api"],
+) {
   const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
   vi.stubGlobal("fetch", fetchMock);
-  writeConfig();
+  writeConfig({ serviceIds });
   const providerError = Object.assign(new Error("not collected"), errorShape);
 
   await expect(
-    recordAiCall({ serviceId: "openai-api" }, () => {
+    recordAiCall({ serviceId }, () => {
       throw providerError;
     }),
   ).rejects.toBe(providerError);

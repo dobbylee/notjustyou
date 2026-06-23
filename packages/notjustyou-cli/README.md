@@ -43,6 +43,13 @@ njy doctor
 njy payload-preview --fixture ./signal.json
 ```
 
+Repeat `--service` to allow one collector config to support multiple API SDK
+adapters:
+
+```bash
+njy register --source api_middleware --service openai-api --service anthropic-claude-api --service google-gemini-api
+```
+
 `register` is the lower-level setup step. `doctor` checks public status reachability, local config, and collector token readiness. `payload-preview` validates a JSON fixture against the metadata-only signal boundary before any SDK collector sends similar data.
 
 ## Privacy Boundary

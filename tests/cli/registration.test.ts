@@ -67,6 +67,79 @@ describe("CLI setup and registration", () => {
     expect(output).not.toContain("njy_raw_secret");
   });
 
+  it("registers multiple API middleware services when --service is repeated", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "api_middleware",
+          serviceIds: ["openai-api", "anthropic-claude-api", "google-gemini-api"],
+        });
+
+        return jsonResponse({
+          collectorId: "col_multi",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "register",
+        "--source",
+        "api_middleware",
+        "--service",
+        "openai-api",
+        "--service",
+        "anthropic-claude-api",
+        "--service",
+        "google-gemini-api",
+        "--base-url",
+        "http://localhost:3000",
+      ]),
+    ).resolves.toBe(0);
+
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Allowed services: openai-api, anthropic-claude-api, google-gemini-api");
+    expect(output).not.toContain("njy_raw_secret");
+  });
+
+  it("deduplicates repeated service allowlist values", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          serviceIds: ["openai-api", "anthropic-claude-api"],
+        });
+
+        return jsonResponse({
+          collectorId: "col_dedupe",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "register",
+        "--service",
+        "openai-api",
+        "--service",
+        "openai-api",
+        "--service",
+        "anthropic-claude-api",
+      ]),
+    ).resolves.toBe(0);
+  });
+
   it("runs setup with registration, config write, doctor checks, and next steps", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     vi.stubGlobal(

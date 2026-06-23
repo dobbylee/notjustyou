@@ -95,6 +95,7 @@ export function parseCliArgs(argv: string[]) {
       },
       service: {
         type: "string",
+        multiple: true,
       },
       fixture: {
         type: "string",
@@ -112,7 +113,7 @@ export function parseCliArgs(argv: string[]) {
   });
   const [command = "", serviceId] = positionals;
 
-  const service = values.service ?? serviceId;
+  const service = values.service ?? (serviceId ? [serviceId] : undefined);
 
   return {
     command: values.help ? "help" : command,
@@ -154,12 +155,12 @@ async function runStatus(input: {
 async function runSetup(input: {
   baseUrl: string;
   source: string;
-  service: string | undefined;
+  service: string[] | undefined;
 }) {
   const config = await registerAndWriteConfig({
     baseUrl: input.baseUrl,
     source: input.source,
-    service: input.service ?? DEFAULT_SERVICE_ID,
+    serviceIds: input.service ?? [DEFAULT_SERVICE_ID],
   });
   const doctorExitCode = await runDoctor({
     baseUrl: config.baseUrl,
@@ -181,12 +182,12 @@ async function runSetup(input: {
 async function runRegister(input: {
   baseUrl: string;
   source: string;
-  service: string | undefined;
+  service: string[] | undefined;
 }) {
   const config = await registerAndWriteConfig({
     baseUrl: input.baseUrl,
     source: input.source,
-    service: input.service ?? DEFAULT_SERVICE_ID,
+    serviceIds: input.service ?? [DEFAULT_SERVICE_ID],
   });
 
   console.log("Collector registered.");
@@ -200,13 +201,13 @@ async function runRegister(input: {
 async function registerAndWriteConfig(input: {
   baseUrl: string;
   source: string;
-  service: string;
+  serviceIds: string[];
 }) {
   assertSupportedSource(input.source);
-  assertSupportedService(input.service);
+  const serviceIds = [...new Set(input.serviceIds)];
+  serviceIds.forEach(assertSupportedService);
 
   const source = input.source as SignalSource;
-  const serviceIds = [input.service];
   const registration = await registerCollector({
     baseUrl: input.baseUrl,
     source,
@@ -330,8 +331,8 @@ function normalizeUrlForCompare(url: string) {
 function printUsage() {
   console.log(`Usage:
   njy status [serviceId] [--base-url <url>] [--watch]
-  njy setup [--source <source>] [--service <serviceId>] [--base-url <url>]
-  njy register [--source <source>] [--service <serviceId>] [--base-url <url>]
+  njy setup [--source <source>] [--service <serviceId> ...] [--base-url <url>]
+  njy register [--source <source>] [--service <serviceId> ...] [--base-url <url>]
   njy doctor [--base-url <url>]
   njy payload-preview --fixture <path>
 

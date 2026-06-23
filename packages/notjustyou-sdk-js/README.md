@@ -10,7 +10,15 @@ Run setup once so the SDK can reuse the local collector config:
 njy setup
 ```
 
-Wrap an existing OpenAI SDK call:
+The default setup allowlist is `openai-api`. To use the SDK with OpenAI,
+Anthropic, and Gemini API calls from the same config, register all three API
+services:
+
+```sh
+njy setup --service openai-api --service anthropic-claude-api --service google-gemini-api
+```
+
+Wrap an existing provider SDK call:
 
 ```ts
 import { recordAiCall } from "@notjustyou/sdk-js";
@@ -20,6 +28,9 @@ const response = await recordAiCall(
   () => client.responses.create({ model: "gpt-5", input: "Hello" }),
 );
 ```
+
+Supported `serviceId` values are `openai-api`, `anthropic-claude-api`, and
+`google-gemini-api`.
 
 The wrapper returns successful values unchanged and rethrows the original
 provider error unchanged. Signal submission is best effort and never replaces

@@ -25,6 +25,14 @@ Installed-client signals:
 - must not reuse `/api/report`
 - v1 should start with API middleware and local tooling; browser extension and MCP monitor sources are future-capable schema values, not first implementation targets
 
+The first SDK middleware supports:
+
+- `openai-api`
+- `anthropic-claude-api`
+- `google-gemini-api`
+
+The SDK sends only when local collector config allows `source: "api_middleware"` and the runtime `serviceId`.
+
 ## Installed Signal Shape
 
 The installed-client signal input is metadata-only:
@@ -107,6 +115,35 @@ Reject payloads that include sensitive keys such as:
 - exact key `code`
 
 The exact key `code` is sensitive, but substrings such as `statusCode` and `errorCode` are allowed.
+
+## SDK Signal Criteria
+
+`recordAiCall` treats a wrapped provider call that throws as a failure signal.
+It preserves the original return value or thrown error and submits Not Just You
+signals best effort.
+
+Common failure mapping:
+
+- network or timeout errors -> `network_error`
+- HTTP `429` or rate/quota error codes -> `rate_limited`
+- HTTP `401` or `403` -> `auth_error`
+- HTTP `5xx` -> `error`
+- other classified HTTP errors -> `error`
+- otherwise -> `unknown`
+
+Provider-specific mapping:
+
+- Anthropic overloaded/server errors -> `error`
+- Anthropic auth, billing, permission, or credit errors -> `auth_error`
+- Gemini quota/rate/resource exhausted errors -> `rate_limited`
+- Gemini model unavailable, model not found, or bare `404` errors -> `model_unavailable`
+
+Slow-call signals are opt-in. The SDK sends `slow` only when the caller passes
+`slowAfterMs` and the wrapped call succeeds with `durationMs >= slowAfterMs`.
+There is no default slow threshold.
+
+Failure signals are locally coalesced for 30 seconds by service id, source,
+symptom, status code, and sanitized error code. Slow signals are not coalesced.
 
 ## Display Rules
 
