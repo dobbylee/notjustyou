@@ -24,28 +24,21 @@ njy --help
 njy status openai-api
 ```
 
-Collector setup is implemented in this repository but is not in the currently published CLI yet. Until the compatible CLI and SDK packages are published, prepare a local machine and install the SDK from a checkout:
+Set up an opt-in SDK collector for API middleware signals:
 
 ```bash
-git clone https://github.com/dobbylee/notjustyou.git
-cd notjustyou
-pnpm install
-pnpm --filter @notjustyou/cli build
-node packages/notjustyou-cli/dist/index.js setup --service openai-api
-pnpm --filter @notjustyou/sdk-js pack --pack-destination /tmp
-cd /path/to/your-app
-npm install /tmp/notjustyou-sdk-js-0.1.0.tgz
+njy setup --service openai-api
+npm install @notjustyou/sdk-js
 ```
 
 Repeat `--service` for each API the app wraps. Supported SDK service ids are `openai-api`, `anthropic-claude-api`, and `google-gemini-api`.
 
 `setup` registers an anonymous collector, saves the collector token only in the local Not Just You config file, and runs a lightweight readiness check. The token is not printed. SDK collectors reuse this local config.
 
-After compatible packages are published, setup and SDK install become:
+For OpenAI, Anthropic, and Gemini API calls from one local collector config:
 
 ```bash
-njy setup --service openai-api
-npm install @notjustyou/sdk-js
+njy setup --service openai-api --service anthropic-claude-api --service google-gemini-api
 ```
 
 See [packages/notjustyou-sdk-js](packages/notjustyou-sdk-js) for the `recordAiCall` wrapper, slow-call settings, retry behavior, and diagnostics.
@@ -94,10 +87,6 @@ Current:
 - SDK retry, backoff, and local coalescing
 - Redis-backed counters and short dedupe windows
 - No account or login requirement
-
-Planned:
-
-- npm package publish decision after package install UX approval
 
 Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
 
