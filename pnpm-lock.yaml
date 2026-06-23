@@ -76,9 +76,11 @@ importers:
         specifier: 4.1.5
         version: 4.1.5(@types/node@22.19.18)(jsdom@26.1.0)(vite@8.0.11(@types/node@22.19.18)(jiti@2.7.0))
 
+  packages/notjustyou-claude-code-plugin: {}
+
   packages/notjustyou-cli: {}
 
-  packages/notjustyou-claude-code-plugin: {}
+  packages/notjustyou-codex-plugin: {}
 
   packages/notjustyou-mcp: {}
 

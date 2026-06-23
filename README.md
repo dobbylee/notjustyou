@@ -73,6 +73,23 @@ MCP tools:
 
 The MCP server reads public status summaries only. The CLI can also register an anonymous collector for opt-in SDK use, but it does not submit reports or installed-client signals by itself.
 
+Use the Claude Code plugin for status lookups inside Claude Code surfaces:
+
+```text
+/plugin marketplace add dobbylee/notjustyou
+/plugin install notjustyou@notjustyou
+/notjustyou:status openai-api
+```
+
+Use the Codex plugin for status lookups inside Codex surfaces:
+
+```bash
+codex plugin marketplace add dobbylee/notjustyou
+codex plugin add notjustyou@notjustyou
+```
+
+Then start a new Codex thread and ask for a status check or invoke `$notjustyou:status openai-api`.
+
 ## Project Status
 
 Current:
@@ -83,6 +100,7 @@ Current:
 - Opt-in installed-client signal APIs for metadata-only problem signals
 - Dashboard source breakdown for community reports, installed signals, and official status
 - Read-only MCP status lookup
+- Claude Code and Codex status-only plugins
 - Node SDK core for OpenAI API, Claude API, and Gemini API metadata-only middleware signals
 - SDK retry, backoff, and local coalescing
 - Redis-backed counters and short dedupe windows
