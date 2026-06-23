@@ -89,7 +89,7 @@ Not Just You must stay privacy-safe and source-aware.
 
 - Treat the repository as fully public open source. Assume any committed code, docs, examples, test fixtures, logs, URLs, tokens, credentials, operational procedures, and comments can be read by anyone.
 - Do not commit real secrets, private operational runbooks, private endpoint details, internal monitoring tokens, personal account identifiers, local machine paths, or security-sensitive instructions that would help misuse production systems.
-- Public docs should be user-centered. `README.md` should explain what the project is, how to run it, what APIs exist at a product level, and the public privacy boundary. Do not use it as an implementation diary, QA log, private operations guide, or place to accumulate per-change manual test notes.
+- Public docs should stay audience-specific. `README.md` should explain what the service is, how users can use it, current supported surfaces, and the public privacy boundary. Put contributor setup, self-hosting, stack, scripts, deployment, and detailed public API references in `docs/development.md` or other focused docs. Do not use `README.md` as an implementation diary, QA log, private operations guide, or place to accumulate per-change manual test notes.
 - Keep manual community reports, official status, and installed-client signals separate in storage, API contracts, tests, and backend aggregation.
 - Do not extend `/api/report` into automatic telemetry.
 - Add installed-client telemetry through dedicated signal contracts and endpoints.
@@ -104,7 +104,8 @@ Before implementation work expands, keep the harness current.
 - `AGENTS.md` is the source for Codex and other LLM-agent behavior in this repository.
 - `CONTRIBUTING.md` is the public contributor workflow.
 - `.github/pull_request_template.md` is the PR checklist.
-- `README.md` should remain useful to a first-time open-source user.
+- `README.md` should remain useful to someone evaluating or using Not Just You.
+- `docs/development.md` should remain useful to contributors, fork maintainers, and self-hosted deployments.
 - `docs/architecture.md` and `docs/signals.md` hold durable public design notes.
 - Run `pnpm lint`, `pnpm test`, and `pnpm run build` before PRs unless the change clearly cannot affect code and the user accepts a narrower check.
 - Keep the baseline verification command list in this file only. Other documents should refer to `AGENTS.md` for baseline verification and list only additional focused tests, package checks, manual checks, skipped checks, blockers, or actual results.
