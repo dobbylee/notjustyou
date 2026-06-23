@@ -1,0 +1,35 @@
+{
+  "name": "@notjustyou/codex-plugin",
+  "version": "0.1.0",
+  "description": "Status-only plugin for Not Just You on Codex surfaces.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dobbylee/notjustyou.git",
+    "directory": "packages/notjustyou-codex-plugin"
+  },
+  "homepage": "https://github.com/dobbylee/notjustyou#readme",
+  "bugs": {
+    "url": "https://github.com/dobbylee/notjustyou/issues"
+  },
+  "keywords": [
+    "ai-status",
+    "codex",
+    "mcp",
+    "notjustyou",
+    "status"
+  ],
+  "files": [
+    ".codex-plugin",
+    ".mcp.json",
+    "skills",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "pack:dry-run": "pnpm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

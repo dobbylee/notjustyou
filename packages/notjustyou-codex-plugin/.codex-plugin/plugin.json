@@ -1,0 +1,37 @@
+{
+  "name": "notjustyou",
+  "version": "0.1.0",
+  "description": "Adds a read-only Not Just You status skill and MCP status tools for Codex surfaces.",
+  "author": {
+    "name": "Not Just You",
+    "url": "https://notjustyou.dev"
+  },
+  "homepage": "https://notjustyou.dev",
+  "repository": "https://github.com/dobbylee/notjustyou",
+  "license": "MIT",
+  "keywords": [
+    "ai-status",
+    "codex",
+    "mcp",
+    "notjustyou",
+    "status"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Not Just You",
+    "shortDescription": "Read-only AI service status for Codex.",
+    "longDescription": "Check public Not Just You status summaries from Codex without sending signals.",
+    "developerName": "Not Just You",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Status lookup",
+      "MCP tools",
+      "Read-only"
+    ],
+    "websiteURL": "https://notjustyou.dev",
+    "defaultPrompt": [
+      "Check Not Just You status for openai-api."
+    ]
+  }
+}
