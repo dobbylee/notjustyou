@@ -1,6 +1,6 @@
 {
-  "name": "notjustyou-status",
-  "displayName": "Not Just You Status",
+  "name": "notjustyou",
+  "displayName": "Not Just You",
   "description": "Adds a read-only Not Just You status skill and MCP status tools for Claude Code surfaces.",
   "version": "0.1.0",
   "author": {

@@ -1,7 +1,6 @@
 {
   "name": "@notjustyou/claude-code-plugin",
   "version": "0.1.0",
-  "private": true,
   "description": "Status-only plugin for Not Just You on Claude Code surfaces.",
   "license": "MIT",
   "repository": {
@@ -10,6 +9,16 @@
     "directory": "packages/notjustyou-claude-code-plugin"
   },
   "homepage": "https://github.com/dobbylee/notjustyou#readme",
+  "bugs": {
+    "url": "https://github.com/dobbylee/notjustyou/issues"
+  },
+  "keywords": [
+    "ai-status",
+    "claude-code",
+    "mcp",
+    "notjustyou",
+    "status"
+  ],
   "files": [
     ".claude-plugin",
     ".mcp.json",
@@ -19,5 +28,8 @@
   ],
   "scripts": {
     "pack:dry-run": "pnpm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "notjustyou": {
+    "status": {
       "command": "npx",
       "args": [
         "-y",
