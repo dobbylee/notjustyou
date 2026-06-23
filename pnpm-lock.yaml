@@ -78,6 +78,8 @@ importers:
 
   packages/notjustyou-cli: {}
 
+  packages/notjustyou-claude-code-plugin: {}
+
   packages/notjustyou-mcp: {}
 
   packages/notjustyou-sdk-js: {}

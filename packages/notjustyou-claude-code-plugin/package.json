@@ -1,0 +1,23 @@
+{
+  "name": "@notjustyou/claude-code-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Status-only plugin for Not Just You on Claude Code surfaces.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dobbylee/notjustyou.git",
+    "directory": "packages/notjustyou-claude-code-plugin"
+  },
+  "homepage": "https://github.com/dobbylee/notjustyou#readme",
+  "files": [
+    ".claude-plugin",
+    ".mcp.json",
+    "skills",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "pack:dry-run": "pnpm pack --dry-run"
+  }
+}
