@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { scanForSensitiveKeys as scanServerPayload } from "@/lib/signals/privacy";
 import { main } from "@/packages/notjustyou-cli/src/index";
+import { normalizeLocalHookEvent } from "@/packages/notjustyou-cli/src/local-hook";
 import { previewPayload, scanForSensitiveKeys } from "@/packages/notjustyou-cli/src/privacy";
 
 describe("CLI payload preview", () => {
@@ -29,6 +30,97 @@ describe("CLI payload preview", () => {
     expect(output).not.toContain("authorization");
   });
 
+  it("accepts hook fixtures and prints normalized metadata", async () => {
+    const fixture = writeFixture({
+      serviceId: "openai-codex-cli",
+      surface: "codex-cli",
+      eventName: "run.failed",
+      symptom: "tool_failure",
+      observedAt: "2026-06-21T00:00:00Z",
+      durationMs: 1200,
+      statusCode: 500,
+      errorCode: "tool_failed",
+      clientVersion: "0.2.0",
+    });
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    await expect(main(["payload-preview", "--fixture", fixture])).resolves.toBe(0);
+
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Normalized hook signal preview:");
+    expect(output).toContain('"source": "cli_hook"');
+    expect(output).toContain('"serviceId": "openai-codex-cli"');
+    expect(output).not.toContain("run.failed");
+    expect(output).not.toContain("surface");
+  });
+
+  it("normalizes only allowed hook fields", () => {
+    expect(
+      normalizeLocalHookEvent({
+        serviceId: "anthropic-claude-code",
+        surface: "claude-code",
+        eventName: "session.failed",
+        symptom: "error",
+      }),
+    ).toEqual({
+      ok: true,
+      payload: {
+        serviceId: "anthropic-claude-code",
+        source: "cli_hook",
+        symptom: "error",
+      },
+    });
+
+    expect(
+      normalizeLocalHookEvent({
+        serviceId: "anthropic-claude-code",
+        surface: "claude-code",
+        eventName: "session.failed",
+        symptom: "error",
+        source: "cli_hook",
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Unknown field rejected: source",
+    });
+  });
+
+  it("requires hook serviceId to match the declared surface", () => {
+    expect(
+      normalizeLocalHookEvent({
+        serviceId: "openai-codex-cli",
+        surface: "claude-code",
+        eventName: "session.failed",
+        symptom: "error",
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "serviceId does not match surface.",
+    });
+  });
+
+  it("rejects sensitive values in allowed hook metadata fields", () => {
+    for (const [field, value] of [
+      ["errorCode", "alice@example.com"],
+      ["errorCode", "Bearer secret-token"],
+      ["clientVersion", "njy_secret"],
+      ["eventName", "/Users/alice/project/run.failed"],
+    ]) {
+      expect(
+        normalizeLocalHookEvent({
+          serviceId: "openai-codex-cli",
+          surface: "codex-cli",
+          eventName: "run.failed",
+          symptom: "error",
+          [field]: value,
+        }),
+      ).toEqual({
+        ok: false,
+        reason: `Sensitive value rejected: ${field}`,
+      });
+    }
+  });
+
   it("accepts UTC observedAt values accepted by the server schema", () => {
     expect(
       previewPayload({
@@ -45,9 +137,18 @@ describe("CLI payload preview", () => {
   it("rejects sensitive fields recursively", () => {
     for (const key of [
       "prompt",
+      "message",
+      "commandArgs",
+      "shellOutput",
+      "toolInput",
+      "toolResultBody",
+      "filePath",
       "body",
       "headers",
       "token",
+      "accountEmail",
+      "machineName",
+      "userName",
       "fileContent",
       "diff",
       "email",

@@ -1,5 +1,13 @@
 const SENSITIVE_KEYS = new Set([
   "prompt",
+  "message",
+  "args",
+  "commandargs",
+  "shelloutput",
+  "toolinput",
+  "toolresult",
+  "toolresultbody",
+  "filepath",
   "body",
   "request",
   "response",
@@ -8,7 +16,11 @@ const SENSITIVE_KEYS = new Set([
   "cookie",
   "apikey",
   "token",
+  "accountemail",
   "email",
+  "machinename",
+  "username",
+  "user",
   "diff",
   "filecontent",
   "code",
@@ -61,4 +73,3 @@ function scanValue(value: unknown): SensitiveScanResult {
 
   return { ok: true };
 }
-

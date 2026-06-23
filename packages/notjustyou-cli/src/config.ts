@@ -116,5 +116,12 @@ function parseConfig(input: unknown): CliConfig {
     throw new Error("Config field serviceIds contains an unknown service.");
   }
 
+  if (
+    config.localHookSignalOptIn !== undefined &&
+    typeof config.localHookSignalOptIn !== "boolean"
+  ) {
+    throw new Error("Config field localHookSignalOptIn must be a boolean.");
+  }
+
   return config as unknown as CliConfig;
 }

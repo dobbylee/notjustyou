@@ -1,7 +1,16 @@
 import type { PayloadPreviewResult } from "./types.js";
+import { previewLocalHookEvent } from "./local-hook.js";
 
 const SENSITIVE_KEYS = new Set([
   "prompt",
+  "message",
+  "args",
+  "commandargs",
+  "shelloutput",
+  "toolinput",
+  "toolresult",
+  "toolresultbody",
+  "filepath",
   "body",
   "request",
   "response",
@@ -10,7 +19,11 @@ const SENSITIVE_KEYS = new Set([
   "cookie",
   "apikey",
   "token",
+  "accountemail",
   "email",
+  "machinename",
+  "username",
+  "user",
   "diff",
   "filecontent",
   "code",
@@ -86,9 +99,14 @@ export function previewPayload(input: unknown): PayloadPreviewResult {
     };
   }
 
-  const unknownFields = Object.keys(input).filter(
+  const payload = input as Record<string, unknown>;
+  const unknownFields = Object.keys(payload).filter(
     (field) => !ALLOWED_SIGNAL_FIELDS.has(field),
   );
+  if (unknownFields.length > 0 && looksLikeLocalHookEvent(payload)) {
+    return previewLocalHookEvent(payload);
+  }
+
   if (unknownFields.length > 0) {
     return {
       ok: false,
@@ -96,12 +114,13 @@ export function previewPayload(input: unknown): PayloadPreviewResult {
     };
   }
 
-  const signal = input as Record<string, unknown>;
+  const signal = payload;
   const validation = validateMetadataSignal(signal);
   if (!validation.ok) return validation;
 
   return {
     ok: true,
+    kind: "signal",
     payload: pickDefined({
       serviceId: signal.serviceId,
       source: signal.source,
@@ -217,7 +236,11 @@ function validateMetadataSignal(signal: Record<string, unknown>): PayloadPreview
     return { ok: false, reason: "regionHint must be 1-40 characters." };
   }
 
-  return { ok: true, payload: {} };
+  return { ok: true, kind: "signal", payload: {} };
+}
+
+function looksLikeLocalHookEvent(input: Record<string, unknown>) {
+  return "surface" in input || "eventName" in input;
 }
 
 function isStringInRange(value: unknown, min: number, max: number): value is string {
