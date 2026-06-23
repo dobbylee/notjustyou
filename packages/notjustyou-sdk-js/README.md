@@ -4,7 +4,28 @@ Node.js metadata-only SDK collector for Not Just You.
 
 ## Usage
 
-Run setup once so the SDK can reuse the local collector config:
+Until compatible CLI and SDK packages are published, build the CLI and SDK from
+this repository:
+
+```sh
+git clone https://github.com/dobbylee/notjustyou.git
+cd notjustyou
+pnpm install
+pnpm --filter @notjustyou/cli build
+node packages/notjustyou-cli/dist/index.js setup --service openai-api
+pnpm --filter @notjustyou/sdk-js pack --pack-destination /tmp
+cd /path/to/your-app
+npm install /tmp/notjustyou-sdk-js-0.1.0.tgz
+```
+
+After compatible packages are published, install the CLI and SDK directly:
+
+```sh
+npm install -g @notjustyou/cli
+npm install @notjustyou/sdk-js
+```
+
+Run setup once with the CLI so the SDK can reuse the local collector config:
 
 ```sh
 njy setup
@@ -25,7 +46,7 @@ import { recordAiCall } from "@notjustyou/sdk-js";
 
 const response = await recordAiCall(
   { serviceId: "openai-api" },
-  () => client.responses.create({ model: "gpt-5", input: "Hello" }),
+  () => callOpenAi(),
 );
 ```
 
@@ -35,6 +56,24 @@ Supported `serviceId` values are `openai-api`, `anthropic-claude-api`, and
 The wrapper returns successful values unchanged and rethrows the original
 provider error unchanged. Signal submission is best effort and never replaces
 the wrapped call result.
+
+Wrapped provider calls that throw produce failure signals. Successful calls
+produce no signal unless `slowAfterMs` is configured.
+
+## Setup Relationship
+
+The SDK does not create collector tokens. It reads the local config written by
+`njy setup` or `njy register` from the Not Just You CLI.
+
+The SDK sends only when that config allows:
+
+- `source: "api_middleware"`
+- the runtime `serviceId`
+- the configured Not Just You base URL
+
+If config is missing, the service is not allowlisted, or a `baseUrl` override
+does not match the config base URL, the SDK fails closed and does not send a
+signal.
 
 ## Privacy Boundary
 
@@ -51,11 +90,17 @@ The SDK sends only metadata for allowed collector configs:
 - status code, when available
 - short sanitized error code, when available
 - random installation id
-- SDK client version
+- configured collector client version
 
-The SDK does not send request bodies, response bodies, prompts, headers, API
-keys, cookies, source files, diffs, clipboard content, raw provider error
-objects, or raw error messages.
+The random installation id is stored in local Not Just You config so repeated
+signals from the same installation can contribute to unique-installation
+aggregation and rate limits. Server aggregation stores only derived hashes, not
+the raw installation id.
+
+The SDK does not send provider request bodies, provider response bodies,
+prompts, provider headers, provider API keys, cookies, source files, diffs,
+clipboard content, raw provider error objects, or raw provider error messages.
+Signal submission uses the local collector token as Not Just You collector auth.
 
 ## Slow Signals
 
@@ -64,7 +109,7 @@ Slow-call signals are opt-in:
 ```ts
 await recordAiCall(
   { serviceId: "openai-api", slowAfterMs: 30000 },
-  () => client.responses.create({ model: "gpt-5", input: "Hello" }),
+  () => callOpenAi(),
 );
 ```
 
@@ -73,8 +118,8 @@ Without `slowAfterMs`, successful calls do not submit a signal.
 ## Retry And Coalescing
 
 Not Just You signal submission uses a bounded in-memory queue. The queue stores
-only sanitized signal payloads, never provider errors, prompts, bodies, headers,
-or tokens.
+only sanitized signal payloads, never provider errors, prompts, provider bodies,
+provider headers, or tokens.
 
 The SDK retries signal submission only. It never retries the wrapped AI API
 call. Retryable signal failures use bounded attempts, exponential backoff with
@@ -83,3 +128,30 @@ jitter, and server `retryAfterSeconds` when present.
 Repeated local failure signals are coalesced for 30 seconds by service id,
 source, symptom, status code, and sanitized error code. Coalescing limits noisy
 repeated failures without changing the wrapped call result.
+
+## Diagnostics
+
+Check local collector readiness with the CLI:
+
+```sh
+njy doctor
+```
+
+For local or self-hosted setups, pass the same base URL used during setup:
+
+```sh
+njy doctor --base-url http://localhost:3000
+```
+
+Preview a metadata-only signal fixture before wiring an app:
+
+```sh
+njy payload-preview --fixture ./signal.json
+```
+
+Build and inspect the package from a workspace checkout:
+
+```sh
+pnpm --filter @notjustyou/sdk-js build
+pnpm --filter @notjustyou/sdk-js pack --dry-run
+```

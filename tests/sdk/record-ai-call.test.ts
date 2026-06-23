@@ -468,6 +468,100 @@ describe("recordAiCall", () => {
     expect(providerCall).toHaveBeenCalledTimes(1);
   });
 
+  it("does not retry queued signals to a changed config base URL", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: false, retryAfterSeconds: 2 }), {
+          status: 429,
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig({ baseUrl: "http://localhost:3000" });
+    const providerError = Object.assign(new Error("not collected"), {
+      status: 429,
+      code: "rate_limit_exceeded",
+    });
+
+    await expect(
+      recordAiCall(
+        { serviceId: "openai-api", baseUrl: "http://localhost:3000" },
+        () => {
+          throw providerError;
+        },
+      ),
+    ).rejects.toBe(providerError);
+
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    writeConfig({
+      baseUrl: "http://127.0.0.1:3000",
+      installationId: readStoredConfig().installationId,
+    });
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getSignalQueueSnapshot()).toHaveLength(0);
+  });
+
+  it("keeps queued base URL guards per entry when a later signal changes the active sender", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: false, retryAfterSeconds: 2 }), {
+          status: 429,
+        }),
+      )
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true })));
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig({ baseUrl: "http://localhost:3000" });
+    const providerError = Object.assign(new Error("not collected"), {
+      status: 429,
+      code: "rate_limit_exceeded",
+    });
+
+    await expect(
+      recordAiCall(
+        { serviceId: "openai-api", baseUrl: "http://localhost:3000" },
+        () => {
+          throw providerError;
+        },
+      ),
+    ).rejects.toBe(providerError);
+
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    writeConfig({
+      baseUrl: "http://127.0.0.1:3000",
+      installationId: readStoredConfig().installationId,
+    });
+    await recordAiCall(
+      { serviceId: "openai-api", slowAfterMs: 0, baseUrl: "http://127.0.0.1:3000" },
+      () => "ok",
+    );
+
+    await vi.runOnlyPendingTimersAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe(
+      "http://localhost:3000/api/signals",
+    );
+    expect((fetchMock.mock.calls[1] as [string, RequestInit])[0]).toBe(
+      "http://127.0.0.1:3000/api/signals",
+    );
+    expect(getSignalQueueSnapshot()).toHaveLength(0);
+  });
+
   it("does not delay new ready signals behind an existing retry timer", async () => {
     vi.useFakeTimers();
     const fetchMock = vi

@@ -81,9 +81,12 @@ async function submitBestEffort(
       clientVersion: config.clientVersion,
     };
 
-    if (!enqueueSignal(payload)) return;
+    const expectedBaseUrl = config.baseUrl;
+    const queuedSender = (payload: ProblemSignalPayload) =>
+      sendQueuedSignal(payload, expectedBaseUrl);
+    if (!enqueueSignal(payload, Date.now(), queuedSender)) return;
 
-    scheduleSignalQueueDrain(sendQueuedSignal);
+    scheduleSignalQueueDrain(queuedSender);
   } catch {
     return;
   }
@@ -97,11 +100,12 @@ function isSupportedServiceId(serviceId: string): serviceId is SupportedServiceI
   );
 }
 
-async function sendQueuedSignal(payload: ProblemSignalPayload) {
+async function sendQueuedSignal(payload: ProblemSignalPayload, expectedBaseUrl: string) {
   const config = readSdkConfig();
   if (!config) return;
   if (config.source !== "api_middleware") return;
   if (!config.serviceIds.includes(payload.serviceId)) return;
+  if (!canSendToBaseUrl(config.baseUrl, expectedBaseUrl)) return;
 
   await sendSignal(config, payload);
 }
