@@ -75,14 +75,39 @@ export interface CliConfig {
   serviceIds: string[];
   clientName: string;
   clientVersion: string;
+  localHookSignalOptIn?: boolean;
 }
 
 export type PayloadPreviewResult =
   | {
       ok: true;
-      payload: Record<string, unknown>;
+      kind: "signal" | "hook";
+      payload: unknown;
     }
   | {
       ok: false;
       reason: string;
     };
+
+export type SignalSymptom =
+  | "slow"
+  | "error"
+  | "down"
+  | "rate_limited"
+  | "auth_error"
+  | "model_unavailable"
+  | "network_error"
+  | "tool_failure"
+  | "permission_blocked"
+  | "unknown";
+
+export interface CliSignalPayload {
+  serviceId: string;
+  source: "cli_hook";
+  symptom: SignalSymptom;
+  observedAt?: string;
+  durationMs?: number;
+  statusCode?: number;
+  errorCode?: string;
+  clientVersion?: string;
+}

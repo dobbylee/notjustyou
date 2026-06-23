@@ -1,5 +1,7 @@
 import type {
   CommunitySummaryResponse,
+  CliConfig,
+  CliSignalPayload,
   CollectorRegistrationResponse,
   InstalledSignalSummaryResponse,
   OfficialSummaryResponse,
@@ -75,6 +77,17 @@ export async function checkCollectorToken(input: {
       installationId: "doctor-readiness-check",
       clientVersion: input.clientVersion,
     }),
+  });
+}
+
+export async function submitSignal(config: CliConfig, payload: CliSignalPayload) {
+  await fetchJson(`${normalizeBaseUrl(config.baseUrl)}/api/signals`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${config.collectorToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
   });
 }
 

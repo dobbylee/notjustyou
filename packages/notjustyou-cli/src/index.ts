@@ -8,6 +8,7 @@ import { checkCollectorToken, fetchStatusData, registerCollector } from "./api.j
 import { getConfigMode, getConfigPath, readConfig, writeConfig } from "./config.js";
 import { formatStatus } from "./format.js";
 import { previewPayload } from "./privacy.js";
+import { createLocalHookReceiver } from "./receiver.js";
 import type { SignalSource } from "./types.js";
 
 const DEFAULT_BASE_URL = "https://notjustyou.dev";
@@ -78,6 +79,11 @@ export async function main(argv = process.argv.slice(2)) {
     return runPayloadPreview(parsed);
   }
 
+  if (parsed.command === "hook-receiver") {
+    await runHookReceiver(parsed);
+    return 0;
+  }
+
   printUsage();
   return 1;
 }
@@ -100,6 +106,13 @@ export function parseCliArgs(argv: string[]) {
       fixture: {
         type: "string",
       },
+      port: {
+        type: "string",
+      },
+      send: {
+        type: "boolean",
+        default: false,
+      },
       watch: {
         type: "boolean",
         default: false,
@@ -121,6 +134,8 @@ export function parseCliArgs(argv: string[]) {
     source: values.source ?? DEFAULT_SOURCE,
     service,
     fixture: values.fixture,
+    port: values.port,
+    send: values.send ?? false,
     watch: values.watch ?? false,
     baseUrl:
       values["base-url"] ?? process.env.NOTJUSTYOU_BASE_URL ?? DEFAULT_BASE_URL,
@@ -303,9 +318,40 @@ function runPayloadPreview(input: { fixture: string | undefined }) {
     return 1;
   }
 
-  console.log("Metadata-only payload preview:");
+  console.log(
+    result.kind === "hook"
+      ? "Normalized hook signal preview:"
+      : "Metadata-only payload preview:",
+  );
   console.log(JSON.stringify(result.payload, null, 2));
   return 0;
+}
+
+async function runHookReceiver(input: { port: string | undefined; send: boolean }) {
+  const port = input.port === undefined ? undefined : Number(input.port);
+  if (port !== undefined && (!Number.isInteger(port) || port < 0 || port > 65535)) {
+    throw new Error("hook-receiver --port must be an integer from 0 to 65535.");
+  }
+
+  const receiver = createLocalHookReceiver({
+    port,
+    sendSignals: input.send,
+  });
+  const address = await receiver.start();
+
+  console.log(
+    `Local hook receiver listening on http://${address.host}:${address.port}/hook`,
+  );
+  console.log(input.send ? "Signal sending: opt-in gated" : "Signal sending: disabled");
+
+  await new Promise<void>((resolve) => {
+    process.once("SIGINT", () => {
+      void receiver.close().finally(resolve);
+    });
+    process.once("SIGTERM", () => {
+      void receiver.close().finally(resolve);
+    });
+  });
 }
 
 function assertSupportedSource(source: string) {
@@ -335,13 +381,15 @@ function printUsage() {
   njy register [--source <source>] [--service <serviceId> ...] [--base-url <url>]
   njy doctor [--base-url <url>]
   njy payload-preview --fixture <path>
+  njy hook-receiver [--port <port>] [--send]
 
 Examples:
   njy status
   njy setup
   njy status openai-api --base-url http://localhost:3000
   njy status openai-api --watch
-  njy payload-preview --fixture ./signal.json`);
+  njy payload-preview --fixture ./signal.json
+  njy hook-receiver --port 8765`);
 }
 
 export function isDirectRun(metaUrl: string, argvPath = process.argv[1]) {
