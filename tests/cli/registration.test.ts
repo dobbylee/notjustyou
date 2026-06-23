@@ -2,6 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readConfig } from "@/packages/notjustyou-cli/src/config";
 import { main, parseCliArgs } from "@/packages/notjustyou-cli/src/index";
 
 const originalConfigPath = process.env.NOTJUSTYOU_CONFIG_PATH;
@@ -36,6 +37,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
+          clientVersion: "0.2.0",
         });
 
         return jsonResponse({
@@ -65,6 +67,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("Collector registered.");
     expect(output).toContain("Token: saved locally; raw token is not printed.");
     expect(output).not.toContain("njy_raw_secret");
+    expect(readConfig()?.clientVersion).toBe("0.2.0");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {

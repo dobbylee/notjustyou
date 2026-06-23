@@ -15,7 +15,7 @@ const WATCH_INTERVAL_MS = 2_000;
 const DEFAULT_SOURCE = "api_middleware";
 const DEFAULT_SERVICE_ID = "openai-api";
 const CLIENT_NAME = "notjustyou-cli";
-const CLIENT_VERSION = "0.1.0";
+const CLIENT_VERSION = "0.2.0";
 const SIGNAL_SOURCES = new Set([
   "api_middleware",
   "cli_hook",

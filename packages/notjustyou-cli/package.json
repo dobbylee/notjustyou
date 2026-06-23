@@ -1,7 +1,7 @@
 {
   "name": "@notjustyou/cli",
-  "version": "0.1.0",
-  "description": "Read-only command line status lookup for Not Just You AI service surfaces.",
+  "version": "0.2.0",
+  "description": "Command line status lookup and local collector setup for Not Just You AI service surfaces.",
   "license": "MIT",
   "repository": {
     "type": "git",
