@@ -4,21 +4,7 @@ Node.js metadata-only SDK collector for Not Just You.
 
 ## Usage
 
-Until compatible CLI and SDK packages are published, build the CLI and SDK from
-this repository:
-
-```sh
-git clone https://github.com/dobbylee/notjustyou.git
-cd notjustyou
-pnpm install
-pnpm --filter @notjustyou/cli build
-node packages/notjustyou-cli/dist/index.js setup --service openai-api
-pnpm --filter @notjustyou/sdk-js pack --pack-destination /tmp
-cd /path/to/your-app
-npm install /tmp/notjustyou-sdk-js-0.1.0.tgz
-```
-
-After compatible packages are published, install the CLI and SDK directly:
+Install the CLI and SDK:
 
 ```sh
 npm install -g @notjustyou/cli
@@ -149,7 +135,8 @@ Preview a metadata-only signal fixture before wiring an app:
 njy payload-preview --fixture ./signal.json
 ```
 
-Build and inspect the package from a workspace checkout:
+Build and inspect the package from a workspace checkout when developing this
+repository:
 
 ```sh
 pnpm --filter @notjustyou/sdk-js build
