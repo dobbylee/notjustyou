@@ -40,6 +40,10 @@ Avoid:
 Use `AGENTS.md` as the source of truth for baseline repository verification.
 If a check is skipped or narrowed, state why in the PR.
 
+## Development
+
+For local setup, environment variables, self-hosting notes, workspace package commands, and the public API surface, read [docs/development.md](docs/development.md).
+
 ## Privacy And Data Boundaries
 
 Manual community reports, official status, and installed-client signals have different trust levels and must stay separate in storage and API contracts.
@@ -73,6 +77,7 @@ Any PR that adds or changes collected fields must document the field, explain wh
 
 Keep public documentation practical:
 
-- `README.md` should help a new user understand and run the project.
+- `README.md` should help a user understand and use Not Just You.
+- `docs/development.md` should describe local development, self-hosting, package commands, and public API details.
 - `docs/architecture.md` should describe durable system boundaries.
 - `docs/signals.md` should describe signal contracts and privacy rules.
