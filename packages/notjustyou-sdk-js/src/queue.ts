@@ -15,6 +15,7 @@ interface QueueEntry {
   expiresAt: number;
   nextAttemptAt: number;
   coalescingKey: string;
+  sender?: SignalQueueSender;
 }
 
 export interface SignalQueueSnapshotEntry {
@@ -35,7 +36,11 @@ let drainTimerAt: number | null = null;
 let draining = false;
 let activeSender: SignalQueueSender | null = null;
 
-export function enqueueSignal(payload: ProblemSignalPayload, now = Date.now()) {
+export function enqueueSignal(
+  payload: ProblemSignalPayload,
+  now = Date.now(),
+  sender?: SignalQueueSender,
+) {
   purgeExpired(now);
 
   const coalescingKey = getCoalescingKey(payload);
@@ -53,6 +58,7 @@ export function enqueueSignal(payload: ProblemSignalPayload, now = Date.now()) {
     expiresAt: now + QUEUE_TTL_MS,
     nextAttemptAt: now,
     coalescingKey,
+    ...(sender ? { sender } : {}),
   });
 
   while (queue.length > MAX_QUEUE_SIZE) {
@@ -81,7 +87,7 @@ export function scheduleSignalQueueDrain(sender: SignalQueueSender, delayMs = 0)
 }
 
 export async function drainSignalQueue(now = Date.now()) {
-  if (draining || !activeSender) return;
+  if (draining || (!activeSender && !queue.some((entry) => entry.sender))) return;
 
   draining = true;
 
@@ -91,10 +97,13 @@ export async function drainSignalQueue(now = Date.now()) {
     for (const entry of [...queue]) {
       if (entry.nextAttemptAt > Date.now()) continue;
 
+      const sender = entry.sender ?? activeSender;
+      if (!sender) continue;
+
       entry.attempts += 1;
 
       try {
-        await activeSender(entry.payload);
+        await sender(entry.payload);
         removeEntry(entry);
       } catch (error) {
         if (!shouldRetry(error) || entry.attempts >= MAX_ATTEMPTS) {
@@ -140,13 +149,16 @@ export function resetSignalQueueForTests() {
 }
 
 function scheduleNextDrain() {
-  if (queue.length === 0 || !activeSender) return;
+  if (queue.length === 0 || (!activeSender && !queue.some((entry) => entry.sender))) return;
 
   const now = Date.now();
   const nextAttemptAt = Math.min(
     ...queue.map((entry) => Math.min(entry.nextAttemptAt, entry.expiresAt)),
   );
-  scheduleSignalQueueDrain(activeSender, Math.max(0, nextAttemptAt - now));
+  const sender = activeSender ?? queue.find((entry) => entry.sender)?.sender;
+  if (!sender) return;
+
+  scheduleSignalQueueDrain(sender, Math.max(0, nextAttemptAt - now));
 }
 
 function purgeExpired(now: number) {

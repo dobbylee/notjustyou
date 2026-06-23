@@ -8,7 +8,7 @@ The current MVP is a public dashboard with anonymous community reports, official
 
 Use the public dashboard at `https://notjustyou.dev`.
 
-Use the CLI from a terminal:
+Use the published CLI for status lookup:
 
 ```bash
 npm install -g @notjustyou/cli
@@ -24,13 +24,31 @@ njy --help
 njy status openai-api
 ```
 
-Prepare a local machine for opt-in SDK collectors:
+Collector setup is implemented in this repository but is not in the currently published CLI yet. Until the compatible CLI and SDK packages are published, prepare a local machine and install the SDK from a checkout:
 
 ```bash
-njy setup
+git clone https://github.com/dobbylee/notjustyou.git
+cd notjustyou
+pnpm install
+pnpm --filter @notjustyou/cli build
+node packages/notjustyou-cli/dist/index.js setup --service openai-api
+pnpm --filter @notjustyou/sdk-js pack --pack-destination /tmp
+cd /path/to/your-app
+npm install /tmp/notjustyou-sdk-js-0.1.0.tgz
 ```
 
+Repeat `--service` for each API the app wraps. Supported SDK service ids are `openai-api`, `anthropic-claude-api`, and `google-gemini-api`.
+
 `setup` registers an anonymous collector, saves the collector token only in the local Not Just You config file, and runs a lightweight readiness check. The token is not printed. SDK collectors reuse this local config.
+
+After compatible packages are published, setup and SDK install become:
+
+```bash
+njy setup --service openai-api
+npm install @notjustyou/sdk-js
+```
+
+See [packages/notjustyou-sdk-js](packages/notjustyou-sdk-js) for the `recordAiCall` wrapper, slow-call settings, retry behavior, and diagnostics.
 
 Use the read-only MCP server with AI clients that support stdio MCP tools:
 
@@ -79,7 +97,7 @@ Current:
 
 Planned:
 
-- Public SDK docs and release hardening
+- npm package publish decision after package install UX approval
 
 Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
 
@@ -92,19 +110,27 @@ Currently collected:
 - Service id
 - Report option: `Slow`, `Error`, or `Down`
 - Installed-client symptom category
-- Installed-client status code, duration, short error code, client version, and coarse region hint when submitted
-- Random installed-client installation id, stored only through server-side derived hashes for aggregation
+- Installed-client status code, duration, short error code, configured collector client version, and coarse region hint when submitted
+- Random installed-client installation id, stored locally by the SDK; server aggregation stores only derived hashes
+- Anonymous collector registration metadata: collector id, allowed source, allowed services, client name/version, registration time, and revocation time when applicable
+- Collector heartbeat metadata: collector id, derived installation hash, client version, and last seen time
 - Minute-bucketed counters
 - Short-lived same-service dedupe fingerprint. Request metadata can be processed to create this hash, but raw IP, user agent, and language values are not stored.
 - Aggregate button click counters
 - Vercel Web Analytics page views and referrers
 
+Collector auth:
+
+- Raw collector tokens are saved locally by `njy setup` and are not printed.
+- Installed-client signal submission uses the collector token as Not Just You authorization.
+- Server-side token lookup uses derived token data; raw collector tokens are not stored.
+
 Not collected:
 
 - Prompt text
-- Request or response bodies
-- Headers
-- API keys
+- Provider request or response bodies
+- Provider request or response headers
+- Provider API keys
 - Cookies
 - Source files or diffs
 - Clipboard content
@@ -257,10 +283,6 @@ Build the SDK package from a workspace checkout:
 ```bash
 pnpm --filter @notjustyou/sdk-js build
 ```
-
-The SDK supports `recordAiCall` for `openai-api`, `anthropic-claude-api`, and
-`google-gemini-api`. Failure signals are automatic for wrapped calls that throw.
-Slow-call signals are opt-in with `slowAfterMs`.
 
 ## Public API Surface
 
