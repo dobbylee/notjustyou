@@ -72,14 +72,13 @@ Current:
 - Opt-in installed-client signal APIs for metadata-only problem signals
 - Dashboard source breakdown for community reports, installed signals, and official status
 - Read-only MCP status lookup
-- OpenAI-only Node SDK core for metadata-only API middleware signals
+- Node SDK core for OpenAI API, Claude API, and Gemini API metadata-only middleware signals
+- SDK retry, backoff, and local coalescing
 - Redis-backed counters and short dedupe windows
 - No account or login requirement
 
 Planned:
 
-- SDK retry, backoff, and local coalescing
-- API middleware adapters for Claude API and Gemini API
 - Public SDK docs and release hardening
 
 Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
@@ -240,6 +239,12 @@ node packages/notjustyou-cli/dist/index.js doctor --base-url http://localhost:30
 node packages/notjustyou-cli/dist/index.js payload-preview --fixture ./signal.json
 ```
 
+Repeat `--service` when one local collector config should allow multiple API SDK adapters:
+
+```bash
+node packages/notjustyou-cli/dist/index.js register --source api_middleware --service openai-api --service anthropic-claude-api --service google-gemini-api --base-url http://localhost:3000
+```
+
 Run the MCP server from a workspace checkout:
 
 ```bash
@@ -252,6 +257,10 @@ Build the SDK package from a workspace checkout:
 ```bash
 pnpm --filter @notjustyou/sdk-js build
 ```
+
+The SDK supports `recordAiCall` for `openai-api`, `anthropic-claude-api`, and
+`google-gemini-api`. Failure signals are automatic for wrapped calls that throw.
+Slow-call signals are opt-in with `slowAfterMs`.
 
 ## Public API Surface
 

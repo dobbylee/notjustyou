@@ -5,6 +5,11 @@ import { randomUUID } from "node:crypto";
 import type { SdkConfig } from "./types.js";
 
 const CONFIG_VERSION = 1;
+const SUPPORTED_SERVICE_IDS = new Set([
+  "anthropic-claude-api",
+  "google-gemini-api",
+  "openai-api",
+]);
 
 export function getConfigPath(env = process.env) {
   if (env.NOTJUSTYOU_CONFIG_PATH) return env.NOTJUSTYOU_CONFIG_PATH;
@@ -70,7 +75,7 @@ function parseSdkConfig(input: unknown): (Omit<SdkConfig, "installationId"> & {
     return null;
   }
 
-  if (!config.serviceIds.includes("openai-api")) return null;
+  if (!config.serviceIds.some((serviceId) => SUPPORTED_SERVICE_IDS.has(serviceId))) return null;
 
   if (
     config.installationId !== undefined &&

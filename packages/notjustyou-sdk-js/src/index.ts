@@ -1,8 +1,8 @@
 import { readSdkConfig } from "./config.js";
-import { normalizeOpenAiError } from "./normalize.js";
+import { normalizeProviderError } from "./normalize.js";
 import { enqueueSignal, scheduleSignalQueueDrain } from "./queue.js";
 import { canSendToBaseUrl, sendSignal } from "./sender.js";
-import type { ProblemSignalPayload, RecordAiCallOptions } from "./types.js";
+import type { ProblemSignalPayload, RecordAiCallOptions, SupportedServiceId } from "./types.js";
 
 export type {
   ProblemSignalPayload,
@@ -34,7 +34,7 @@ export async function recordAiCall<T>(
     return value;
   } catch (error) {
     const durationMs = Date.now() - startedAt;
-    const normalized = normalizeOpenAiError(error);
+    const normalized = normalizeProviderError(options.serviceId, error);
 
     scheduleBestEffort(options, {
       serviceId: options.serviceId,
@@ -54,7 +54,7 @@ function scheduleBestEffort(
   options: RecordAiCallOptions,
   partialPayload: Omit<ProblemSignalPayload, "installationId" | "clientVersion">,
 ) {
-  if (options.serviceId !== "openai-api") return;
+  if (!isSupportedServiceId(options.serviceId)) return;
 
   setTimeout(() => {
     void submitBestEffort(options, partialPayload);
@@ -66,11 +66,14 @@ async function submitBestEffort(
   partialPayload: Omit<ProblemSignalPayload, "installationId" | "clientVersion">,
 ) {
   try {
-    if (options.serviceId !== "openai-api") return;
+    if (!isSupportedServiceId(options.serviceId)) return;
 
     const config = readSdkConfig();
     if (!config) return;
     if (!canSendToBaseUrl(config.baseUrl, options.baseUrl)) return;
+    if (config.source !== "api_middleware" || !config.serviceIds.includes(options.serviceId)) {
+      return;
+    }
 
     const payload = {
       ...partialPayload,
@@ -86,12 +89,19 @@ async function submitBestEffort(
   }
 }
 
+function isSupportedServiceId(serviceId: string): serviceId is SupportedServiceId {
+  return (
+    serviceId === "anthropic-claude-api" ||
+    serviceId === "google-gemini-api" ||
+    serviceId === "openai-api"
+  );
+}
+
 async function sendQueuedSignal(payload: ProblemSignalPayload) {
   const config = readSdkConfig();
   if (!config) return;
-  if (config.source !== "api_middleware" || !config.serviceIds.includes(payload.serviceId)) {
-    return;
-  }
+  if (config.source !== "api_middleware") return;
+  if (!config.serviceIds.includes(payload.serviceId)) return;
 
   await sendSignal(config, payload);
 }

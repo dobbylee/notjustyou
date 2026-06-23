@@ -1,4 +1,5 @@
 import type { SignalSymptom } from "./types.js";
+import type { SupportedServiceId } from "./types.js";
 
 export interface NormalizedErrorSignal {
   symptom: SignalSymptom;
@@ -7,23 +8,57 @@ export interface NormalizedErrorSignal {
 }
 
 export function normalizeOpenAiError(error: unknown): NormalizedErrorSignal {
-  const statusCode = readStatusCode(error);
-  const errorCode = readErrorCode(error);
+  return normalizeByProvider("openai-api", error);
+}
 
-  if (statusCode === 429) {
-    return { symptom: "rate_limited", statusCode, ...(errorCode ? { errorCode } : {}) };
+export function normalizeProviderError(
+  serviceId: SupportedServiceId,
+  error: unknown,
+): NormalizedErrorSignal {
+  return normalizeByProvider(serviceId, error);
+}
+
+function normalizeByProvider(
+  serviceId: SupportedServiceId,
+  error: unknown,
+): NormalizedErrorSignal {
+  const statusCode = readStatusCode(error);
+  const errorCode = readErrorCode(error, serviceId);
+
+  if (isNetworkOrTimeoutError(error)) {
+    return { symptom: "network_error", ...(errorCode ? { errorCode } : {}) };
   }
 
-  if (statusCode === 401 || statusCode === 403) {
-    return { symptom: "auth_error", statusCode, ...(errorCode ? { errorCode } : {}) };
+  if (serviceId === "google-gemini-api" && isGeminiModelUnavailable(statusCode, errorCode)) {
+    return {
+      symptom: "model_unavailable",
+      ...(statusCode ? { statusCode } : {}),
+      ...(errorCode ? { errorCode } : {}),
+    };
+  }
+
+  if (statusCode === 429 || isRateLimitedCode(errorCode)) {
+    return {
+      symptom: "rate_limited",
+      ...(statusCode ? { statusCode } : {}),
+      ...(errorCode ? { errorCode } : {}),
+    };
+  }
+
+  if (
+    statusCode === 401 ||
+    statusCode === 403 ||
+    (serviceId === "anthropic-claude-api" && isAnthropicAuthOrBillingCode(errorCode))
+  ) {
+    return {
+      symptom: "auth_error",
+      ...(statusCode ? { statusCode } : {}),
+      ...(errorCode ? { errorCode } : {}),
+    };
   }
 
   if (statusCode && statusCode >= 500) {
     return { symptom: "error", statusCode, ...(errorCode ? { errorCode } : {}) };
-  }
-
-  if (isNetworkOrTimeoutError(error)) {
-    return { symptom: "network_error", ...(errorCode ? { errorCode } : {}) };
   }
 
   return {
@@ -36,22 +71,61 @@ export function normalizeOpenAiError(error: unknown): NormalizedErrorSignal {
 function readStatusCode(error: unknown) {
   if (!error || typeof error !== "object") return undefined;
   const record = error as Record<string, unknown>;
-  const value = record.statusCode ?? record.status;
+  const value = record.statusCode ?? record.status ?? readNestedNumber(record.error, "code");
 
   return typeof value === "number" && Number.isInteger(value) && value >= 100 && value <= 599
     ? value
     : undefined;
 }
 
-function readErrorCode(error: unknown) {
+function readErrorCode(error: unknown, serviceId: SupportedServiceId) {
   if (!error || typeof error !== "object") return undefined;
   const record = error as Record<string, unknown>;
-  const value = record.code ?? record.type ?? record.name;
 
-  if (typeof value !== "string") return undefined;
+  if (serviceId === "google-gemini-api") {
+    const geminiValue =
+      readNestedString(record.error, "status") ??
+      readNestedString(record.error, "type") ??
+      readNestedString(record.error, "code") ??
+      readString(record.code) ??
+      readString(record.type) ??
+      readString(record.status);
+
+    if (geminiValue) {
+      const sanitized = geminiValue.replace(/[^a-zA-Z0-9_.:-]/g, "_").slice(0, 120);
+      return sanitized || undefined;
+    }
+
+    return undefined;
+  }
+
+  const value =
+    readString(record.code) ??
+    readString(record.type) ??
+    readNestedString(record.error, "status") ??
+    readNestedString(record.error, "type") ??
+    readNestedString(record.error, "code") ??
+    readString(record.name);
+
+  if (!value) return undefined;
 
   const sanitized = value.replace(/[^a-zA-Z0-9_.:-]/g, "_").slice(0, 120);
   return sanitized || undefined;
+}
+
+function readString(value: unknown) {
+  return typeof value === "string" ? value : undefined;
+}
+
+function readNestedString(input: unknown, key: string) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+  return readString((input as Record<string, unknown>)[key]);
+}
+
+function readNestedNumber(input: unknown, key: string) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+  const value = (input as Record<string, unknown>)[key];
+  return typeof value === "number" ? value : undefined;
 }
 
 function isNetworkOrTimeoutError(error: unknown) {
@@ -70,5 +144,39 @@ function isNetworkOrTimeoutError(error: unknown) {
     code === "ECONNREFUSED" ||
     code === "ENOTFOUND" ||
     code === "EAI_AGAIN"
+  );
+}
+
+function isRateLimitedCode(errorCode: string | undefined) {
+  if (!errorCode) return false;
+  const normalized = errorCode.toLowerCase();
+  return (
+    normalized.includes("rate_limit") ||
+    normalized.includes("ratelimit") ||
+    normalized.includes("quota") ||
+    normalized === "resource_exhausted"
+  );
+}
+
+function isAnthropicAuthOrBillingCode(errorCode: string | undefined) {
+  if (!errorCode) return false;
+  const normalized = errorCode.toLowerCase();
+  return (
+    normalized.includes("auth") ||
+    normalized.includes("permission") ||
+    normalized.includes("billing") ||
+    normalized.includes("credit")
+  );
+}
+
+function isGeminiModelUnavailable(statusCode: number | undefined, errorCode: string | undefined) {
+  if (statusCode === 404 && !errorCode) return true;
+  if (!errorCode) return false;
+  const normalized = errorCode.toLowerCase();
+
+  return (
+    normalized.includes("model_unavailable") ||
+    normalized.includes("model_not_found") ||
+    (statusCode === 404 && normalized.includes("not_found"))
   );
 }

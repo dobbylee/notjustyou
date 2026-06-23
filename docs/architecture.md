@@ -9,6 +9,7 @@ The current app is a Next.js status board backed by Redis.
 - Users can submit `Slow`, `Error`, or `Down` reports without signing in.
 - Reports are deduped for the same service over a short window.
 - Official provider status is fetched separately where a reliable mapping exists.
+- Opt-in SDK middleware can submit metadata-only API problem signals for OpenAI API, Claude API, and Gemini API.
 - The dashboard polls for recent state and renders provider surface cards.
 
 Redis is required at runtime. There is no in-memory fallback.
@@ -76,7 +77,7 @@ The durable order is:
 3. Add Redis hot counters and summary APIs.
 4. Add dashboard source breakdown.
 5. Add CLI and read-only MCP status lookup.
-6. Add API middleware collectors.
+6. Add API middleware collectors, starting with OpenAI API, Claude API, and Gemini API.
 7. Add vendor plugins only after local preview, redaction, and consent flows are clear.
 
 Browser extensions, WebSocket transport, and durable event warehouses are later work.
