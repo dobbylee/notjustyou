@@ -6,9 +6,13 @@ The current MVP is a public dashboard with anonymous community reports, official
 
 ## Use Not Just You
 
+### Dashboard
+
 Use the public dashboard at `https://notjustyou.dev`.
 
-Use the published CLI for status lookup:
+### CLI Status Checks
+
+Install the published CLI for terminal status lookup:
 
 ```bash
 npm install -g @notjustyou/cli
@@ -17,14 +21,10 @@ njy status openai-api
 njy status openai-api --watch
 ```
 
-Expected quick check:
+### API Middleware Reporting
 
-```bash
-njy --help
-njy status openai-api
-```
-
-Set up an opt-in SDK collector for API middleware signals:
+Set up an opt-in SDK collector when you want your own OpenAI, Anthropic, or
+Gemini API wrapper to contribute metadata-only failure signals:
 
 ```bash
 njy setup --service openai-api
@@ -43,59 +43,67 @@ njy setup --service openai-api --service anthropic-claude-api --service google-g
 
 See [packages/notjustyou-sdk-js](packages/notjustyou-sdk-js) for the `recordAiCall` wrapper, slow-call settings, retry behavior, and diagnostics.
 
+### MCP For AI Clients
+
 Use the MCP server with AI clients that support stdio MCP tools:
 
 ```bash
 npm install -g @notjustyou/mcp
 ```
 
-Example MCP client configuration:
+The MCP server lets compatible AI clients answer status questions
+conversationally, such as "Is Claude Code down?" or "Show recent Cursor
+signals." It also exposes explicit local reporting setup tools for supported
+plugins after user confirmation.
 
-```json
-{
-  "mcpServers": {
-    "notjustyou": {
-      "command": "notjustyou-mcp",
-      "env": {
-        "NOTJUSTYOU_BASE_URL": "https://notjustyou.dev"
-      }
-    }
-  }
-}
-```
-
-MCP tools:
-
-- `list_surfaces`
-- `get_surface_status`
-- `get_recent_signals`
-- `explain_privacy`
-- `get_reporting_setup_state`
-- `enable_reporting`
-- `disable_reporting`
+After installing the package, add `notjustyou-mcp` as a stdio MCP server in
+your AI client.
 
 Status MCP tools read public status summaries only. Setup MCP tools can enable
 or disable local hook reporting after explicit user confirmation, but they do
-not submit signals directly. The CLI can also register an anonymous collector
-for opt-in SDK or local hook use, but it does not submit reports or
-installed-client signals by itself.
+not submit signals directly. See [packages/notjustyou-mcp](packages/notjustyou-mcp)
+for MCP client configuration and the full tool list.
 
-Use the Claude Code plugin for status lookups inside Claude Code surfaces:
+### Claude Code Plugin
+
+Use the Claude Code plugin for status lookups inside Claude Code:
 
 ```text
 /plugin marketplace add dobbylee/notjustyou
 /plugin install notjustyou@notjustyou
-/notjustyou:status openai-api
 ```
 
-During plugin setup, you can opt in to anonymous Claude Code failure reporting.
-If enabled, the plugin starts the local Not Just You setup path for you and
-reports only normalized failure metadata through a localhost receiver. This is
-best-effort installed-client reporting: it can share failures that Claude Code
-itself reaches and emits as local failure events, but it is not a guaranteed
+Then start a new Claude Code session and ask a status question, or invoke the
+status skill directly:
+
+```text
+Is Claude Code down?
+/notjustyou:status anthropic-claude-code
+```
+
+The plugin bundles MCP status tools, so Claude Code can answer conversationally
+from public community reports, installed-client signal aggregates, and official
+status summaries. During plugin setup, you can opt in to anonymous Claude Code
+failure reporting. If enabled, the plugin starts the local Not Just You setup
+path for you and reports only normalized failure metadata through a localhost
+receiver. This is best-effort installed-client reporting, not a guaranteed
 outage detector.
 
-Use the Codex plugin for status lookups inside Codex surfaces:
+The Claude Code plugin does not call public `/api/signals` directly. Public
+sending requires explicit reporting opt-in and the local receiver path.
+
+### Cursor Plugin
+
+Cursor support is available as a package while marketplace distribution is
+pending. The plugin provides status lookup and explicit opt-in reporting setup
+through bundled MCP tools, but it must currently be installed into Cursor's
+local plugin directory. See
+[packages/notjustyou-cursor-plugin](packages/notjustyou-cursor-plugin) for
+manual install instructions.
+
+### Codex Plugin
+
+Use the Codex plugin for status lookups inside Codex:
 
 ```bash
 codex plugin marketplace add dobbylee/notjustyou
@@ -104,15 +112,8 @@ codex plugin add notjustyou@notjustyou
 
 Then start a new Codex thread and ask for a status check or invoke `$notjustyou:status openai-api`.
 
-The Claude Code plugin does not call public `/api/signals` directly. Public
-sending requires explicit reporting opt-in and the local receiver path. The
-Codex plugin remains status-only because current Codex hook and telemetry
+The Codex plugin remains status-only because current Codex hook and telemetry
 surfaces do not yet provide a reliable service-failure classifier.
-
-Cursor support is available as a package while marketplace distribution is
-pending. See
-[packages/notjustyou-cursor-plugin](packages/notjustyou-cursor-plugin) for
-manual install instructions.
 
 ## Project Status
 

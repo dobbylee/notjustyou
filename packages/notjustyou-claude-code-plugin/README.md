@@ -12,18 +12,19 @@ Claude Desktop app.
 
 ## Install
 
-After the marketplace and npm package are published:
+Install from Claude Code:
 
 ```text
 /plugin marketplace add dobbylee/notjustyou
 /plugin install notjustyou@notjustyou
-/reload-plugins
 ```
 
-Then run:
+Then start a new Claude Code session and ask a status question, or invoke the
+status skill directly:
 
 ```text
-/notjustyou:status openai-api
+Is Claude Code down?
+/notjustyou:status anthropic-claude-code
 ```
 
 ## Optional Local Hook Reporting
@@ -66,10 +67,11 @@ surfaces, not the general Claude chat tab.
 claude --plugin-dir ./packages/notjustyou-claude-code-plugin
 ```
 
-Then run:
+Then ask a status question, or invoke the status skill directly:
 
 ```text
-/notjustyou:status openai-api
+Is Claude Code down?
+/notjustyou:status anthropic-claude-code
 ```
 
 ## Privacy Boundary
