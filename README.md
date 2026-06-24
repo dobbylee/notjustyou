@@ -81,6 +81,10 @@ Use the Claude Code plugin for status lookups inside Claude Code surfaces:
 /notjustyou:status openai-api
 ```
 
+During plugin setup, you can opt in to anonymous Claude Code failure reporting.
+If enabled, the plugin starts the local Not Just You setup path for you and
+reports only normalized failure metadata through a localhost receiver.
+
 Use the Codex plugin for status lookups inside Codex surfaces:
 
 ```bash
@@ -89,6 +93,9 @@ codex plugin add notjustyou@notjustyou
 ```
 
 Then start a new Codex thread and ask for a status check or invoke `$notjustyou:status openai-api`.
+
+The Claude Code plugin does not call public `/api/signals` directly. Public
+sending requires explicit reporting opt-in and the local receiver path.
 
 ## Project Status
 
@@ -100,13 +107,14 @@ Current:
 - Opt-in installed-client signal APIs for metadata-only problem signals
 - Dashboard source breakdown for community reports, installed signals, and official status
 - Read-only MCP status lookup
-- Claude Code and Codex status-only plugins
+- Claude Code status plugin with opt-in local hook reporting
+- Codex status-only plugin
 - Node SDK core for OpenAI API, Claude API, and Gemini API metadata-only middleware signals
 - SDK retry, backoff, and local coalescing
 - Redis-backed counters and short dedupe windows
 - No account or login requirement
 
-Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and vendor-specific hook collectors are later work.
+Codex hook collection, browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and broader vendor-specific collectors are later work.
 
 ## Privacy Boundary
 
@@ -118,6 +126,7 @@ Currently collected:
 - Report option: `Slow`, `Error`, or `Down`
 - Installed-client symptom category
 - Installed-client status code, duration, short error code, configured collector client version, and coarse region hint when submitted
+- Opt-in local hook failure metadata after receiver normalization
 - Random installed-client installation id, stored locally by the SDK; server aggregation stores only derived hashes
 - Anonymous collector registration metadata: collector id, allowed source, allowed services, client name/version, registration time, and revocation time when applicable
 - Collector heartbeat metadata: collector id, derived installation hash, client version, and last seen time

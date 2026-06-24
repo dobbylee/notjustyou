@@ -40,8 +40,12 @@ $notjustyou:status openai-api
 
 ## Privacy Boundary
 
-This plugin is status-only. It reads public aggregate status APIs through `@notjustyou/mcp` and does not send signals or require collector credentials.
+This plugin is status-only. It reads public aggregate status APIs through
+`@notjustyou/mcp` and does not send signals or require collector credentials.
 
 It does not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, machine names, or local usernames.
 
-Hook-based signal collection is intentionally not included in this plugin release.
+Hook-based signal collection is intentionally not included in this plugin
+release. A future Codex reporting flow should use the same explicit opt-in
+setup shape as Claude Code after Codex hook payloads can be classified without
+tool input or result bodies.

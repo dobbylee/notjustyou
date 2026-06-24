@@ -1,20 +1,28 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
+import { previewPayload } from "@/packages/notjustyou-cli/src/privacy";
 
 const pluginRoot = join(process.cwd(), "packages/notjustyou-claude-code-plugin");
 const marketplaceRoot = join(process.cwd(), ".claude-plugin");
 
 describe("Claude Code status plugin", () => {
-  it("declares a status-only Claude Code plugin manifest", () => {
+  it("declares a Claude Code plugin manifest", () => {
     const manifest = readJson(".claude-plugin/plugin.json");
 
     expect(manifest).toMatchObject({
       name: "notjustyou",
       description:
-        "Adds a read-only Not Just You status skill and MCP status tools for Claude Code surfaces.",
-      version: "0.1.0",
+        "Adds Not Just You status tools and optional local hook reporting for Claude Code surfaces.",
+      version: "0.3.0",
       license: "MIT",
+      userConfig: {
+        enableReporting: {
+          type: "boolean",
+          default: false,
+        },
+      },
     });
     expect(manifest.name).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
   });
@@ -35,19 +43,63 @@ describe("Claude Code status plugin", () => {
     });
   });
 
-  it("keeps the first release free of hooks and signal submission paths", () => {
+  it("bundles hooks that only target the local receiver", () => {
     const rootEntries = readdirSync(pluginRoot);
+    const hookImplementation = [
+      readFileSync(join(pluginRoot, "hooks/hooks.json"), "utf8"),
+      readFileSync(join(pluginRoot, "hooks/forward-local-hook.mjs"), "utf8"),
+      readFileSync(join(pluginRoot, "hooks/setup-reporting.mjs"), "utf8"),
+    ].join("\n");
     const serializedPlugin = [
       readFileSync(join(pluginRoot, ".claude-plugin/plugin.json"), "utf8"),
       readFileSync(join(pluginRoot, ".mcp.json"), "utf8"),
+      hookImplementation,
       readFileSync(join(pluginRoot, "skills/status/SKILL.md"), "utf8"),
       readFileSync(join(pluginRoot, "README.md"), "utf8"),
     ].join("\n");
+    const hooks = readJson("hooks/hooks.json");
 
-    expect(rootEntries).not.toContain("hooks");
-    expect(serializedPlugin).not.toContain("submit_signal");
-    expect(serializedPlugin).not.toContain("/api/signals");
-    expect(serializedPlugin).not.toContain("collectorToken");
+    expect(rootEntries).toContain("hooks");
+    expect(hooks.hooks).toHaveProperty("SessionStart");
+    expect(hooks.hooks).toHaveProperty("StopFailure");
+    expect(hooks.hooks).not.toHaveProperty("PostToolUseFailure");
+    expect(serializedPlugin).toContain("http://127.0.0.1:8765/hook");
+    expect(hookImplementation).toContain("${user_config.enableReporting}");
+    expect(hookImplementation).toContain("@notjustyou/cli@0.3.0");
+    expect(hookImplementation).toContain("enable\", \"claude-code\"");
+    expect(hookImplementation).not.toContain("submit_signal");
+    expect(hookImplementation).not.toContain("/api/signals");
+    expect(hookImplementation).not.toContain("collectorToken");
+  });
+
+  it("normalizes Claude Code hook input without forwarding raw sensitive fields", () => {
+    const result = runHookScript("hooks/forward-local-hook.mjs", {
+      session_id: "abc123",
+      transcript_path: "/Users/alice/.claude/projects/transcript.jsonl",
+      cwd: "/Users/alice/project",
+      hook_event_name: "StopFailure",
+      error: "rate_limit",
+      error_details: "429 Too Many Requests for alice@example.com",
+      last_assistant_message: "API Error: Rate limit reached",
+    });
+
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout);
+    expect(payload).toEqual({
+      serviceId: "anthropic-claude-code",
+      surface: "claude-code",
+      eventName: "StopFailure",
+      symptom: "rate_limited",
+      errorCode: "claude_rate_limit",
+      clientVersion: "0.3.0",
+    });
+    expect(previewPayload(payload)).toMatchObject({
+      ok: true,
+      kind: "hook",
+    });
+    expect(result.stdout).not.toContain("alice@example.com");
+    expect(result.stdout).not.toContain("/Users/alice");
+    expect(result.stdout).not.toContain("429 Too Many Requests");
   });
 
   it("limits the status skill to Not Just You read-only MCP tools", () => {
@@ -66,7 +118,8 @@ describe("Claude Code status plugin", () => {
     expect(skill).toContain(
       "disallowed-tools: Read Grep Glob Bash Edit Write MultiEdit NotebookRead NotebookEdit WebFetch WebSearch",
     );
-    expect(skill).toContain("This status-only plugin must not submit signals");
+    expect(skill).toContain("This status skill must not submit signals");
+    expect(skill).toContain("optional Claude Code");
   });
 
   it("publishes the plugin through the Not Just You marketplace catalog", () => {
@@ -80,14 +133,17 @@ describe("Claude Code status plugin", () => {
       plugins: [
         {
           name: "notjustyou",
-          source: {
-            source: "npm",
-            package: "@notjustyou/claude-code-plugin",
-            version: "0.1.0",
+            source: {
+              source: "npm",
+              package: "@notjustyou/claude-code-plugin",
+            version: "0.3.0",
           },
         },
       ],
     });
+    expect(marketplace.plugins[0].description).toContain(
+      "opt-in local hook reporting",
+    );
     expect(marketplace.plugins[0].name).toBe(readJson(".claude-plugin/plugin.json").name);
     expect(marketplace.plugins[0].source.package).toBe(packageJson.name);
     expect(marketplace.plugins[0].source.version).toBe(packageJson.version);
@@ -100,4 +156,15 @@ describe("Claude Code status plugin", () => {
 
 function readJson(relativePath: string) {
   return JSON.parse(readFileSync(join(pluginRoot, relativePath), "utf8"));
+}
+
+function runHookScript(relativePath: string, input: unknown) {
+  return spawnSync("node", [join(pluginRoot, relativePath)], {
+    input: JSON.stringify(input),
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      NOTJUSTYOU_HOOK_DRY_RUN: "1",
+    },
+  });
 }

@@ -3,6 +3,7 @@ import {
   assertLocalReceiverHost,
   createLocalHookReceiver,
   getHookSendReadiness,
+  LOCAL_HOOK_RECEIVER_HEALTH,
 } from "@/packages/notjustyou-cli/src/receiver";
 import type { CliConfig } from "@/packages/notjustyou-cli/src/types";
 
@@ -23,6 +24,19 @@ describe("local hook receiver", () => {
     );
   });
 
+  it("exposes an explicit receiver health check", async () => {
+    const receiver = createLocalHookReceiver({
+      port: 0,
+    });
+    receivers.push(receiver);
+    const address = await receiver.start();
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/health`);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(LOCAL_HOOK_RECEIVER_HEALTH);
+  });
+
   it("accepts metadata-only hook events without sending by default", async () => {
     const submit = vi.fn();
     const receiver = createLocalHookReceiver({
@@ -39,7 +53,7 @@ describe("local hook receiver", () => {
       symptom: "tool_failure",
       statusCode: 500,
       errorCode: "tool_failed",
-      clientVersion: "0.2.0",
+      clientVersion: "0.3.0",
     });
 
     await expect(response.json()).resolves.toMatchObject({
@@ -51,7 +65,7 @@ describe("local hook receiver", () => {
         symptom: "tool_failure",
         statusCode: 500,
         errorCode: "tool_failed",
-        clientVersion: "0.2.0",
+        clientVersion: "0.3.0",
       },
     });
     expect(response.status).toBe(202);
@@ -123,7 +137,7 @@ describe("local hook receiver", () => {
           localHookSignalOptIn: true,
         },
         {
-          serviceId: "openai-codex-cli",
+          serviceId: "anthropic-claude-code",
           source: "cli_hook",
           symptom: "error",
         },
@@ -143,7 +157,7 @@ describe("local hook receiver", () => {
           localHookSignalOptIn: true,
         },
         {
-          serviceId: "openai-codex-cli",
+          serviceId: "anthropic-claude-code",
           source: "cli_hook",
           symptom: "error",
         },
@@ -159,11 +173,11 @@ describe("local hook receiver", () => {
       getHookSendReadiness(
         {
           ...baseConfig,
-          serviceIds: ["anthropic-claude-code"],
+          serviceIds: ["openai-codex-cli"],
           localHookSignalOptIn: true,
         },
         {
-          serviceId: "openai-codex-cli",
+          serviceId: "anthropic-claude-code",
           source: "cli_hook",
           symptom: "error",
         },
@@ -171,6 +185,25 @@ describe("local hook receiver", () => {
     ).toEqual({
       ok: false,
       reason: "Collector config does not allow this serviceId.",
+    });
+  });
+
+  it("does not send non-Claude local hook signals yet", () => {
+    expect(
+      getHookSendReadiness(
+        {
+          ...baseConfig,
+          localHookSignalOptIn: true,
+        },
+        {
+          serviceId: "openai-codex-cli",
+          source: "cli_hook",
+          symptom: "tool_failure",
+        },
+      ),
+    ).toEqual({
+      ok: false,
+      reason: "Local hook signal sending is currently supported for Claude Code only.",
     });
   });
 
@@ -199,11 +232,11 @@ describe("local hook receiver", () => {
         collectorToken: "njy_secret",
       }),
       {
-        serviceId: "openai-codex-cli",
+        serviceId: "anthropic-claude-code",
         source: "cli_hook",
-        symptom: "tool_failure",
+        symptom: "rate_limited",
         statusCode: 500,
-        errorCode: "tool_failed",
+        errorCode: "claude_rate_limit",
       },
     );
     expect(JSON.stringify(submit.mock.calls[0])).not.toContain("run.failed");
@@ -217,19 +250,19 @@ const baseConfig: CliConfig = {
   collectorId: "col_test",
   collectorToken: "njy_secret",
   source: "cli_hook",
-  serviceIds: ["openai-codex-cli"],
+  serviceIds: ["anthropic-claude-code"],
   clientName: "notjustyou-cli",
-  clientVersion: "0.2.0",
+  clientVersion: "0.3.0",
 };
 
 function validHook() {
   return {
-    serviceId: "openai-codex-cli",
-    surface: "codex-cli",
-    eventName: "run.failed",
-    symptom: "tool_failure",
+    serviceId: "anthropic-claude-code",
+    surface: "claude-code",
+    eventName: "StopFailure",
+    symptom: "rate_limited",
     statusCode: 500,
-    errorCode: "tool_failed",
+    errorCode: "claude_rate_limit",
   };
 }
 
