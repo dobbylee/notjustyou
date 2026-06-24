@@ -12,7 +12,18 @@ Plugin for Cursor IDE surfaces.
 ## Install
 
 Cursor marketplace distribution is not available yet. Until then, install the
-plugin from a local checkout.
+published package into Cursor's local plugin directory, then restart Cursor or
+run **Developer: Reload Window**.
+
+```bash
+mkdir -p ~/.cursor/plugins/local/notjustyou
+npm pack @notjustyou/cursor-plugin@0.1.1
+tar -xzf notjustyou-cursor-plugin-0.1.1.tgz -C ~/.cursor/plugins/local/notjustyou --strip-components=1
+rm notjustyou-cursor-plugin-0.1.1.tgz
+```
+
+For local development from a Not Just You checkout, symlink the package root
+instead:
 
 From the Not Just You repository:
 
@@ -20,8 +31,6 @@ From the Not Just You repository:
 mkdir -p ~/.cursor/plugins/local
 ln -s "$(pwd)/packages/notjustyou-cursor-plugin" ~/.cursor/plugins/local/notjustyou
 ```
-
-Then restart Cursor or run **Developer: Reload Window**.
 
 ## Optional Local Hook Reporting
 
