@@ -43,7 +43,7 @@ If the setup MCP tool is unavailable and you installed the CLI from npm but do
 not have `njy` on your `PATH`, use:
 
 ```bash
-npx -y @notjustyou/cli@0.3.0 enable cursor
+npx -y @notjustyou/cli@0.3.1 enable cursor
 ```
 
 To turn reporting off:
