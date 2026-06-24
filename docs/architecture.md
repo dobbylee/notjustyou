@@ -76,7 +76,7 @@ The durable order is:
 2. Add installed-signal schema and privacy validation before collector code.
 3. Add Redis hot counters and summary APIs.
 4. Add dashboard source breakdown.
-5. Add CLI and read-only MCP status lookup.
+5. Add CLI and MCP status lookup with explicit local reporting setup tools.
 6. Add API middleware collectors, starting with OpenAI API, Claude API, and Gemini API.
 7. Add vendor plugins only after local preview, redaction, and consent flows are clear.
 

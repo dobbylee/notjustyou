@@ -1,12 +1,12 @@
 {
-  "name": "@notjustyou/claude-code-plugin",
-  "version": "0.3.0",
-  "description": "Not Just You status and opt-in local hook reporting for Claude Code surfaces.",
+  "name": "@notjustyou/cursor-plugin",
+  "version": "0.1.0",
+  "description": "Not Just You status and opt-in local hook reporting for Cursor surfaces.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dobbylee/notjustyou.git",
-    "directory": "packages/notjustyou-claude-code-plugin"
+    "directory": "packages/notjustyou-cursor-plugin"
   },
   "homepage": "https://github.com/dobbylee/notjustyou#readme",
   "bugs": {
@@ -14,17 +14,17 @@
   },
   "keywords": [
     "ai-status",
-    "claude-code",
+    "cursor",
     "mcp",
     "notjustyou",
     "status"
   ],
   "files": [
-    ".claude-plugin",
-    ".mcp.json",
+    ".cursor-plugin",
     "commands",
     "hooks",
     "skills",
+    "mcp.json",
     "LICENSE",
     "README.md"
   ],

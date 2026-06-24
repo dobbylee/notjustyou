@@ -1,0 +1,19 @@
+{
+  "name": "notjustyou",
+  "displayName": "Not Just You",
+  "version": "0.1.0",
+  "description": "Adds Not Just You status tools and optional local hook reporting for Cursor surfaces.",
+  "author": {
+    "name": "Not Just You"
+  },
+  "homepage": "https://notjustyou.dev",
+  "repository": "https://github.com/dobbylee/notjustyou",
+  "license": "MIT",
+  "keywords": [
+    "ai-status",
+    "cursor",
+    "mcp",
+    "notjustyou",
+    "status"
+  ]
+}

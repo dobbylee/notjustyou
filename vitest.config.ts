@@ -4,6 +4,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": new URL(".", import.meta.url).pathname,
+      "@notjustyou/cli/reporting-setup": new URL(
+        "./packages/notjustyou-cli/src/reporting-setup.ts",
+        import.meta.url,
+      ).pathname,
     },
   },
   test: {

@@ -1,0 +1,30 @@
+{
+  "name": "notjustyou",
+  "owner": {
+    "name": "Not Just You"
+  },
+  "metadata": {
+    "description": "Not Just You plugins for Cursor."
+  },
+  "plugins": [
+    {
+      "name": "notjustyou",
+      "source": "packages/notjustyou-cursor-plugin",
+      "description": "AI service status and opt-in local hook reporting for Cursor surfaces.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Not Just You"
+      },
+      "homepage": "https://notjustyou.dev",
+      "repository": "https://github.com/dobbylee/notjustyou",
+      "license": "MIT",
+      "category": "Developer Tools",
+      "tags": [
+        "ai-status",
+        "cursor",
+        "mcp",
+        "status"
+      ]
+    }
+  ]
+}

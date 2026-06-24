@@ -251,6 +251,50 @@ describe("CLI setup and registration", () => {
     expect(output).not.toContain("njy_raw_secret");
   });
 
+  it("enables Cursor reporting with one command", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["cursor-ide"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.0",
+        });
+
+        return jsonResponse({
+          collectorId: "col_cursor",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "enable",
+        "cursor",
+        "--base-url",
+        "http://localhost:3000",
+        "--skip-receiver",
+      ]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      localHookSignalOptIn: true,
+      clientVersion: "0.3.0",
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Cursor reporting enabled.");
+    expect(output).toContain("Local hook receiver: skipped");
+    expect(output).not.toContain("njy_raw_secret");
+  });
+
   it("does not overwrite an existing non-hook collector config", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -320,6 +364,83 @@ describe("CLI setup and registration", () => {
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Claude Code reporting disabled.");
     expect(output).not.toContain("njy_hook_secret");
+  });
+
+  it("disables Cursor hook sending without printing the token", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_cursor",
+      collectorToken: "njy_cursor_secret",
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.0",
+      localHookSignalOptIn: true,
+    });
+
+    await expect(main(["disable", "cursor"])).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      localHookSignalOptIn: false,
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Cursor reporting disabled.");
+    expect(output).not.toContain("njy_cursor_secret");
+  });
+
+  it("does not disable a different reporting surface config", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_claude",
+      collectorToken: "njy_claude_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.0",
+      localHookSignalOptIn: true,
+    });
+
+    await expect(main(["disable", "cursor"])).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      localHookSignalOptIn: true,
+    });
+    expect(log.mock.calls.flat().join("\n")).toContain(
+      "Cursor reporting is not enabled for this config.",
+    );
+  });
+
+  it("rejects disable for mixed local hook configs instead of disabling all services", async () => {
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_mixed",
+      collectorToken: "njy_mixed_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.0",
+      localHookSignalOptIn: true,
+    });
+
+    await expect(main(["disable", "cursor"])).rejects.toThrow(
+      "Existing cli_hook config includes services outside Cursor.",
+    );
+    expect(readConfig()).toMatchObject({
+      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      localHookSignalOptIn: true,
+    });
+  });
+
+  it("rejects unknown reporting surfaces", async () => {
+    await expect(main(["enable", "codex", "--skip-receiver"])).rejects.toThrow(
+      "Supported reporting surfaces: claude-code, cursor.",
+    );
   });
 
   it("deduplicates repeated service allowlist values", async () => {

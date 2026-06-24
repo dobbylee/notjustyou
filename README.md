@@ -43,7 +43,7 @@ njy setup --service openai-api --service anthropic-claude-api --service google-g
 
 See [packages/notjustyou-sdk-js](packages/notjustyou-sdk-js) for the `recordAiCall` wrapper, slow-call settings, retry behavior, and diagnostics.
 
-Use the read-only MCP server with AI clients that support stdio MCP tools:
+Use the MCP server with AI clients that support stdio MCP tools:
 
 ```bash
 npm install -g @notjustyou/mcp
@@ -70,8 +70,15 @@ MCP tools:
 - `get_surface_status`
 - `get_recent_signals`
 - `explain_privacy`
+- `get_reporting_setup_state`
+- `enable_reporting`
+- `disable_reporting`
 
-The MCP server reads public status summaries only. The CLI can also register an anonymous collector for opt-in SDK use, but it does not submit reports or installed-client signals by itself.
+Status MCP tools read public status summaries only. Setup MCP tools can enable
+or disable local hook reporting after explicit user confirmation, but they do
+not submit signals directly. The CLI can also register an anonymous collector
+for opt-in SDK or local hook use, but it does not submit reports or
+installed-client signals by itself.
 
 Use the Claude Code plugin for status lookups inside Claude Code surfaces:
 
@@ -111,8 +118,10 @@ Current:
 - Official status badges for mapped provider surfaces
 - Opt-in installed-client signal APIs for metadata-only problem signals
 - Dashboard source breakdown for community reports, installed signals, and official status
-- Read-only MCP status lookup
+- MCP status lookup with explicit local reporting setup tools
 - Claude Code status plugin with opt-in local hook reporting
+- Cursor plugin package foundation with status lookup and opt-in local hook
+  forwarding; marketplace distribution is pending
 - Codex status-only plugin; automatic Codex reporting is deferred until a
   reliable service-failure classifier exists
 - Node SDK core for OpenAI API, Claude API, and Gemini API metadata-only middleware signals

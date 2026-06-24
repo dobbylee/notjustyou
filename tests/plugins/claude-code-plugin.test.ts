@@ -27,14 +27,14 @@ describe("Claude Code status plugin", () => {
     expect(manifest.name).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
   });
 
-  it("bundles the published read-only MCP server", () => {
+  it("bundles the published status and setup MCP server", () => {
     const mcpConfig = readJson(".mcp.json");
 
     expect(mcpConfig).toEqual({
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.1.0"],
+          args: ["-y", "@notjustyou/mcp@0.2.0"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -53,8 +53,10 @@ describe("Claude Code status plugin", () => {
     const serializedPlugin = [
       readFileSync(join(pluginRoot, ".claude-plugin/plugin.json"), "utf8"),
       readFileSync(join(pluginRoot, ".mcp.json"), "utf8"),
+      readFileSync(join(pluginRoot, "commands/setup-reporting.md"), "utf8"),
       hookImplementation,
       readFileSync(join(pluginRoot, "skills/status/SKILL.md"), "utf8"),
+      readFileSync(join(pluginRoot, "skills/setup-reporting/SKILL.md"), "utf8"),
       readFileSync(join(pluginRoot, "README.md"), "utf8"),
     ].join("\n");
     const hooks = readJson("hooks/hooks.json");
@@ -120,6 +122,44 @@ describe("Claude Code status plugin", () => {
     );
     expect(skill).toContain("This status skill must not submit signals");
     expect(skill).toContain("optional Claude Code");
+    expect(skill).toContain("setup-reporting");
+  });
+
+  it("includes a confirmation-gated reporting setup skill", () => {
+    const skill = readFileSync(
+      join(pluginRoot, "skills/setup-reporting/SKILL.md"),
+      "utf8",
+    );
+
+    expect(skill).toContain(
+      "disallowed-tools: Bash Read Grep Glob Edit Write MultiEdit NotebookRead NotebookEdit WebFetch WebSearch",
+    );
+    expect(skill).toContain("Ask for explicit confirmation before enabling or disabling reporting");
+    expect(skill).toContain("mcp__plugin_notjustyou_status__enable_reporting");
+    expect(skill).toContain("mcp__plugin_notjustyou_status__disable_reporting");
+    expect(skill).toContain('surface: "claude-code"');
+    expect(skill).toContain("confirmed: true");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.0 enable claude-code");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.0 disable claude-code");
+    expect(skill).toContain("If the user confirms disabling reporting");
+    expect(skill).toContain("metadata-only Claude Code failure signals");
+    expect(skill).toContain("Do not use Bash, setup, register, hook receiver");
+  });
+
+  it("includes a reporting setup command for discoverability", () => {
+    const command = readFileSync(
+      join(pluginRoot, "commands/setup-reporting.md"),
+      "utf8",
+    );
+    const packageJson = JSON.parse(readFileSync(join(pluginRoot, "package.json"), "utf8"));
+
+    expect(packageJson.files).toContain("commands");
+    expect(command).toContain("name: setup-reporting");
+    expect(command).toContain("Ask for explicit confirmation before enabling or disabling reporting");
+    expect(command).toContain("mcp__plugin_notjustyou_status__enable_reporting");
+    expect(command).toContain("mcp__plugin_notjustyou_status__disable_reporting");
+    expect(command).toContain("npx -y @notjustyou/cli@0.3.0 enable claude-code");
+    expect(command).toContain("Do not run shell commands from this command file.");
   });
 
   it("publishes the plugin through the Not Just You marketplace catalog", () => {

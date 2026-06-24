@@ -1,6 +1,7 @@
 # @notjustyou/mcp
 
-Read-only MCP server for Not Just You AI service status lookup.
+MCP server for Not Just You AI service status lookup and explicit local
+reporting setup.
 
 ## Install
 
@@ -11,6 +12,7 @@ npm install -g @notjustyou/mcp
 You can also run it from a workspace checkout:
 
 ```bash
+pnpm --filter @notjustyou/cli build
 pnpm --filter @notjustyou/mcp build
 NOTJUSTYOU_BASE_URL=http://localhost:3000 node packages/notjustyou-mcp/dist/index.js
 ```
@@ -52,15 +54,31 @@ For local development, set `NOTJUSTYOU_BASE_URL` to your local app URL:
 - `get_surface_status`
 - `get_recent_signals`
 - `explain_privacy`
+- `get_reporting_setup_state`
+- `enable_reporting`
+- `disable_reporting`
 
-All tools are read-only. This package does not expose a signal submission tool and does not require collector credentials.
+Status tools are read-only and do not require collector credentials.
+The setup tools are local-only write tools: after explicit user confirmation,
+they can register a `cli_hook` collector, save the token in the local Not Just
+You config file, and start the localhost hook receiver for supported surfaces.
+
+This package does not expose a signal submission tool. Automatic reports still
+flow through supported local hooks, the localhost receiver, and the
+metadata-only normalizer.
 
 ## Privacy Boundary
 
-The MCP server reads public status summaries only:
+The MCP server reads public status summaries:
 
 - `/api/summary`
 - `/api/signals/summary`
 - `/api/official`
 
-It does not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, or machine/user names.
+The setup tools may write local config and store a collector token locally after
+user confirmation. They do not print the token, expose local config paths, or
+submit signals directly.
+
+It does not collect prompt text, request or response bodies, headers, API keys,
+cookies, source files, diffs, clipboard content, exact IP addresses, account
+emails, or machine/user names.

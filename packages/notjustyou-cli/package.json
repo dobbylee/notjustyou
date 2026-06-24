@@ -30,6 +30,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./reporting-setup": {
+      "types": "./dist/reporting-setup.d.ts",
+      "import": "./dist/reporting-setup.js"
     }
   },
   "bin": {

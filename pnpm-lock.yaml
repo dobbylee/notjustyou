@@ -82,7 +82,13 @@ importers:
 
   packages/notjustyou-codex-plugin: {}
 
-  packages/notjustyou-mcp: {}
+  packages/notjustyou-cursor-plugin: {}
+
+  packages/notjustyou-mcp:
+    dependencies:
+      '@notjustyou/cli':
+        specifier: workspace:*
+        version: link:../notjustyou-cli
 
   packages/notjustyou-sdk-js: {}
 

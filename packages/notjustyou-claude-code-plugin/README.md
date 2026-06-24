@@ -6,7 +6,7 @@ Claude Desktop app.
 ## What It Provides
 
 - A `/notjustyou:status` skill for AI service status checks.
-- A bundled read-only Not Just You MCP server configuration.
+- A bundled Not Just You MCP server configuration for status lookup and explicit local reporting setup.
 - Public status lookups for community reports, installed-client signal aggregates, and official status summaries.
 - Opt-in metadata-only local hook reporting for Claude Code failure events.
 
@@ -31,6 +31,9 @@ Then run:
 During plugin setup, enable anonymous Claude Code failure reporting only if you
 want metadata-only failure events to contribute to Not Just You. When enabled,
 the plugin starts the local reporting setup path automatically on session start.
+You can also ask the plugin to set up Not Just You reporting; the
+`setup-reporting` skill explains the privacy boundary and asks for confirmation
+before calling the bundled setup MCP tool.
 
 ```bash
 njy enable claude-code
@@ -71,8 +74,10 @@ Then run:
 
 ## Privacy Boundary
 
-The status skill reads public aggregate status APIs through `@notjustyou/mcp`
-and does not send signals or require collector credentials.
+The status skill reads public aggregate status APIs through `@notjustyou/mcp`.
+The setup MCP tools can write local reporting config after explicit
+confirmation, but they do not submit signals directly or print collector
+tokens.
 
 It does not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, machine names, or local usernames.
 
