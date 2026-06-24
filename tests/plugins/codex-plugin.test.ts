@@ -44,7 +44,7 @@ describe("Codex status plugin", () => {
     });
   });
 
-  it("keeps the first release free of hooks and signal submission paths", () => {
+  it("keeps Codex free of hooks and signal submission paths until a safe classifier exists", () => {
     const rootEntries = readdirSync(pluginRoot);
     const serializedPlugin = [
       readFileSync(join(pluginRoot, ".codex-plugin/plugin.json"), "utf8"),

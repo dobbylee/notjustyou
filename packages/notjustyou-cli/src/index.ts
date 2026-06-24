@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { spawn } from "node:child_process";
 import { readFileSync, realpathSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
@@ -8,7 +9,7 @@ import { checkCollectorToken, fetchStatusData, registerCollector } from "./api.j
 import { getConfigMode, getConfigPath, readConfig, writeConfig } from "./config.js";
 import { formatStatus } from "./format.js";
 import { previewPayload } from "./privacy.js";
-import { createLocalHookReceiver } from "./receiver.js";
+import { createLocalHookReceiver, LOCAL_HOOK_RECEIVER_HEALTH } from "./receiver.js";
 import type { SignalSource } from "./types.js";
 
 const DEFAULT_BASE_URL = "https://notjustyou.dev";
@@ -16,7 +17,8 @@ const WATCH_INTERVAL_MS = 2_000;
 const DEFAULT_SOURCE = "api_middleware";
 const DEFAULT_SERVICE_ID = "openai-api";
 const CLIENT_NAME = "notjustyou-cli";
-const CLIENT_VERSION = "0.2.0";
+const CLIENT_VERSION = "0.3.0";
+const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
 const SIGNAL_SOURCES = new Set([
   "api_middleware",
   "cli_hook",
@@ -71,6 +73,16 @@ export async function main(argv = process.argv.slice(2)) {
     return 0;
   }
 
+  if (parsed.command === "enable") {
+    await runEnable(parsed);
+    return 0;
+  }
+
+  if (parsed.command === "disable") {
+    runDisable(parsed);
+    return 0;
+  }
+
   if (parsed.command === "doctor") {
     return runDoctor(parsed);
   }
@@ -113,6 +125,18 @@ export function parseCliArgs(argv: string[]) {
         type: "boolean",
         default: false,
       },
+      "enable-local-hooks": {
+        type: "boolean",
+        default: false,
+      },
+      "skip-receiver": {
+        type: "boolean",
+        default: false,
+      },
+      quiet: {
+        type: "boolean",
+        default: false,
+      },
       watch: {
         type: "boolean",
         default: false,
@@ -136,6 +160,9 @@ export function parseCliArgs(argv: string[]) {
     fixture: values.fixture,
     port: values.port,
     send: values.send ?? false,
+    enableLocalHooks: values["enable-local-hooks"] ?? false,
+    skipReceiver: values["skip-receiver"] ?? false,
+    quiet: values.quiet ?? false,
     watch: values.watch ?? false,
     baseUrl:
       values["base-url"] ?? process.env.NOTJUSTYOU_BASE_URL ?? DEFAULT_BASE_URL,
@@ -171,11 +198,13 @@ async function runSetup(input: {
   baseUrl: string;
   source: string;
   service: string[] | undefined;
+  enableLocalHooks: boolean;
 }) {
   const config = await registerAndWriteConfig({
     baseUrl: input.baseUrl,
     source: input.source,
     serviceIds: input.service ?? [DEFAULT_SERVICE_ID],
+    enableLocalHooks: input.enableLocalHooks,
   });
   const doctorExitCode = await runDoctor({
     baseUrl: config.baseUrl,
@@ -198,11 +227,13 @@ async function runRegister(input: {
   baseUrl: string;
   source: string;
   service: string[] | undefined;
+  enableLocalHooks: boolean;
 }) {
   const config = await registerAndWriteConfig({
     baseUrl: input.baseUrl,
     source: input.source,
     serviceIds: input.service ?? [DEFAULT_SERVICE_ID],
+    enableLocalHooks: input.enableLocalHooks,
   });
 
   console.log("Collector registered.");
@@ -213,14 +244,106 @@ async function runRegister(input: {
   console.log("Token: saved locally; raw token is not printed.");
 }
 
+async function runEnable(input: {
+  baseUrl: string;
+  serviceId: string | undefined;
+  skipReceiver: boolean;
+  quiet: boolean;
+}) {
+  assertReportingSurface(input.serviceId);
+
+  const existingConfig = readConfig();
+  let config = existingConfig;
+
+  if (
+    !config ||
+    config.source !== "cli_hook" ||
+    !config.serviceIds.includes(CLAUDE_CODE_REPORTING_SERVICE) ||
+    config.localHookSignalOptIn !== true
+  ) {
+    if (config && config.source !== "cli_hook") {
+      throw new Error(
+        "Existing config uses a different collector source. Automatic Claude Code reporting needs a cli_hook config.",
+      );
+    }
+    if (
+      config &&
+      config.source === "cli_hook" &&
+      config.serviceIds.some((serviceId) => serviceId !== CLAUDE_CODE_REPORTING_SERVICE)
+    ) {
+      throw new Error(
+        "Existing cli_hook config includes services outside Claude Code. Re-run manual registration for a Claude Code-only hook config.",
+      );
+    }
+
+    config = await registerAndWriteConfig({
+      baseUrl: input.baseUrl,
+      source: "cli_hook",
+      serviceIds: [CLAUDE_CODE_REPORTING_SERVICE],
+      enableLocalHooks: true,
+    });
+  }
+
+  const receiverStatus = input.skipReceiver
+    ? "skipped"
+    : await ensureHookReceiverRunning();
+
+  if (!input.quiet) {
+    console.log("Claude Code reporting enabled.");
+    console.log(`Config: ${getConfigPath()}`);
+    console.log(`Collector: ${config.collectorId}`);
+    console.log("Allowed source: cli_hook");
+    console.log(`Allowed services: ${config.serviceIds.join(", ")}`);
+    console.log(`Local hook receiver: ${receiverStatus}`);
+    console.log("Token: saved locally; raw token is not printed.");
+  }
+}
+
+function runDisable(input: { serviceId: string | undefined; quiet: boolean }) {
+  assertReportingSurface(input.serviceId);
+
+  const config = readConfig();
+  if (!config) {
+    if (!input.quiet) console.log("Claude Code reporting is not configured.");
+    return;
+  }
+
+  if (config.source !== "cli_hook") {
+    if (!input.quiet) {
+      console.log("Claude Code reporting is not enabled for this config.");
+    }
+    return;
+  }
+
+  writeConfig({
+    ...config,
+    localHookSignalOptIn: false,
+  });
+
+  if (!input.quiet) {
+    console.log("Claude Code reporting disabled.");
+    console.log("The local receiver may keep running, but it will not send hook signals.");
+  }
+}
+
 async function registerAndWriteConfig(input: {
   baseUrl: string;
   source: string;
   serviceIds: string[];
+  enableLocalHooks: boolean;
 }) {
   assertSupportedSource(input.source);
   const serviceIds = [...new Set(input.serviceIds)];
   serviceIds.forEach(assertSupportedService);
+  if (input.enableLocalHooks && input.source !== "cli_hook") {
+    throw new Error("--enable-local-hooks requires --source cli_hook.");
+  }
+  if (
+    input.enableLocalHooks &&
+    serviceIds.some((serviceId) => serviceId !== CLAUDE_CODE_REPORTING_SERVICE)
+  ) {
+    throw new Error("--enable-local-hooks currently supports anthropic-claude-code only.");
+  }
 
   const source = input.source as SignalSource;
   const registration = await registerCollector({
@@ -239,6 +362,7 @@ async function registerAndWriteConfig(input: {
     serviceIds,
     clientName: CLIENT_NAME,
     clientVersion: CLIENT_VERSION,
+    ...(input.enableLocalHooks ? { localHookSignalOptIn: true } : {}),
   });
 }
 
@@ -366,6 +490,42 @@ function assertSupportedService(serviceId: string) {
   }
 }
 
+function assertReportingSurface(surface: string | undefined) {
+  if (surface !== "claude-code") {
+    throw new Error("Supported reporting surface: claude-code.");
+  }
+}
+
+async function ensureHookReceiverRunning() {
+  if (await isHookReceiverRunning()) return "already running";
+
+  const entrypoint = process.argv[1] ?? fileURLToPath(import.meta.url);
+  const child = spawn(process.execPath, [realpathSync(entrypoint), "hook-receiver", "--send"], {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
+
+  return "started";
+}
+
+async function isHookReceiverRunning() {
+  try {
+    const response = await fetch("http://127.0.0.1:8765/health", {
+      method: "GET",
+      signal: AbortSignal.timeout(500),
+    });
+    const body = await response.json();
+    return (
+      response.ok &&
+      body?.ok === LOCAL_HOOK_RECEIVER_HEALTH.ok &&
+      body?.name === LOCAL_HOOK_RECEIVER_HEALTH.name
+    );
+  } catch {
+    return false;
+  }
+}
+
 function formatError(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
@@ -377,8 +537,10 @@ function normalizeUrlForCompare(url: string) {
 function printUsage() {
   console.log(`Usage:
   njy status [serviceId] [--base-url <url>] [--watch]
-  njy setup [--source <source>] [--service <serviceId> ...] [--base-url <url>]
-  njy register [--source <source>] [--service <serviceId> ...] [--base-url <url>]
+  njy setup [--source <source>] [--service <serviceId> ...] [--base-url <url>] [--enable-local-hooks]
+  njy register [--source <source>] [--service <serviceId> ...] [--base-url <url>] [--enable-local-hooks]
+  njy enable claude-code [--base-url <url>]
+  njy disable claude-code
   njy doctor [--base-url <url>]
   njy payload-preview --fixture <path>
   njy hook-receiver [--port <port>] [--send]
@@ -386,6 +548,7 @@ function printUsage() {
 Examples:
   njy status
   njy setup
+  njy enable claude-code
   njy status openai-api --base-url http://localhost:3000
   njy status openai-api --watch
   njy payload-preview --fixture ./signal.json

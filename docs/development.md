@@ -105,6 +105,12 @@ node packages/notjustyou-cli/dist/index.js doctor --base-url http://localhost:30
 node packages/notjustyou-cli/dist/index.js payload-preview --fixture ./signal.json
 ```
 
+Local hook receiver checks:
+
+```bash
+node packages/notjustyou-cli/dist/index.js enable claude-code --base-url http://localhost:3000
+```
+
 Repeat `--service` when one local collector config should allow multiple API SDK adapters:
 
 ```bash

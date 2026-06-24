@@ -8,11 +8,11 @@
     {
       "name": "notjustyou",
       "displayName": "Not Just You",
-      "description": "Read-only AI service status for Claude Code surfaces.",
+      "description": "AI service status and opt-in local hook reporting for Claude Code surfaces.",
       "source": {
         "source": "npm",
         "package": "@notjustyou/claude-code-plugin",
-        "version": "0.1.0"
+        "version": "0.3.0"
       },
       "category": "status",
       "tags": [

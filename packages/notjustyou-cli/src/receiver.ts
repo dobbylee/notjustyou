@@ -9,6 +9,10 @@ import type { CliConfig, CliSignalPayload } from "./types.js";
 const SIGNAL_BODY_LIMIT_BYTES = 8 * 1024;
 const DEFAULT_RECEIVER_HOST = "127.0.0.1";
 const DEFAULT_RECEIVER_PORT = 8765;
+export const LOCAL_HOOK_RECEIVER_HEALTH = {
+  ok: true,
+  name: "notjustyou-hook-receiver",
+} as const;
 const LOCAL_RECEIVER_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
 
 export type LocalHookSubmitter = (
@@ -34,6 +38,11 @@ export function createLocalHookReceiver(options: LocalHookReceiverOptions = {}) 
   const signalSubmitter = options.submit ?? submitSignal;
 
   const server = createServer(async (request, response) => {
+    if (request.method === "GET" && request.url === "/health") {
+      writeJson(response, 200, LOCAL_HOOK_RECEIVER_HEALTH);
+      return;
+    }
+
     if (request.method !== "POST" || request.url !== "/hook") {
       writeJson(response, 404, {
         ok: false,
@@ -182,6 +191,13 @@ export function getHookSendReadiness(config: CliConfig | null, payload: CliSigna
     return {
       ok: false,
       reason: "Collector config source must be cli_hook for local hook signals.",
+    };
+  }
+
+  if (payload.serviceId !== "anthropic-claude-code") {
+    return {
+      ok: false,
+      reason: "Local hook signal sending is currently supported for Claude Code only.",
     };
   }
 

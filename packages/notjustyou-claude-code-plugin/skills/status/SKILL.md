@@ -15,8 +15,12 @@ When the user names a provider or asks what is affected, call `list_surfaces` an
 
 When the user asks about recent installed-client reports for one surface, call `get_recent_signals`.
 
-When the user asks what the plugin reads or sends, call `explain_privacy`.
+When the user asks what the status skill reads or sends, call `explain_privacy`.
+If the user asks about hook reporting, explain that optional Claude Code failure
+hooks can forward metadata-only events to a local receiver only after reporting
+opt-in. Users can enable or disable that path with `njy enable claude-code` and
+`njy disable claude-code`; hooks do not call public `/api/signals` directly.
 
 Keep manual community reports, installed-client signals, and official status separate in the answer. Do not infer a vendor-wide outage from one source alone.
 
-This status-only plugin must not submit signals, register collectors, read prompts, inspect files, inspect diffs, read headers, read API keys, or collect account, machine, or user identifiers.
+This status skill must not submit signals, register collectors, read prompts, inspect files, inspect diffs, read headers, read API keys, or collect account, machine, or user identifiers.

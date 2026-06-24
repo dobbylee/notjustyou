@@ -1,8 +1,8 @@
 {
   "name": "notjustyou",
   "displayName": "Not Just You",
-  "description": "Adds a read-only Not Just You status skill and MCP status tools for Claude Code surfaces.",
-  "version": "0.1.0",
+  "description": "Adds Not Just You status tools and optional local hook reporting for Claude Code surfaces.",
+  "version": "0.3.0",
   "author": {
     "name": "Not Just You"
   },
@@ -15,5 +15,13 @@
     "mcp",
     "notjustyou",
     "status"
-  ]
+  ],
+  "userConfig": {
+    "enableReporting": {
+      "type": "boolean",
+      "title": "Enable anonymous Claude Code failure reporting",
+      "description": "When enabled, the plugin starts the local Not Just You receiver and sends metadata-only Claude Code failure reports through it.",
+      "default": false
+    }
+  }
 }

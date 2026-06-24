@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { readConfig } from "@/packages/notjustyou-cli/src/config";
+import { readConfig, writeConfig } from "@/packages/notjustyou-cli/src/config";
 import { main, parseCliArgs } from "@/packages/notjustyou-cli/src/index";
 
 const originalConfigPath = process.env.NOTJUSTYOU_CONFIG_PATH;
@@ -26,6 +26,7 @@ describe("CLI setup and registration", () => {
       command: "setup",
       source: "api_middleware",
       service: undefined,
+      enableLocalHooks: false,
     });
   });
 
@@ -37,7 +38,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.2.0",
+          clientVersion: "0.3.0",
         });
 
         return jsonResponse({
@@ -67,7 +68,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("Collector registered.");
     expect(output).toContain("Token: saved locally; raw token is not printed.");
     expect(output).not.toContain("njy_raw_secret");
-    expect(readConfig()?.clientVersion).toBe("0.2.0");
+    expect(readConfig()?.clientVersion).toBe("0.3.0");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {
@@ -109,6 +110,176 @@ describe("CLI setup and registration", () => {
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Allowed services: openai-api, anthropic-claude-api, google-gemini-api");
     expect(output).not.toContain("njy_raw_secret");
+  });
+
+  it("registers explicit local hook opt-in for cli_hook collectors", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["anthropic-claude-code"],
+        });
+
+        return jsonResponse({
+          collectorId: "col_hooks",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "register",
+        "--source",
+        "cli_hook",
+        "--service",
+        "anthropic-claude-code",
+        "--enable-local-hooks",
+      ]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      localHookSignalOptIn: true,
+    });
+  });
+
+  it("rejects local hook opt-in for Codex until a safe hook event is available", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "register",
+        "--source",
+        "cli_hook",
+        "--service",
+        "openai-codex-cli",
+        "--enable-local-hooks",
+      ]),
+    ).rejects.toThrow("--enable-local-hooks currently supports anthropic-claude-code only.");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("enables Claude Code reporting with one command", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["anthropic-claude-code"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.0",
+        });
+
+        return jsonResponse({
+          collectorId: "col_claude",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "enable",
+        "claude-code",
+        "--base-url",
+        "http://localhost:3000",
+        "--skip-receiver",
+      ]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      localHookSignalOptIn: true,
+      clientVersion: "0.3.0",
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Claude Code reporting enabled.");
+    expect(output).toContain("Local hook receiver: skipped");
+    expect(output).not.toContain("njy_raw_secret");
+  });
+
+  it("does not overwrite an existing non-hook collector config", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_api",
+      collectorToken: "njy_api_secret",
+      source: "api_middleware",
+      serviceIds: ["openai-api"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.0",
+    });
+
+    await expect(
+      main(["enable", "claude-code", "--skip-receiver"]),
+    ).rejects.toThrow("Existing config uses a different collector source");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(readConfig()).toMatchObject({
+      source: "api_middleware",
+      serviceIds: ["openai-api"],
+    });
+  });
+
+  it("does not broaden an existing mixed cli_hook config", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_mixed",
+      collectorToken: "njy_mixed_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.0",
+      localHookSignalOptIn: false,
+    });
+
+    await expect(
+      main(["enable", "claude-code", "--skip-receiver"]),
+    ).rejects.toThrow("Existing cli_hook config includes services outside Claude Code");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(readConfig()).toMatchObject({
+      serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
+      localHookSignalOptIn: false,
+    });
+  });
+
+  it("disables Claude Code hook sending without printing the token", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_hook",
+      collectorToken: "njy_hook_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.0",
+      localHookSignalOptIn: true,
+    });
+
+    await expect(main(["disable", "claude-code"])).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      localHookSignalOptIn: false,
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Claude Code reporting disabled.");
+    expect(output).not.toContain("njy_hook_secret");
   });
 
   it("deduplicates repeated service allowlist values", async () => {
@@ -240,6 +411,9 @@ describe("CLI setup and registration", () => {
     await expect(main(["register", "--service", "missing-service"])).rejects.toThrow(
       "Unsupported service",
     );
+    await expect(
+      main(["register", "--source", "api_middleware", "--enable-local-hooks"]),
+    ).rejects.toThrow("--enable-local-hooks requires --source cli_hook.");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

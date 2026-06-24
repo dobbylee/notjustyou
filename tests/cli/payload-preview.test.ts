@@ -40,7 +40,7 @@ describe("CLI payload preview", () => {
       durationMs: 1200,
       statusCode: 500,
       errorCode: "tool_failed",
-      clientVersion: "0.2.0",
+      clientVersion: "0.3.0",
     });
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
