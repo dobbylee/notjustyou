@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { classifySignalOperationalError } from "@/lib/signals/errors";
 import { validateSignalRequest } from "./request";
 
 export const runtime = "nodejs";
@@ -22,15 +23,17 @@ export async function POST(request: NextRequest) {
       ok: true,
       receivedAt: validation.signal.receivedAt,
     });
-  } catch {
-    return signalError("redis_unavailable");
+  } catch (error) {
+    return signalError(classifySignalOperationalError(error));
   }
 }
 
 function signalError(reason: string, detail?: unknown) {
   const status =
-    reason === "redis_unavailable"
+    reason === "redis_unavailable" || reason === "server_config_error"
       ? 503
+      : reason === "internal_error"
+        ? 500
       : reason === "missing_token" || reason === "invalid_token"
       ? 401
       : reason === "revoked_token"

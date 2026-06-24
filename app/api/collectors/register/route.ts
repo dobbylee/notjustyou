@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { classifySignalOperationalError } from "@/lib/signals/errors";
 import { createCollectorRecord } from "@/lib/signals/collectors";
 import { validateRegistrationRequest } from "../../signals/request";
 
@@ -21,14 +22,20 @@ export async function POST(request: NextRequest) {
       collectorToken: collector.collectorToken,
       expiresAt: null,
     });
-  } catch {
-    return signalError("redis_unavailable");
+  } catch (error) {
+    return signalError(classifySignalOperationalError(error));
   }
 }
 
 function signalError(reason: string, detail?: unknown) {
   const status =
-    reason === "redis_unavailable" ? 503 : reason === "rate_limited" ? 429 : 400;
+    reason === "redis_unavailable" || reason === "server_config_error"
+      ? 503
+      : reason === "internal_error"
+        ? 500
+      : reason === "rate_limited"
+        ? 429
+        : 400;
   const retryAfterSeconds =
     detail &&
     typeof detail === "object" &&
