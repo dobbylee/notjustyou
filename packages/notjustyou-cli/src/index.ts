@@ -19,6 +19,10 @@ const DEFAULT_SERVICE_ID = "openai-api";
 const CLIENT_NAME = "notjustyou-cli";
 const CLIENT_VERSION = "0.3.0";
 const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
+const LOCAL_HOOK_REPORTING_SERVICES = new Set([
+  CLAUDE_CODE_REPORTING_SERVICE,
+  "cursor-ide",
+]);
 const SIGNAL_SOURCES = new Set([
   "api_middleware",
   "cli_hook",
@@ -340,9 +344,11 @@ async function registerAndWriteConfig(input: {
   }
   if (
     input.enableLocalHooks &&
-    serviceIds.some((serviceId) => serviceId !== CLAUDE_CODE_REPORTING_SERVICE)
+    serviceIds.some((serviceId) => !LOCAL_HOOK_REPORTING_SERVICES.has(serviceId))
   ) {
-    throw new Error("--enable-local-hooks currently supports anthropic-claude-code only.");
+    throw new Error(
+      "--enable-local-hooks currently supports anthropic-claude-code and cursor-ide only.",
+    );
   }
 
   const source = input.source as SignalSource;

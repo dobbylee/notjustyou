@@ -83,7 +83,10 @@ Use the Claude Code plugin for status lookups inside Claude Code surfaces:
 
 During plugin setup, you can opt in to anonymous Claude Code failure reporting.
 If enabled, the plugin starts the local Not Just You setup path for you and
-reports only normalized failure metadata through a localhost receiver.
+reports only normalized failure metadata through a localhost receiver. This is
+best-effort installed-client reporting: it can share failures that Claude Code
+itself reaches and emits as local failure events, but it is not a guaranteed
+outage detector.
 
 Use the Codex plugin for status lookups inside Codex surfaces:
 
@@ -95,7 +98,9 @@ codex plugin add notjustyou@notjustyou
 Then start a new Codex thread and ask for a status check or invoke `$notjustyou:status openai-api`.
 
 The Claude Code plugin does not call public `/api/signals` directly. Public
-sending requires explicit reporting opt-in and the local receiver path.
+sending requires explicit reporting opt-in and the local receiver path. The
+Codex plugin remains status-only because current Codex hook and telemetry
+surfaces do not yet provide a reliable service-failure classifier.
 
 ## Project Status
 
@@ -108,13 +113,14 @@ Current:
 - Dashboard source breakdown for community reports, installed signals, and official status
 - Read-only MCP status lookup
 - Claude Code status plugin with opt-in local hook reporting
-- Codex status-only plugin
+- Codex status-only plugin; automatic Codex reporting is deferred until a
+  reliable service-failure classifier exists
 - Node SDK core for OpenAI API, Claude API, and Gemini API metadata-only middleware signals
 - SDK retry, backoff, and local coalescing
 - Redis-backed counters and short dedupe windows
 - No account or login requirement
 
-Codex hook collection, browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and broader vendor-specific collectors are later work.
+Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and broader vendor-specific collectors are later work. Codex hook collection is intentionally deferred until local raw hook payloads can be classified into reliable service-level metadata without storing or sending prompt, command, tool input, or tool output content.
 
 ## Privacy Boundary
 
@@ -140,6 +146,15 @@ Collector auth:
 - Raw collector tokens are saved locally by `njy setup` and are not printed.
 - Installed-client signal submission uses the collector token as Not Just You authorization.
 - Server-side token lookup uses derived token data; raw collector tokens are not stored.
+
+Local hook processing:
+
+- If a user opts in to local hook reporting, a local adapter may receive vendor
+  hook payloads in memory to derive a metadata-only signal.
+- Raw vendor payload fields such as prompts, commands, outputs, file paths,
+  emails, transcript paths, headers, cookies, and tokens are not stored,
+  queued, logged, or sent to Not Just You.
+- The public `/api/signals` endpoint accepts only normalized metadata.
 
 Not collected:
 

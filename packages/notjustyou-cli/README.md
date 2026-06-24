@@ -46,6 +46,7 @@ collector path is enabled.
 ```bash
 njy register --source api_middleware --service openai-api
 njy register --source cli_hook --service anthropic-claude-code --enable-local-hooks
+njy register --source cli_hook --service cursor-ide --enable-local-hooks
 njy doctor
 njy payload-preview --fixture ./signal.json
 ```
@@ -61,6 +62,12 @@ njy register --source api_middleware --service openai-api --service anthropic-cl
 
 ## Privacy Boundary
 
-The CLI does not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, or machine/user names.
+The CLI does not send prompt text, request or response bodies, headers, API
+keys, cookies, source files, diffs, clipboard content, exact IP addresses,
+account emails, or machine/user names.
+
+If local hook reporting is enabled, a local adapter may receive vendor hook
+payloads in memory to derive metadata-only signals. Raw vendor payload fields
+are not stored, queued, logged, or sent to Not Just You.
 
 The local config stores only `baseUrl`, `collectorId`, `collectorToken`, allowed `source`, allowed service ids, client name, and client version. v1 stores the token in a local file with private file permissions; OS keychain storage is later work.

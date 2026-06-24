@@ -48,6 +48,11 @@ The plugin hook forwards only normalized metadata to the localhost receiver. It
 does not call public `/api/signals` directly, and install-only status lookup does
 not enable reporting.
 
+Reporting is best-effort. It can share Claude Code failures that reach a local
+failure hook, but it cannot report cases where Claude Code never starts, the
+plugin or hook is not trusted, the local receiver is not configured, or the
+user's network cannot reach Not Just You.
+
 In the Claude Desktop app, use the Code tab's plugin manager to add the
 marketplace, install the plugin, and enable it. This plugin is for Claude Code
 surfaces, not the general Claude chat tab.
@@ -72,4 +77,5 @@ and does not send signals or require collector credentials.
 It does not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, machine names, or local usernames.
 
 Optional hook reporting sends only metadata-only failure signals through the
-local Not Just You receiver when local hook opt-in is enabled.
+local Not Just You receiver when local hook opt-in is enabled. It is not a
+guaranteed outage detector.

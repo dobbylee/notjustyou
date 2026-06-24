@@ -104,6 +104,49 @@ describe("local hook receiver", () => {
     });
   });
 
+  it("accepts raw Cursor hook payloads locally but returns only normalized metadata", async () => {
+    const submit = vi.fn();
+    const receiver = createLocalHookReceiver({
+      port: 0,
+      submit,
+    });
+    receivers.push(receiver);
+    const address = await receiver.start();
+
+    const response = await postHook(address.port, {
+      rawHook: "cursor",
+      payload: {
+        hook_event_name: "sessionEnd",
+        reason: "error",
+        duration_ms: 1234,
+        cursor_version: "1.7.2",
+        user_email: "alice@example.com",
+        workspace_roots: ["/Users/alice/private-project"],
+        transcript_path: "/Users/alice/.cursor/transcript.json",
+        error_message: "raw provider or local error text",
+      },
+    });
+
+    const body = await response.json();
+    expect(response.status).toBe(202);
+    expect(body).toEqual({
+      ok: true,
+      mode: "preview",
+      payload: {
+        serviceId: "cursor-ide",
+        source: "cli_hook",
+        symptom: "error",
+        errorCode: "cursor_session_error",
+        durationMs: 1234,
+        clientVersion: "1.7.2",
+      },
+    });
+    expect(JSON.stringify(body)).not.toContain("alice@example.com");
+    expect(JSON.stringify(body)).not.toContain("/Users/alice");
+    expect(JSON.stringify(body)).not.toContain("raw provider");
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it("does not send when local hook opt-in is missing", async () => {
     const submit = vi.fn();
     const receiver = createLocalHookReceiver({
@@ -188,11 +231,29 @@ describe("local hook receiver", () => {
     });
   });
 
-  it("does not send non-Claude local hook signals yet", () => {
+  it("can send non-Claude local hook signals when config explicitly allows the service", () => {
     expect(
       getHookSendReadiness(
         {
           ...baseConfig,
+          serviceIds: ["cursor-ide"],
+          localHookSignalOptIn: true,
+        },
+        {
+          serviceId: "cursor-ide",
+          source: "cli_hook",
+          symptom: "error",
+        },
+      ),
+    ).toEqual({ ok: true });
+  });
+
+  it("does not send Codex hook metadata even if a config was hand-edited to opt in", () => {
+    expect(
+      getHookSendReadiness(
+        {
+          ...baseConfig,
+          serviceIds: ["openai-codex-cli"],
           localHookSignalOptIn: true,
         },
         {
@@ -203,7 +264,7 @@ describe("local hook receiver", () => {
       ),
     ).toEqual({
       ok: false,
-      reason: "Local hook signal sending is currently supported for Claude Code only.",
+      reason: "Local hook signal sending is not supported for this serviceId.",
     });
   });
 
@@ -241,6 +302,53 @@ describe("local hook receiver", () => {
     );
     expect(JSON.stringify(submit.mock.calls[0])).not.toContain("run.failed");
     expect(JSON.stringify(submit.mock.calls[0])).not.toContain("surface");
+  });
+
+  it("sends normalized Cursor metadata without raw payload after opt-in", async () => {
+    const submit = vi.fn(async () => undefined);
+    const receiver = createLocalHookReceiver({
+      port: 0,
+      sendSignals: true,
+      readConfig: () => ({
+        ...baseConfig,
+        serviceIds: ["cursor-ide"],
+        localHookSignalOptIn: true,
+      }),
+      submit,
+    });
+    receivers.push(receiver);
+    const address = await receiver.start();
+
+    const response = await postHook(address.port, {
+      rawHook: "cursor",
+      payload: {
+        hook_event_name: "stop",
+        status: "error",
+        cursor_version: "1.7.2",
+        user_email: "alice@example.com",
+        workspace_roots: ["/Users/alice/private-project"],
+        transcript_path: "/Users/alice/.cursor/transcript.json",
+        prompt: "do not collect this prompt",
+        output: "do not collect this output",
+      },
+    });
+
+    expect(response.status).toBe(202);
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        serviceIds: ["cursor-ide"],
+      }),
+      {
+        serviceId: "cursor-ide",
+        source: "cli_hook",
+        symptom: "error",
+        errorCode: "cursor_agent_error",
+        clientVersion: "1.7.2",
+      },
+    );
+    expect(JSON.stringify(submit.mock.calls[0])).not.toContain("alice@example.com");
+    expect(JSON.stringify(submit.mock.calls[0])).not.toContain("/Users/alice");
+    expect(JSON.stringify(submit.mock.calls[0])).not.toContain("do not collect");
   });
 });
 

@@ -2,13 +2,17 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 import { readConfig } from "./config.js";
 import { submitSignal } from "./api.js";
-import { normalizeLocalHookEvent } from "./local-hook.js";
+import { isRawVendorHookEnvelope, normalizeLocalHookEvent } from "./local-hook.js";
 import { scanForSensitiveKeys } from "./privacy.js";
 import type { CliConfig, CliSignalPayload } from "./types.js";
 
 const SIGNAL_BODY_LIMIT_BYTES = 8 * 1024;
 const DEFAULT_RECEIVER_HOST = "127.0.0.1";
 const DEFAULT_RECEIVER_PORT = 8765;
+const SENDABLE_LOCAL_HOOK_SERVICES = new Set([
+  "anthropic-claude-code",
+  "cursor-ide",
+]);
 export const LOCAL_HOOK_RECEIVER_HEALTH = {
   ok: true,
   name: "notjustyou-hook-receiver",
@@ -62,13 +66,15 @@ export function createLocalHookReceiver(options: LocalHookReceiverOptions = {}) 
       return;
     }
 
-    const sensitiveScan = scanForSensitiveKeys(body);
-    if (!sensitiveScan.ok) {
-      writeJson(response, 400, {
-        ok: false,
-        error: `Sensitive field rejected: ${sensitiveScan.key}`,
-      });
-      return;
+    if (!isRawVendorHookEnvelope(body)) {
+      const sensitiveScan = scanForSensitiveKeys(body);
+      if (!sensitiveScan.ok) {
+        writeJson(response, 400, {
+          ok: false,
+          error: `Sensitive field rejected: ${sensitiveScan.key}`,
+        });
+        return;
+      }
     }
 
     const normalized = normalizeLocalHookEvent(body);
@@ -194,10 +200,10 @@ export function getHookSendReadiness(config: CliConfig | null, payload: CliSigna
     };
   }
 
-  if (payload.serviceId !== "anthropic-claude-code") {
+  if (!SENDABLE_LOCAL_HOOK_SERVICES.has(payload.serviceId)) {
     return {
       ok: false,
-      reason: "Local hook signal sending is currently supported for Claude Code only.",
+      reason: "Local hook signal sending is not supported for this serviceId.",
     };
   }
 
