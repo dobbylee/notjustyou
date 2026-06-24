@@ -15,6 +15,17 @@ export interface RegisteredCollector extends CollectorRecord {
   collectorToken: string;
 }
 
+export class SignalServerConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SignalServerConfigError";
+  }
+}
+
+export function isSignalServerConfigError(error: unknown) {
+  return error instanceof SignalServerConfigError;
+}
+
 export function createCollectorRecord(
   input: CollectorRegistrationInput,
   now = new Date(),
@@ -49,7 +60,9 @@ export function getSignalSecret() {
   if (secret) return secret;
 
   if (process.env.NODE_ENV === "production") {
-    throw new Error("NOTJUSTYOU_SIGNAL_SECRET is required in production.");
+    throw new SignalServerConfigError(
+      "NOTJUSTYOU_SIGNAL_SECRET is required in production.",
+    );
   }
 
   return "notjustyou-local-development-signal-secret";
@@ -58,4 +71,3 @@ export function getSignalSecret() {
 function hmacValue(value: string, secret: string) {
   return createHmac("sha256", secret).update(value).digest("hex");
 }
-

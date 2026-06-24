@@ -45,6 +45,7 @@ const collector: CollectorRecord = {
 };
 
 beforeEach(() => {
+  vi.unstubAllEnvs();
   vi.clearAllMocks();
   storage.findCollectorByToken.mockResolvedValue(collector);
   storage.checkRegistrationRateLimit.mockResolvedValue({
@@ -105,6 +106,102 @@ describe("signals API", () => {
       ok: false,
       reason: "rate_limited",
       retryAfterSeconds: 60,
+    });
+  });
+
+  it("classifies server config failures separately from Redis failures", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NOTJUSTYOU_SIGNAL_SECRET", "");
+
+    const configResponse = await registerCollector(
+      jsonRequest("http://localhost/api/collectors/register", {
+        source: "api_middleware",
+        serviceIds: ["openai-api"],
+        clientName: "notjustyou-sdk-js",
+        clientVersion: "0.1.0",
+      }),
+    );
+
+    expect(configResponse.status).toBe(503);
+    expect(await configResponse.json()).toEqual({
+      ok: false,
+      reason: "server_config_error",
+    });
+    expect(storage.registerCollector).not.toHaveBeenCalled();
+    expect(storage.checkRegistrationRateLimit).not.toHaveBeenCalled();
+
+    const signalResponse = await submitSignal(
+      signalRequest({
+        serviceId: "openai-api",
+        source: "api_middleware",
+        symptom: "error",
+      }),
+    );
+
+    expect(signalResponse.status).toBe(503);
+    expect(await signalResponse.json()).toEqual({
+      ok: false,
+      reason: "server_config_error",
+    });
+
+    const heartbeatResponse = await submitHeartbeat(
+      jsonRequest(
+        "http://localhost/api/collectors/heartbeat",
+        {
+          installationId: "random-local-id",
+          clientVersion: "0.1.0",
+        },
+        {
+          authorization: "Bearer njy_token",
+        },
+      ),
+    );
+
+    expect(heartbeatResponse.status).toBe(503);
+    expect(await heartbeatResponse.json()).toEqual({
+      ok: false,
+      reason: "server_config_error",
+    });
+
+    vi.unstubAllEnvs();
+    storage.checkRegistrationRateLimit.mockRejectedValueOnce(
+      new Error("Socket closed unexpectedly"),
+    );
+
+    const redisResponse = await registerCollector(
+      jsonRequest("http://localhost/api/collectors/register", {
+        source: "api_middleware",
+        serviceIds: ["openai-api"],
+        clientName: "notjustyou-sdk-js",
+        clientVersion: "0.1.0",
+      }),
+    );
+
+    expect(redisResponse.status).toBe(503);
+    expect(await redisResponse.json()).toEqual({
+      ok: false,
+      reason: "redis_unavailable",
+    });
+  });
+
+  it("does not label unexpected registration failures as Redis outages", async () => {
+    storage.checkRegistrationRateLimit.mockRejectedValueOnce(
+      new Error("unexpected failure"),
+    );
+
+    const response = await registerCollector(
+      jsonRequest("http://localhost/api/collectors/register", {
+        source: "api_middleware",
+        serviceIds: ["openai-api"],
+        clientName: "notjustyou-sdk-js",
+        clientVersion: "0.1.0",
+      }),
+    );
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      ok: false,
+      reason: "internal_error",
     });
   });
 

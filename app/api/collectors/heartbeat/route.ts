@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { classifySignalOperationalError } from "@/lib/signals/errors";
 import { validateHeartbeatRequest } from "../../signals/request";
 
 export const runtime = "nodejs";
@@ -22,15 +23,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
     });
-  } catch {
-    return signalError("redis_unavailable");
+  } catch (error) {
+    return signalError(classifySignalOperationalError(error));
   }
 }
 
 function signalError(reason: string, detail?: unknown) {
   const status =
-    reason === "redis_unavailable"
+    reason === "redis_unavailable" || reason === "server_config_error"
       ? 503
+      : reason === "internal_error"
+        ? 500
       : reason === "rate_limited"
         ? 429
         : reason === "missing_token" || reason === "invalid_token"

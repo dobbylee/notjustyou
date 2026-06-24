@@ -27,7 +27,9 @@ export type SignalErrorReason =
   | "rate_limited"
   | "observed_at_too_old"
   | "observed_at_in_future"
-  | "redis_unavailable";
+  | "internal_error"
+  | "redis_unavailable"
+  | "server_config_error";
 
 export async function readJsonBody(request: NextRequest) {
   const text = await request.text();
@@ -180,6 +182,7 @@ export async function validateRegistrationRequest(request: NextRequest) {
     };
   }
 
+  const secret = getSignalSecret();
   const storage = await getSignalStorage();
   const rateLimit = await storage.checkRegistrationRateLimit(
     getRequestFingerprint(request),
@@ -196,7 +199,7 @@ export async function validateRegistrationRequest(request: NextRequest) {
   return {
     ok: true as const,
     storage,
-    secret: getSignalSecret(),
+    secret,
     data: parsed.data,
   };
 }
