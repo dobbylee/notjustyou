@@ -12,7 +12,7 @@
       "source": {
         "source": "npm",
         "package": "@notjustyou/claude-code-plugin",
-        "version": "0.3.0"
+        "version": "0.3.1"
       },
       "category": "status",
       "tags": [

@@ -131,7 +131,7 @@ describe("Cursor status plugin", () => {
         source: "cli_hook",
         serviceIds: ["cursor-ide"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.0",
+        clientVersion: "0.3.1",
         localHookSignalOptIn: true,
       }),
     );
@@ -209,8 +209,8 @@ describe("Cursor status plugin", () => {
     expect(skill).toContain("mcp__plugin_notjustyou_status__disable_reporting");
     expect(skill).toContain('surface: "cursor"');
     expect(skill).toContain("confirmed: true");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.0 enable cursor");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.0 disable cursor");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.1 enable cursor");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.1 disable cursor");
     expect(skill).toContain("If the user confirms disabling reporting");
     expect(skill).toContain("metadata-only Cursor");
     expect(skill).toContain("Do not use Bash, setup, register, hook receiver");
@@ -228,7 +228,7 @@ describe("Cursor status plugin", () => {
     expect(command).toContain("Ask for explicit confirmation before enabling or disabling reporting");
     expect(command).toContain("mcp__plugin_notjustyou_status__enable_reporting");
     expect(command).toContain("mcp__plugin_notjustyou_status__disable_reporting");
-    expect(command).toContain("npx -y @notjustyou/cli@0.3.0 enable cursor");
+    expect(command).toContain("npx -y @notjustyou/cli@0.3.1 enable cursor");
     expect(command).toContain("Do not run shell commands from this command file.");
   });
 

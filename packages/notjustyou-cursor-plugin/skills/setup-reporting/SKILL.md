@@ -31,8 +31,8 @@ If the user confirms disabling reporting, call:
 If the setup MCP tools are unavailable, tell the user the fallback commands are:
 
 ```bash
-npx -y @notjustyou/cli@0.3.0 enable cursor
-npx -y @notjustyou/cli@0.3.0 disable cursor
+npx -y @notjustyou/cli@0.3.1 enable cursor
+npx -y @notjustyou/cli@0.3.1 disable cursor
 ```
 
 Do not use Bash, setup, register, hook receiver, curl, npm install, file reads, or any other command from this skill.

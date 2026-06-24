@@ -38,7 +38,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.0",
+          clientVersion: "0.3.1",
         });
 
         return jsonResponse({
@@ -68,7 +68,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("Collector registered.");
     expect(output).toContain("Token: saved locally; raw token is not printed.");
     expect(output).not.toContain("njy_raw_secret");
-    expect(readConfig()?.clientVersion).toBe("0.3.0");
+    expect(readConfig()?.clientVersion).toBe("0.3.1");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {
@@ -215,7 +215,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.0",
+          clientVersion: "0.3.1",
         });
 
         return jsonResponse({
@@ -243,7 +243,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Claude Code reporting enabled.");
@@ -259,7 +259,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.0",
+          clientVersion: "0.3.1",
         });
 
         return jsonResponse({
@@ -287,7 +287,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Cursor reporting enabled.");
@@ -305,7 +305,7 @@ describe("CLI setup and registration", () => {
       source: "api_middleware",
       serviceIds: ["openai-api"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
     });
 
     await expect(
@@ -328,7 +328,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
       localHookSignalOptIn: false,
     });
 
@@ -351,7 +351,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
       localHookSignalOptIn: true,
     });
 
@@ -375,7 +375,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
       localHookSignalOptIn: true,
     });
 
@@ -400,7 +400,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
       localHookSignalOptIn: true,
     });
 
@@ -424,7 +424,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.0",
+      clientVersion: "0.3.1",
       localHookSignalOptIn: true,
     });
 
