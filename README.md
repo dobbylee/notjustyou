@@ -109,6 +109,11 @@ sending requires explicit reporting opt-in and the local receiver path. The
 Codex plugin remains status-only because current Codex hook and telemetry
 surfaces do not yet provide a reliable service-failure classifier.
 
+Cursor support is available as a package while marketplace distribution is
+pending. See
+[packages/notjustyou-cursor-plugin](packages/notjustyou-cursor-plugin) for
+manual install instructions.
+
 ## Project Status
 
 Current:
@@ -120,16 +125,13 @@ Current:
 - Dashboard source breakdown for community reports, installed signals, and official status
 - MCP status lookup with explicit local reporting setup tools
 - Claude Code status plugin with opt-in local hook reporting
-- Cursor plugin package foundation with status lookup and opt-in local hook
-  forwarding; marketplace distribution is pending
+- Cursor plugin package with status lookup and opt-in local hook reporting
 - Codex status-only plugin; automatic Codex reporting is deferred until a
   reliable service-failure classifier exists
 - Node SDK core for OpenAI API, Claude API, and Gemini API metadata-only middleware signals
-- SDK retry, backoff, and local coalescing
-- Redis-backed counters and short dedupe windows
 - No account or login requirement
 
-Browser extensions, MCP monitor collectors, WebSocket transport, durable event warehouses, and broader vendor-specific collectors are later work. Codex hook collection is intentionally deferred until local raw hook payloads can be classified into reliable service-level metadata without storing or sending prompt, command, tool input, or tool output content.
+Browser extensions and broader vendor-specific collectors are not part of the current release.
 
 ## Privacy Boundary
 
@@ -137,24 +139,29 @@ Not Just You should collect the smallest metadata needed to show service-level s
 
 Currently collected:
 
-- Service id
-- Report option: `Slow`, `Error`, or `Down`
-- Installed-client symptom category
-- Installed-client status code, duration, short error code, configured collector client version, and coarse region hint when submitted
-- Opt-in local hook failure metadata after receiver normalization
-- Random installed-client installation id, stored locally by the SDK; server aggregation stores only derived hashes
-- Anonymous collector registration metadata: collector id, allowed source, allowed services, client name/version, registration time, and revocation time when applicable
-- Collector heartbeat metadata: collector id, derived installation hash, client version, and last seen time
+- Service id and community report option: `Slow`, `Error`, or `Down`
+- Official status summaries from provider status pages
+- Installed-client symptom category and small metadata such as status code,
+  duration, short error code, client version, and coarse region hint when
+  submitted
+- Opt-in local hook failure metadata after local normalization
+- Random installed-client installation id, stored locally; server aggregation
+  stores only derived hashes
+- Anonymous collector setup metadata: collector id, allowed source, allowed
+  services, client name/version, registration time, and revocation time when
+  applicable
+- Collector heartbeat metadata: collector id, derived installation hash, client
+  version, and last seen time
 - Minute-bucketed counters
-- Short-lived same-service dedupe fingerprint. Request metadata can be processed to create this hash, but raw IP, user agent, and language values are not stored.
-- Aggregate button click counters
-- Vercel Web Analytics page views and referrers
+- Short-lived same-service dedupe fingerprint. Request metadata can be
+  processed to create this hash, but raw IP, user agent, and language values
+  are not stored.
+- Aggregate site interaction and page analytics, including Vercel Web
+  Analytics page views and referrers
 
-Collector auth:
-
-- Raw collector tokens are saved locally by `njy setup` and are not printed.
-- Installed-client signal submission uses the collector token as Not Just You authorization.
-- Server-side token lookup uses derived token data; raw collector tokens are not stored.
+Raw collector tokens are saved locally by `njy setup` and are not printed.
+Server-side token lookup uses derived token data; raw collector tokens are not
+stored.
 
 Local hook processing:
 
