@@ -1,5 +1,5 @@
 import type { PayloadPreviewResult } from "./types.js";
-import { previewLocalHookEvent } from "./local-hook.js";
+import { isRawVendorHookEnvelope, previewLocalHookEvent } from "./local-hook.js";
 
 const SENSITIVE_KEYS = new Set([
   "prompt",
@@ -84,6 +84,10 @@ const ISO_DATETIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?Z$/;
 
 export function previewPayload(input: unknown): PayloadPreviewResult {
+  if (isRawVendorHookEnvelope(input)) {
+    return previewLocalHookEvent(input);
+  }
+
   const sensitiveScan = scanForSensitiveKeys(input);
   if (!sensitiveScan.ok) {
     return {

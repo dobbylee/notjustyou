@@ -54,6 +54,123 @@ describe("CLI payload preview", () => {
     expect(output).not.toContain("surface");
   });
 
+  it("accepts raw Cursor hook fixtures but prints only normalized metadata", async () => {
+    const fixture = writeFixture({
+      rawHook: "cursor",
+      payload: {
+        hook_event_name: "stop",
+        status: "error",
+        cursor_version: "1.7.2",
+        user_email: "alice@example.com",
+        workspace_roots: ["/Users/alice/private-project"],
+        transcript_path: "/Users/alice/.cursor/transcript.json",
+        prompt: "do not collect this prompt",
+        output: "do not collect this output",
+      },
+    });
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    await expect(main(["payload-preview", "--fixture", fixture])).resolves.toBe(0);
+
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Normalized hook signal preview:");
+    expect(output).toContain('"serviceId": "cursor-ide"');
+    expect(output).toContain('"source": "cli_hook"');
+    expect(output).toContain('"errorCode": "cursor_agent_error"');
+    expect(output).not.toContain("alice@example.com");
+    expect(output).not.toContain("/Users/alice");
+    expect(output).not.toContain("do not collect");
+    expect(output).not.toContain("transcript");
+  });
+
+  it("rejects raw Codex hooks with a report-specific reason", () => {
+    expect(
+      previewPayload({
+        rawHook: "codex",
+        payload: {
+          hook_event_name: "PostToolUse",
+          tool_input: {
+            command: "npm test",
+          },
+          tool_response: "failing output",
+          transcript_path: "/Users/alice/.codex/transcript.json",
+        },
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Codex raw hooks are not classified as service failure signals yet.",
+    });
+  });
+
+  it("does not bypass sensitive scanning for malformed raw hook envelopes", () => {
+    expect(
+      previewPayload({
+        rawHook: "cursor",
+        payload: {
+          hook_event_name: "stop",
+          status: "error",
+        },
+        prompt: "top-level raw prompt",
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Sensitive field rejected: prompt",
+    });
+  });
+
+  it("omits sensitive-looking optional metadata from raw Cursor hooks", () => {
+    for (const cursorVersion of [
+      "/Users/alice/.cursor",
+      "/tmp/cursor-version",
+      "/private/tmp/cursor-version",
+      "C:\\temp\\cursor-version",
+      "not-a-version",
+    ]) {
+      expect(
+        previewPayload({
+          rawHook: "cursor",
+          payload: {
+            hook_event_name: "stop",
+            status: "error",
+            cursor_version: cursorVersion,
+          },
+        }),
+      ).toEqual({
+        ok: true,
+        kind: "hook",
+        payload: {
+          serviceId: "cursor-ide",
+          source: "cli_hook",
+          symptom: "error",
+          errorCode: "cursor_agent_error",
+        },
+      });
+    }
+  });
+
+  it("keeps version-shaped optional metadata from raw Cursor hooks", () => {
+    expect(
+      previewPayload({
+        rawHook: "cursor",
+        payload: {
+          hook_event_name: "stop",
+          status: "error",
+          cursor_version: "1.7.2-beta.1",
+        },
+      }),
+    ).toEqual({
+      ok: true,
+      kind: "hook",
+      payload: {
+        serviceId: "cursor-ide",
+        source: "cli_hook",
+        symptom: "error",
+        errorCode: "cursor_agent_error",
+        clientVersion: "1.7.2-beta.1",
+      },
+    });
+  });
+
   it("normalizes only allowed hook fields", () => {
     expect(
       normalizeLocalHookEvent({

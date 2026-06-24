@@ -163,8 +163,48 @@ describe("CLI setup and registration", () => {
         "openai-codex-cli",
         "--enable-local-hooks",
       ]),
-    ).rejects.toThrow("--enable-local-hooks currently supports anthropic-claude-code only.");
+    ).rejects.toThrow(
+      "--enable-local-hooks currently supports anthropic-claude-code and cursor-ide only.",
+    );
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("registers Cursor local hook opt-in for the raw local adapter", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["cursor-ide"],
+        });
+
+        return jsonResponse({
+          collectorId: "col_cursor",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "register",
+        "--source",
+        "cli_hook",
+        "--service",
+        "cursor-ide",
+        "--enable-local-hooks",
+      ]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      localHookSignalOptIn: true,
+    });
   });
 
   it("enables Claude Code reporting with one command", async () => {

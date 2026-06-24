@@ -46,6 +46,8 @@ This plugin is status-only. It reads public aggregate status APIs through
 It does not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, machine names, or local usernames.
 
 Hook-based signal collection is intentionally not included in this plugin
-release. A future Codex reporting flow should use the same explicit opt-in
-setup shape as Claude Code after Codex hook payloads can be classified without
-tool input or result bodies.
+release. Current Codex hook and telemetry surfaces do not yet provide a reliable
+service-failure classifier. A future Codex reporting flow should use the same
+explicit opt-in setup shape as Claude Code only after a local adapter can turn
+raw hook or telemetry payloads into service-level metadata without storing,
+logging, queuing, or sending raw prompts, commands, tool input, or tool output.

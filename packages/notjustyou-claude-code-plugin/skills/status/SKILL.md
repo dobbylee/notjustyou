@@ -20,6 +20,8 @@ If the user asks about hook reporting, explain that optional Claude Code failure
 hooks can forward metadata-only events to a local receiver only after reporting
 opt-in. Users can enable or disable that path with `njy enable claude-code` and
 `njy disable claude-code`; hooks do not call public `/api/signals` directly.
+Describe hook reporting as best-effort installed-client reporting, not
+guaranteed outage detection.
 
 Keep manual community reports, installed-client signals, and official status separate in the answer. Do not infer a vendor-wide outage from one source alone.
 

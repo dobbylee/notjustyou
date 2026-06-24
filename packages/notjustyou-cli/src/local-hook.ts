@@ -1,5 +1,7 @@
 import type { CliSignalPayload, PayloadPreviewResult, SignalSymptom } from "./types.js";
 
+const RAW_HOOK_ADAPTERS = new Set(["cursor", "codex"]);
+const VERSION_PATTERN = /^[0-9]+(?:\.[0-9]+){0,3}(?:[-+][0-9A-Za-z.-]+)?$/;
 const ALLOWED_HOOK_FIELDS = new Set([
   "serviceId",
   "surface",
@@ -16,6 +18,7 @@ const SURFACE_SERVICE_IDS = {
   "claude-code": "anthropic-claude-code",
   "codex-cli": "openai-codex-cli",
   "codex-app": "openai-codex-app",
+  "cursor-ide": "cursor-ide",
 } as const;
 
 const SIGNAL_SYMPTOMS = new Set([
@@ -63,6 +66,10 @@ export function normalizeLocalHookEvent(input: unknown): LocalHookEventResult {
       ok: false,
       reason: "Hook fixture must be a JSON object.",
     };
+  }
+
+  if (isRawVendorHookEnvelope(input)) {
+    return normalizeRawVendorHookEnvelope(input);
   }
 
   const event = input as Record<string, unknown>;
@@ -182,12 +189,158 @@ export function normalizeLocalHookEvent(input: unknown): LocalHookEventResult {
   };
 }
 
+export function isRawVendorHookEnvelope(input: unknown): input is {
+  rawHook: string;
+  payload: Record<string, unknown>;
+} {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return false;
+  }
+
+  const envelope = input as Record<string, unknown>;
+  const fields = Object.keys(envelope);
+  return (
+    fields.length === 2 &&
+    typeof envelope.rawHook === "string" &&
+    RAW_HOOK_ADAPTERS.has(envelope.rawHook) &&
+    Boolean(envelope.payload) &&
+    typeof envelope.payload === "object" &&
+    !Array.isArray(envelope.payload)
+  );
+}
+
+function normalizeRawVendorHookEnvelope(input: {
+  rawHook: string;
+  payload: Record<string, unknown>;
+}): LocalHookEventResult {
+  if (input.rawHook === "cursor") {
+    return normalizeCursorRawHook(input.payload);
+  }
+
+  if (input.rawHook === "codex") {
+    return normalizeCodexRawHook(input.payload);
+  }
+
+  return {
+    ok: false,
+    reason: "Raw hook adapter is unsupported.",
+  };
+}
+
+function normalizeCursorRawHook(payload: Record<string, unknown>): LocalHookEventResult {
+  const eventName = normalizeEventName(payload.hook_event_name);
+  if (!eventName) {
+    return {
+      ok: false,
+      reason: "Cursor raw hook is missing hook_event_name.",
+    };
+  }
+
+  if (eventName === "stop") {
+    if (payload.status !== "error") {
+      return {
+        ok: false,
+        reason: "Cursor stop hook did not report an error status.",
+      };
+    }
+
+    return {
+      ok: true,
+      payload: {
+        serviceId: "cursor-ide",
+        source: "cli_hook",
+        symptom: "error",
+        errorCode: "cursor_agent_error",
+        ...pickDefined({
+          clientVersion: normalizeOptionalString(payload.cursor_version, 1, 80),
+        }),
+      },
+    };
+  }
+
+  if (eventName === "sessionend") {
+    if (payload.reason !== "error") {
+      return {
+        ok: false,
+        reason: "Cursor sessionEnd hook did not report an error reason.",
+      };
+    }
+
+    return {
+      ok: true,
+      payload: {
+        serviceId: "cursor-ide",
+        source: "cli_hook",
+        symptom: "error",
+        errorCode: "cursor_session_error",
+        ...pickDefined({
+          durationMs: normalizeDuration(payload.duration_ms),
+          clientVersion: normalizeOptionalString(payload.cursor_version, 1, 80),
+        }),
+      },
+    };
+  }
+
+  return {
+    ok: false,
+    reason: "Cursor raw hook event is not a supported failure-only signal.",
+  };
+}
+
+function normalizeCodexRawHook(payload: Record<string, unknown>): LocalHookEventResult {
+  const eventName = normalizeEventName(payload.hook_event_name);
+  if (!eventName) {
+    return {
+      ok: false,
+      reason: "Codex raw hook is missing hook_event_name.",
+    };
+  }
+
+  return {
+    ok: false,
+    reason:
+      "Codex raw hooks are not classified as service failure signals yet.",
+  };
+}
+
 function isLocalHookSurface(value: unknown): value is LocalHookSurface {
   return typeof value === "string" && value in SURFACE_SERVICE_IDS;
 }
 
 function isStringInRange(value: unknown, min: number, max: number): value is string {
   return typeof value === "string" && value.length >= min && value.length <= max;
+}
+
+function normalizeEventName(value: unknown) {
+  return typeof value === "string" ? value.toLowerCase() : null;
+}
+
+function normalizeOptionalString(value: unknown, min: number, max: number) {
+  if (!isStringInRange(value, min, max)) {
+    return undefined;
+  }
+
+  if (!VERSION_PATTERN.test(value)) {
+    return undefined;
+  }
+
+  if (
+    containsEmailLikeValue(value) ||
+    containsSecretLikeValue(value) ||
+    containsPathLikeValue(value)
+  ) {
+    return undefined;
+  }
+
+  return value;
+}
+
+function normalizeDuration(value: unknown) {
+  if (!Number.isInteger(value) || Number(value) < 0 || Number(value) > 600_000) {
+    return undefined;
+  }
+
+  return value;
 }
 
 function isValidUtcDatetime(value: string) {
