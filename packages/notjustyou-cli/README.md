@@ -24,6 +24,9 @@ njy status openai-api --watch
 njy status --base-url http://localhost:3000
 njy setup
 njy enable claude-code
+njy enable cursor
+njy disable claude-code
+njy disable cursor
 ```
 
 `status` reads public status summaries:
@@ -34,9 +37,10 @@ njy enable claude-code
 
 `setup` registers an anonymous collector for future opt-in SDK collectors, writes the collector token to the local Not Just You config file, and runs a lightweight readiness check. The raw token is not printed.
 
-`enable claude-code` opts in to metadata-only Claude Code hook reporting, writes
-a `cli_hook` collector config, and starts the local hook receiver in send mode.
-Use `disable claude-code` to turn that local hook sending off.
+`enable claude-code` and `enable cursor` opt in to metadata-only local hook
+reporting, write a `cli_hook` collector config, and start the local hook
+receiver in send mode. Use `disable claude-code` or `disable cursor` to turn
+that local hook sending off.
 
 The CLI does not submit reports or installed-client signals unless an opt-in
 collector path is enabled.
@@ -47,6 +51,7 @@ collector path is enabled.
 njy register --source api_middleware --service openai-api
 njy register --source cli_hook --service anthropic-claude-code --enable-local-hooks
 njy register --source cli_hook --service cursor-ide --enable-local-hooks
+njy enable cursor
 njy doctor
 njy payload-preview --fixture ./signal.json
 ```

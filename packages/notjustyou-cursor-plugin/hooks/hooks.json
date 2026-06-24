@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [
+      {
+        "command": "node ./hooks/forward-local-hook.mjs stop",
+        "timeout": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node ./hooks/forward-local-hook.mjs sessionEnd",
+        "timeout": 5
+      }
+    ]
+  }
+}

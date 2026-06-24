@@ -5,49 +5,22 @@ import { readFileSync, realpathSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import { checkCollectorToken, fetchStatusData, registerCollector } from "./api.js";
+import { checkCollectorToken, fetchStatusData } from "./api.js";
 import { getConfigMode, getConfigPath, readConfig, writeConfig } from "./config.js";
 import { formatStatus } from "./format.js";
 import { previewPayload } from "./privacy.js";
 import { createLocalHookReceiver, LOCAL_HOOK_RECEIVER_HEALTH } from "./receiver.js";
-import type { SignalSource } from "./types.js";
+import {
+  CLIENT_NAME,
+  CLIENT_VERSION,
+  DEFAULT_BASE_URL,
+  getReportingSurface,
+  registerAndWriteConfig,
+} from "./reporting-setup.js";
 
-const DEFAULT_BASE_URL = "https://notjustyou.dev";
 const WATCH_INTERVAL_MS = 2_000;
 const DEFAULT_SOURCE = "api_middleware";
 const DEFAULT_SERVICE_ID = "openai-api";
-const CLIENT_NAME = "notjustyou-cli";
-const CLIENT_VERSION = "0.3.0";
-const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
-const LOCAL_HOOK_REPORTING_SERVICES = new Set([
-  CLAUDE_CODE_REPORTING_SERVICE,
-  "cursor-ide",
-]);
-const SIGNAL_SOURCES = new Set([
-  "api_middleware",
-  "cli_hook",
-  "ide_extension",
-  "browser_extension",
-  "mcp_monitor",
-  "local_probe",
-]);
-const SERVICE_IDS = new Set([
-  "anthropic-claude-code",
-  "anthropic-claude-ai",
-  "anthropic-claude-cowork",
-  "anthropic-claude-api",
-  "openai-codex-cli",
-  "openai-codex-app",
-  "openai-chatgpt",
-  "openai-api",
-  "google-antigravity-cli",
-  "google-antigravity",
-  "google-antigravity-ide",
-  "google-gemini-web",
-  "google-gemini-api",
-  "cursor-ide",
-  "cursor-cli",
-]);
 
 export async function main(argv = process.argv.slice(2)) {
   const parsed = parseCliArgs(argv);
@@ -254,7 +227,7 @@ async function runEnable(input: {
   skipReceiver: boolean;
   quiet: boolean;
 }) {
-  assertReportingSurface(input.serviceId);
+  const surface = getReportingSurface(input.serviceId);
 
   const existingConfig = readConfig();
   let config = existingConfig;
@@ -262,28 +235,28 @@ async function runEnable(input: {
   if (
     !config ||
     config.source !== "cli_hook" ||
-    !config.serviceIds.includes(CLAUDE_CODE_REPORTING_SERVICE) ||
+    !config.serviceIds.includes(surface.serviceId) ||
     config.localHookSignalOptIn !== true
   ) {
     if (config && config.source !== "cli_hook") {
       throw new Error(
-        "Existing config uses a different collector source. Automatic Claude Code reporting needs a cli_hook config.",
+        `Existing config uses a different collector source. Automatic ${surface.displayName} reporting needs a cli_hook config.`,
       );
     }
     if (
       config &&
       config.source === "cli_hook" &&
-      config.serviceIds.some((serviceId) => serviceId !== CLAUDE_CODE_REPORTING_SERVICE)
+      config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)
     ) {
       throw new Error(
-        "Existing cli_hook config includes services outside Claude Code. Re-run manual registration for a Claude Code-only hook config.",
+        `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
       );
     }
 
     config = await registerAndWriteConfig({
       baseUrl: input.baseUrl,
       source: "cli_hook",
-      serviceIds: [CLAUDE_CODE_REPORTING_SERVICE],
+      serviceIds: [surface.serviceId],
       enableLocalHooks: true,
     });
   }
@@ -293,7 +266,7 @@ async function runEnable(input: {
     : await ensureHookReceiverRunning();
 
   if (!input.quiet) {
-    console.log("Claude Code reporting enabled.");
+    console.log(`${surface.displayName} reporting enabled.`);
     console.log(`Config: ${getConfigPath()}`);
     console.log(`Collector: ${config.collectorId}`);
     console.log("Allowed source: cli_hook");
@@ -304,19 +277,32 @@ async function runEnable(input: {
 }
 
 function runDisable(input: { serviceId: string | undefined; quiet: boolean }) {
-  assertReportingSurface(input.serviceId);
+  const surface = getReportingSurface(input.serviceId);
 
   const config = readConfig();
   if (!config) {
-    if (!input.quiet) console.log("Claude Code reporting is not configured.");
+    if (!input.quiet) console.log(`${surface.displayName} reporting is not configured.`);
     return;
   }
 
   if (config.source !== "cli_hook") {
     if (!input.quiet) {
-      console.log("Claude Code reporting is not enabled for this config.");
+      console.log(`${surface.displayName} reporting is not enabled for this config.`);
     }
     return;
+  }
+
+  if (!config.serviceIds.includes(surface.serviceId)) {
+    if (!input.quiet) {
+      console.log(`${surface.displayName} reporting is not enabled for this config.`);
+    }
+    return;
+  }
+
+  if (config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)) {
+    throw new Error(
+      `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
+    );
   }
 
   writeConfig({
@@ -325,51 +311,9 @@ function runDisable(input: { serviceId: string | undefined; quiet: boolean }) {
   });
 
   if (!input.quiet) {
-    console.log("Claude Code reporting disabled.");
+    console.log(`${surface.displayName} reporting disabled.`);
     console.log("The local receiver may keep running, but it will not send hook signals.");
   }
-}
-
-async function registerAndWriteConfig(input: {
-  baseUrl: string;
-  source: string;
-  serviceIds: string[];
-  enableLocalHooks: boolean;
-}) {
-  assertSupportedSource(input.source);
-  const serviceIds = [...new Set(input.serviceIds)];
-  serviceIds.forEach(assertSupportedService);
-  if (input.enableLocalHooks && input.source !== "cli_hook") {
-    throw new Error("--enable-local-hooks requires --source cli_hook.");
-  }
-  if (
-    input.enableLocalHooks &&
-    serviceIds.some((serviceId) => !LOCAL_HOOK_REPORTING_SERVICES.has(serviceId))
-  ) {
-    throw new Error(
-      "--enable-local-hooks currently supports anthropic-claude-code and cursor-ide only.",
-    );
-  }
-
-  const source = input.source as SignalSource;
-  const registration = await registerCollector({
-    baseUrl: input.baseUrl,
-    source,
-    serviceIds,
-    clientName: CLIENT_NAME,
-    clientVersion: CLIENT_VERSION,
-  });
-
-  return writeConfig({
-    baseUrl: input.baseUrl,
-    collectorId: registration.collectorId,
-    collectorToken: registration.collectorToken,
-    source,
-    serviceIds,
-    clientName: CLIENT_NAME,
-    clientVersion: CLIENT_VERSION,
-    ...(input.enableLocalHooks ? { localHookSignalOptIn: true } : {}),
-  });
 }
 
 async function runDoctor(input: { baseUrl: string }) {
@@ -484,24 +428,6 @@ async function runHookReceiver(input: { port: string | undefined; send: boolean 
   });
 }
 
-function assertSupportedSource(source: string) {
-  if (!SIGNAL_SOURCES.has(source)) {
-    throw new Error(`Unsupported source: ${source}`);
-  }
-}
-
-function assertSupportedService(serviceId: string) {
-  if (!SERVICE_IDS.has(serviceId)) {
-    throw new Error(`Unsupported service: ${serviceId}`);
-  }
-}
-
-function assertReportingSurface(surface: string | undefined) {
-  if (surface !== "claude-code") {
-    throw new Error("Supported reporting surface: claude-code.");
-  }
-}
-
 async function ensureHookReceiverRunning() {
   if (await isHookReceiverRunning()) return "already running";
 
@@ -546,7 +472,9 @@ function printUsage() {
   njy setup [--source <source>] [--service <serviceId> ...] [--base-url <url>] [--enable-local-hooks]
   njy register [--source <source>] [--service <serviceId> ...] [--base-url <url>] [--enable-local-hooks]
   njy enable claude-code [--base-url <url>]
+  njy enable cursor [--base-url <url>]
   njy disable claude-code
+  njy disable cursor
   njy doctor [--base-url <url>]
   njy payload-preview --fixture <path>
   njy hook-receiver [--port <port>] [--send]
@@ -555,6 +483,7 @@ Examples:
   njy status
   njy setup
   njy enable claude-code
+  njy enable cursor
   njy status openai-api --base-url http://localhost:3000
   njy status openai-api --watch
   njy payload-preview --fixture ./signal.json

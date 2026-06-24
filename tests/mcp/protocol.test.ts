@@ -10,7 +10,7 @@ import {
 } from "@/packages/notjustyou-mcp/src/protocol";
 
 describe("MCP JSON-RPC protocol", () => {
-  it("negotiates read-only tools capability", async () => {
+  it("negotiates tools capability", async () => {
     const response = await handleJsonRpcMessage({
       jsonrpc: "2.0",
       id: 1,
@@ -74,6 +74,30 @@ describe("MCP JSON-RPC protocol", () => {
           },
           {
             name: "explain_privacy",
+          },
+          {
+            name: "get_reporting_setup_state",
+            inputSchema: {
+              required: ["surface"],
+            },
+          },
+          {
+            name: "enable_reporting",
+            inputSchema: {
+              required: ["surface", "confirmed"],
+            },
+            annotations: {
+              readOnlyHint: false,
+            },
+          },
+          {
+            name: "disable_reporting",
+            inputSchema: {
+              required: ["surface", "confirmed"],
+            },
+            annotations: {
+              readOnlyHint: false,
+            },
           },
         ],
       },

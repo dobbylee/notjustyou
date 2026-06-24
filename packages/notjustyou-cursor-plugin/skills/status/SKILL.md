@@ -1,6 +1,6 @@
 ---
+name: status
 description: Check Not Just You public AI service status for OpenAI, Anthropic Claude, Google Gemini, Cursor, and related coding surfaces. Use when the user asks if an AI service is down, degraded, rate limited, or showing recent problem signals.
-argument-hint: "[service id or provider]"
 allowed-tools: mcp__plugin_notjustyou_status__list_surfaces mcp__plugin_notjustyou_status__get_surface_status mcp__plugin_notjustyou_status__get_recent_signals mcp__plugin_notjustyou_status__explain_privacy
 disallowed-tools: Read Grep Glob Bash Edit Write MultiEdit NotebookRead NotebookEdit WebFetch WebSearch
 ---
@@ -16,10 +16,12 @@ When the user names a provider or asks what is affected, call `list_surfaces` an
 When the user asks about recent installed-client reports for one surface, call `get_recent_signals`.
 
 When the user asks what the status skill reads or sends, call `explain_privacy`.
-If the user asks about hook reporting, explain that optional Claude Code failure
-hooks can forward metadata-only events to a local receiver only after reporting
-opt-in. Users can enable or disable that path through the `setup-reporting`
-skill; hooks do not call public `/api/signals` directly.
+If the user asks about hook reporting, explain that optional Cursor hooks can
+forward only an allowlisted local hook envelope to a local receiver after local
+reporting opt-in. The local adapter derives metadata-only signals without
+receiving raw prompts, commands, outputs, file paths, emails, transcript paths,
+or tool bodies.
+Hooks do not call public `/api/signals` directly.
 Describe hook reporting as best-effort installed-client reporting, not
 guaranteed outage detection.
 If the user asks to set up, enable, disable, or configure reporting, route them

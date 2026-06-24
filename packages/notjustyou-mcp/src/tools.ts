@@ -1,3 +1,11 @@
+import {
+  DEFAULT_BASE_URL,
+  disableReporting,
+  enableReporting,
+  getReportingSetupState,
+  getReportingSurface,
+  type ReportingSurfaceId,
+} from "@notjustyou/cli/reporting-setup";
 import { fetchInstalledSignalSummary, fetchStatusData } from "./api.js";
 import type {
   CommunityServiceSummary,
@@ -6,15 +14,13 @@ import type {
   StatusData,
 } from "./types.js";
 
-export const DEFAULT_BASE_URL = "https://notjustyou.dev";
-
 export interface McpTool {
   name: string;
   title: string;
   description: string;
   inputSchema: JsonSchema;
   annotations: {
-    readOnlyHint: true;
+    readOnlyHint: boolean;
   };
 }
 
@@ -23,7 +29,7 @@ export interface ToolResult {
     type: "text";
     text: string;
   }>;
-  structuredContent?: Record<string, unknown>;
+  structuredContent?: object;
   isError?: boolean;
 }
 
@@ -115,6 +121,87 @@ export const TOOLS = [
       readOnlyHint: true,
     },
   },
+  {
+    name: "get_reporting_setup_state",
+    title: "Get Reporting Setup State",
+    description:
+      "Read local Not Just You automatic reporting setup state for Claude Code or Cursor without exposing collector tokens or local file paths.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        surface: {
+          type: "string",
+          enum: ["claude-code", "cursor"],
+          description: "Reporting surface to inspect.",
+        },
+      },
+      required: ["surface"],
+      additionalProperties: false,
+    },
+    annotations: {
+      readOnlyHint: true,
+    },
+  },
+  {
+    name: "enable_reporting",
+    title: "Enable Local Reporting",
+    description:
+      "Enable opt-in local hook reporting for Claude Code or Cursor after the user explicitly asks for or confirms setup. This writes local config, registers a collector token, and may start the localhost hook receiver. It does not submit a signal.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        surface: {
+          type: "string",
+          enum: ["claude-code", "cursor"],
+          description: "Reporting surface to enable.",
+        },
+        confirmed: {
+          type: "boolean",
+          const: true,
+          description: "Must be true only after explicit user request or confirmation.",
+        },
+        startReceiver: {
+          type: "boolean",
+          description: "Start the local hook receiver. Defaults to true.",
+        },
+        baseUrl: {
+          type: "string",
+          description: "Optional Not Just You base URL. Defaults to production.",
+        },
+      },
+      required: ["surface", "confirmed"],
+      additionalProperties: false,
+    },
+    annotations: {
+      readOnlyHint: false,
+    },
+  },
+  {
+    name: "disable_reporting",
+    title: "Disable Local Reporting",
+    description:
+      "Disable opt-in local hook reporting for Claude Code or Cursor after the user explicitly asks for or confirms disabling. This updates local config only and does not delete public data.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        surface: {
+          type: "string",
+          enum: ["claude-code", "cursor"],
+          description: "Reporting surface to disable.",
+        },
+        confirmed: {
+          type: "boolean",
+          const: true,
+          description: "Must be true only after explicit user request or confirmation.",
+        },
+      },
+      required: ["surface", "confirmed"],
+      additionalProperties: false,
+    },
+    annotations: {
+      readOnlyHint: false,
+    },
+  },
 ] as const satisfies readonly McpTool[];
 
 export function getBaseUrl() {
@@ -179,9 +266,11 @@ export async function callTool(
     rejectUnknownFields(readObject(argumentsValue), []);
 
     return jsonToolResult({
-      readOnly: true,
-      sendsSignals: false,
-      requiresCollectorToken: false,
+      readOnlyStatusTools: true,
+      setupToolsWriteLocalConfig: true,
+      toolSubmitsSignals: false,
+      hookReceiverCanSendAfterOptIn: true,
+      requiresCollectorTokenForStatusLookup: false,
       readsPublicEndpoints: [
         "/api/summary",
         "/api/signals/summary",
@@ -201,6 +290,58 @@ export async function callTool(
         "machine or user names",
       ],
     });
+  }
+
+  if (name === "get_reporting_setup_state") {
+    const args = readObject(argumentsValue);
+    rejectUnknownFields(args, ["surface"]);
+    const surface = readReportingSurface(args.surface);
+
+    try {
+      return jsonToolResult(getReportingSetupState(surface));
+    } catch {
+      throw new ToolExecutionError("Failed to read local reporting setup state.");
+    }
+  }
+
+  if (name === "enable_reporting") {
+    const args = readObject(argumentsValue);
+    rejectUnknownFields(args, ["surface", "confirmed", "startReceiver", "baseUrl"]);
+    assertConfirmed(args.confirmed);
+    const surface = readReportingSurface(args.surface);
+    const startReceiver = readOptionalBoolean(args.startReceiver, "startReceiver");
+    const setupBaseUrl = readOptionalString(args.baseUrl, "baseUrl");
+
+    try {
+      return jsonToolResult({
+        ...(await enableReporting({
+          surface,
+          baseUrl: setupBaseUrl ?? baseUrl,
+          startReceiver,
+        })),
+        tokenPrinted: false,
+        signalSubmitted: false,
+      });
+    } catch {
+      throw new ToolExecutionError("Failed to enable local reporting.");
+    }
+  }
+
+  if (name === "disable_reporting") {
+    const args = readObject(argumentsValue);
+    rejectUnknownFields(args, ["surface", "confirmed"]);
+    assertConfirmed(args.confirmed);
+    const surface = readReportingSurface(args.surface);
+
+    try {
+      return jsonToolResult({
+        ...disableReporting({ surface }),
+        tokenPrinted: false,
+        signalSubmitted: false,
+      });
+    } catch {
+      throw new ToolExecutionError("Failed to disable local reporting.");
+    }
   }
 
   throw new Error(`Unknown tool: ${name}`);
@@ -331,7 +472,7 @@ function sourceAvailability(data: StatusData) {
   };
 }
 
-function jsonToolResult(value: Record<string, unknown>): ToolResult {
+function jsonToolResult(value: object): ToolResult {
   return {
     content: [
       {
@@ -375,6 +516,13 @@ function readRequiredString(value: unknown, name: string) {
   return value;
 }
 
+function readReportingSurface(value: unknown): ReportingSurfaceId {
+  const surface = readRequiredString(value, "surface");
+  getReportingSurface(surface);
+
+  return surface as ReportingSurfaceId;
+}
+
 function readOptionalString(value: unknown, name: string) {
   if (value === undefined) return undefined;
 
@@ -383,6 +531,22 @@ function readOptionalString(value: unknown, name: string) {
   }
 
   return value;
+}
+
+function readOptionalBoolean(value: unknown, name: string) {
+  if (value === undefined) return undefined;
+
+  if (typeof value !== "boolean") {
+    throw new Error(`${name} must be a boolean.`);
+  }
+
+  return value;
+}
+
+function assertConfirmed(value: unknown) {
+  if (value !== true) {
+    throw new Error("confirmed must be true after explicit user request or confirmation.");
+  }
 }
 
 function readOptionalWindowMinutes(value: unknown) {
