@@ -37,6 +37,13 @@ ln -s "$(pwd)/packages/notjustyou-cursor-plugin" ~/.cursor/plugins/local/notjust
 Install-only status lookup does not enable reporting. Cursor hook reporting is
 best-effort and only works when you explicitly opt in to local hook reporting
 with a Not Just You `cli_hook` collector for `cursor-ide`.
+
+Cursor's current public plugin manifest schema does not expose a stable
+install-time consent prompt or plugin-owned user configuration field for this
+reporting toggle. Until Cursor adds that surface, reporting setup is explicit
+after install through the conversational setup skill/command or the CLI
+fallback below.
+
 You can ask the plugin to set up Not Just You reporting; the `setup-reporting`
 skill explains the privacy boundary and asks for confirmation before calling
 the bundled setup MCP tool.
