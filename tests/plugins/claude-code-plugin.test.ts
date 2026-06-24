@@ -15,7 +15,7 @@ describe("Claude Code status plugin", () => {
       name: "notjustyou",
       description:
         "Adds Not Just You status tools and optional local hook reporting for Claude Code surfaces.",
-      version: "0.3.1",
+      version: "0.3.2",
       license: "MIT",
       userConfig: {
         enableReporting: {
@@ -34,7 +34,7 @@ describe("Claude Code status plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.0"],
+          args: ["-y", "@notjustyou/mcp@0.2.1"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -176,7 +176,7 @@ describe("Claude Code status plugin", () => {
             source: {
               source: "npm",
               package: "@notjustyou/claude-code-plugin",
-            version: "0.3.1",
+            version: "0.3.2",
           },
         },
       ],

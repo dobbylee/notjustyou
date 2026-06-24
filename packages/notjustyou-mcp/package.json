@@ -1,6 +1,6 @@
 {
   "name": "@notjustyou/mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server for Not Just You AI service status lookup and explicit local reporting setup.",
   "license": "MIT",
   "repository": {
@@ -19,7 +19,7 @@
     "notjustyou"
   ],
   "dependencies": {
-    "@notjustyou/cli": "workspace:*"
+    "@notjustyou/cli": "0.3.1"
   },
   "type": "module",
   "files": [
