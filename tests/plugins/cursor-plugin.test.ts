@@ -18,7 +18,7 @@ describe("Cursor status plugin", () => {
       displayName: "Not Just You",
       description:
         "Adds Not Just You status tools and optional local hook reporting for Cursor surfaces.",
-      version: "0.1.0",
+      version: "0.1.1",
       license: "MIT",
     });
     expect(manifest.name).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
@@ -31,7 +31,7 @@ describe("Cursor status plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.0"],
+          args: ["-y", "@notjustyou/mcp@0.2.1"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -244,7 +244,7 @@ describe("Cursor status plugin", () => {
         {
           name: "notjustyou",
           source: "packages/notjustyou-cursor-plugin",
-          version: "0.1.0",
+      version: "0.1.1",
           category: "Developer Tools",
         },
       ],

@@ -87,8 +87,8 @@ importers:
   packages/notjustyou-mcp:
     dependencies:
       '@notjustyou/cli':
-        specifier: workspace:*
-        version: link:../notjustyou-cli
+        specifier: 0.3.1
+        version: 0.3.1
 
   packages/notjustyou-sdk-js: {}
 
@@ -521,6 +521,11 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@notjustyou/cli@0.3.1':
+    resolution: {integrity: sha512-F5Il7dZlR8SIF0kjYr6K8gOcS9yHScEv1Hr6SjXNxR/T5lYZyldUyIZ8bPuxDPodeMdOwlh77MWIqSL5WT4UPA==}
+    engines: {node: '>=20.9.0'}
+    hasBin: true
 
   '@oxc-project/types@0.128.0':
     resolution: {integrity: sha512-huv1Y/LzBJkBVHt3OlC7u0zHBW9qXf1FdD7sGmc1rXc2P1mTwHssYv7jyGx5KAACSCH+9B3Bhn6Z9luHRvf7pQ==}
@@ -3005,6 +3010,8 @@ snapshots:
       fastq: 1.20.1
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@notjustyou/cli@0.3.1': {}
 
   '@oxc-project/types@0.128.0': {}
 
