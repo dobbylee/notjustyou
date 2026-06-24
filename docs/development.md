@@ -15,7 +15,10 @@ For contribution workflow and review rules, read [CONTRIBUTING.md](../CONTRIBUTI
 
 ## Requirements
 
-- Node `>=20.9.0`
+- Node 24 for the app runtime and repository-level development. The repository
+  includes `.nvmrc` with `24`.
+- Package manifests in this checkout allow Node `>=22 <25` where packages are
+  designed to run outside the app.
 - pnpm `10.30.3`
 - Redis
 
