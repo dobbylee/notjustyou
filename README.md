@@ -8,7 +8,7 @@ The current MVP is a public dashboard with anonymous community reports, official
 
 ### Dashboard
 
-Use the public dashboard at `https://notjustyou.dev`.
+Use the public dashboard at [https://notjustyou.dev](https://notjustyou.dev).
 
 ### CLI Status Checks
 

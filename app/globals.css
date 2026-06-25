@@ -3,7 +3,6 @@
 
 :root {
   color-scheme: light;
-  --background: #fbf5eb;
   --foreground: #17191c;
   --muted: #5e6872;
   --line: rgba(23, 25, 28, 0.08);
@@ -54,13 +53,11 @@
 
 html {
   min-height: 100%;
-  background-color: var(--background);
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background-color: var(--background);
   color: var(--foreground);
   letter-spacing: -0.01em;
 }
@@ -70,20 +67,20 @@ body {
   background: rgba(255, 255, 255, 0.45);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 
-    0 10px 30px -10px rgba(0, 0, 0, 0.02),
-    0 1px 3px 0 rgba(0, 0, 0, 0.01),
-    0 0 20px 0 rgba(219, 234, 254, 0.25);
+    0 12px 28px -18px rgba(15, 23, 42, 0.28),
+    0 2px 8px -4px rgba(15, 23, 42, 0.16),
+    0 0 0 1px rgba(15, 23, 42, 0.03);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
   background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(15, 23, 42, 0.12);
   box-shadow: 
-    0 20px 40px -15px rgba(0, 0, 0, 0.04),
-    0 1px 3px 0 rgba(0, 0, 0, 0.01),
+    0 18px 36px -20px rgba(15, 23, 42, 0.32),
+    0 4px 12px -6px rgba(15, 23, 42, 0.18),
     0 0 25px 0 rgba(244, 63, 94, 0.12);
 }
 
