@@ -1,6 +1,6 @@
 {
   "name": "@notjustyou/mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "MCP server for Not Just You AI service status lookup and explicit local reporting setup.",
   "license": "MIT",
   "repository": {
@@ -19,7 +19,7 @@
     "notjustyou"
   ],
   "dependencies": {
-    "@notjustyou/cli": "0.3.1"
+    "@notjustyou/cli": "workspace:*"
   },
   "type": "module",
   "files": [
@@ -40,6 +40,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "node -e \"if (!String(process.env.npm_config_user_agent || '').startsWith('pnpm/')) throw new Error('Use pnpm publish so workspace dependencies are packed with concrete versions.')\"",
     "prepack": "pnpm run build",
     "pack:dry-run": "pnpm pack --dry-run"
   },

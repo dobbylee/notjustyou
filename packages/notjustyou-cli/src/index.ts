@@ -473,8 +473,14 @@ function printUsage() {
   njy register [--source <source>] [--service <serviceId> ...] [--base-url <url>] [--enable-local-hooks]
   njy enable claude-code [--base-url <url>]
   njy enable cursor [--base-url <url>]
+  njy enable antigravity-cli [--base-url <url>]
+  njy enable antigravity [--base-url <url>]
+  njy enable antigravity-ide [--base-url <url>]
   njy disable claude-code
   njy disable cursor
+  njy disable antigravity-cli
+  njy disable antigravity
+  njy disable antigravity-ide
   njy doctor [--base-url <url>]
   njy payload-preview --fixture <path>
   njy hook-receiver [--port <port>] [--send]
@@ -484,6 +490,7 @@ Examples:
   njy setup
   njy enable claude-code
   njy enable cursor
+  njy enable antigravity-cli
   njy status openai-api --base-url http://localhost:3000
   njy status openai-api --watch
   njy payload-preview --fixture ./signal.json

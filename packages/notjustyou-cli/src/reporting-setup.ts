@@ -9,13 +9,19 @@ import type { SignalSource } from "./types.js";
 
 export const DEFAULT_BASE_URL = "https://notjustyou.dev";
 export const CLIENT_NAME = "notjustyou-cli";
-export const CLIENT_VERSION = "0.3.1";
+export const CLIENT_VERSION = "0.3.2";
 export const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
 export const CURSOR_REPORTING_SERVICE = "cursor-ide";
+export const ANTIGRAVITY_CLI_REPORTING_SERVICE = "google-antigravity-cli";
+export const ANTIGRAVITY_REPORTING_SERVICE = "google-antigravity";
+export const ANTIGRAVITY_IDE_REPORTING_SERVICE = "google-antigravity-ide";
 
 const LOCAL_HOOK_REPORTING_SERVICES = new Set([
   CLAUDE_CODE_REPORTING_SERVICE,
   CURSOR_REPORTING_SERVICE,
+  ANTIGRAVITY_CLI_REPORTING_SERVICE,
+  ANTIGRAVITY_REPORTING_SERVICE,
+  ANTIGRAVITY_IDE_REPORTING_SERVICE,
 ]);
 const SIGNAL_SOURCES = new Set([
   "api_middleware",
@@ -51,6 +57,18 @@ export const REPORTING_SURFACES = {
   cursor: {
     serviceId: CURSOR_REPORTING_SERVICE,
     displayName: "Cursor",
+  },
+  "antigravity-cli": {
+    serviceId: ANTIGRAVITY_CLI_REPORTING_SERVICE,
+    displayName: "Antigravity CLI",
+  },
+  antigravity: {
+    serviceId: ANTIGRAVITY_REPORTING_SERVICE,
+    displayName: "Antigravity",
+  },
+  "antigravity-ide": {
+    serviceId: ANTIGRAVITY_IDE_REPORTING_SERVICE,
+    displayName: "Antigravity IDE",
   },
 } as const;
 
@@ -194,7 +212,9 @@ export function getReportingSurface(surface: string | undefined) {
     return REPORTING_SURFACES[surface as ReportingSurfaceId];
   }
 
-  throw new Error("Supported reporting surfaces: claude-code, cursor.");
+  throw new Error(
+    "Supported reporting surfaces: claude-code, cursor, antigravity-cli, antigravity, antigravity-ide.",
+  );
 }
 
 export async function registerAndWriteConfig(input: {
@@ -214,7 +234,7 @@ export async function registerAndWriteConfig(input: {
     serviceIds.some((serviceId) => !LOCAL_HOOK_REPORTING_SERVICES.has(serviceId))
   ) {
     throw new Error(
-      "--enable-local-hooks currently supports anthropic-claude-code and cursor-ide only.",
+      "--enable-local-hooks currently supports anthropic-claude-code, cursor-ide, google-antigravity-cli, google-antigravity, and google-antigravity-ide only.",
     );
   }
 

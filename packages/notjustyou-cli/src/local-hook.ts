@@ -1,6 +1,6 @@
 import type { CliSignalPayload, PayloadPreviewResult, SignalSymptom } from "./types.js";
 
-const RAW_HOOK_ADAPTERS = new Set(["cursor", "codex"]);
+const RAW_HOOK_ADAPTERS = new Set(["antigravity", "cursor", "codex"]);
 const VERSION_PATTERN = /^[0-9]+(?:\.[0-9]+){0,3}(?:[-+][0-9A-Za-z.-]+)?$/;
 const ALLOWED_HOOK_FIELDS = new Set([
   "serviceId",
@@ -19,7 +19,16 @@ const SURFACE_SERVICE_IDS = {
   "codex-cli": "openai-codex-cli",
   "codex-app": "openai-codex-app",
   "cursor-ide": "cursor-ide",
+  "antigravity-cli": "google-antigravity-cli",
+  antigravity: "google-antigravity",
+  "antigravity-ide": "google-antigravity-ide",
 } as const;
+
+const ANTIGRAVITY_SERVICE_IDS = new Set([
+  "google-antigravity-cli",
+  "google-antigravity",
+  "google-antigravity-ide",
+]);
 
 const SIGNAL_SYMPTOMS = new Set([
   "slow",
@@ -217,6 +226,10 @@ function normalizeRawVendorHookEnvelope(input: {
     return normalizeCursorRawHook(input.payload);
   }
 
+  if (input.rawHook === "antigravity") {
+    return normalizeAntigravityRawHook(input.payload);
+  }
+
   if (input.rawHook === "codex") {
     return normalizeCodexRawHook(input.payload);
   }
@@ -287,6 +300,70 @@ function normalizeCursorRawHook(payload: Record<string, unknown>): LocalHookEven
   };
 }
 
+function normalizeAntigravityRawHook(
+  payload: Record<string, unknown>,
+): LocalHookEventResult {
+  const eventName = normalizeEventName(payload.hook_event_name);
+  if (!eventName) {
+    return {
+      ok: false,
+      reason: "Antigravity raw hook is missing hook_event_name.",
+    };
+  }
+
+  const serviceId = normalizeAntigravityServiceId(payload.service_id);
+  if (!serviceId) {
+    return {
+      ok: false,
+      reason: "Antigravity raw hook service_id is unsupported.",
+    };
+  }
+
+  if (eventName !== "stop") {
+    return {
+      ok: false,
+      reason: "Antigravity raw hook event is not a supported failure-only signal.",
+    };
+  }
+
+  if (payload.fully_idle !== true) {
+    return {
+      ok: false,
+      reason: "Antigravity stop hook is not fully idle.",
+    };
+  }
+
+  if (
+    payload.termination_reason !== undefined &&
+    payload.termination_reason !== "error"
+  ) {
+    return {
+      ok: false,
+      reason: "Antigravity stop hook termination reason is unsupported.",
+    };
+  }
+
+  if (payload.termination_reason !== "error" && payload.has_error !== true) {
+    return {
+      ok: false,
+      reason: "Antigravity stop hook did not report an error.",
+    };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      serviceId,
+      source: "cli_hook",
+      symptom: "error",
+      errorCode: "antigravity_agent_error",
+      ...pickDefined({
+        clientVersion: normalizeOptionalString(payload.client_version, 1, 80),
+      }),
+    },
+  };
+}
+
 function normalizeCodexRawHook(payload: Record<string, unknown>): LocalHookEventResult {
   const eventName = normalizeEventName(payload.hook_event_name);
   if (!eventName) {
@@ -301,6 +378,12 @@ function normalizeCodexRawHook(payload: Record<string, unknown>): LocalHookEvent
     reason:
       "Codex raw hooks are not classified as service failure signals yet.",
   };
+}
+
+function normalizeAntigravityServiceId(value: unknown) {
+  return typeof value === "string" && ANTIGRAVITY_SERVICE_IDS.has(value)
+    ? value
+    : null;
 }
 
 function isLocalHookSurface(value: unknown): value is LocalHookSurface {

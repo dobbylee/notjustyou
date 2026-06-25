@@ -1,7 +1,7 @@
 {
   "name": "@notjustyou/antigravity-plugin",
-  "version": "0.1.0",
-  "description": "Status-only Antigravity plugin for Not Just You AI service status lookup.",
+  "version": "0.2.0",
+  "description": "Antigravity plugin for Not Just You AI service status lookup and opt-in local hook reporting.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -22,6 +22,8 @@
   "files": [
     "plugin.json",
     "mcp_config.json",
+    "hooks.json",
+    "hooks",
     "skills",
     "LICENSE",
     "README.md"

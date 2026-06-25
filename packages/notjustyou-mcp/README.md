@@ -62,6 +62,8 @@ Status tools are read-only and do not require collector credentials.
 The setup tools are local-only write tools: after explicit user confirmation,
 they can register a `cli_hook` collector, save the token in the local Not Just
 You config file, and start the localhost hook receiver for supported surfaces.
+Supported reporting surfaces are `claude-code`, `cursor`,
+`antigravity-cli`, `antigravity`, and `antigravity-ide`.
 
 This package does not expose a signal submission tool. Automatic reports still
 flow through supported local hooks, the localhost receiver, and the

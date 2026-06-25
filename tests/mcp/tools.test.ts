@@ -292,6 +292,47 @@ describe("MCP tools", () => {
     });
   });
 
+  it("enables Antigravity CLI reporting through local config without submitting a signal", async () => {
+    const configPath = tempConfigPath();
+    vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", configPath);
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "http://localhost:3000/api/collectors/register") {
+        expect(init?.method).toBe("POST");
+        expect(String(init?.body)).toContain('"source":"cli_hook"');
+        expect(String(init?.body)).toContain('"google-antigravity-cli"');
+        return jsonResponse({
+          collectorId: "collector_test",
+          collectorToken: "secret_test_token",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callTool("enable_reporting", {
+      surface: "antigravity-cli",
+      confirmed: true,
+      startReceiver: false,
+    }, "http://localhost:3000");
+
+    expect(result.structuredContent).toMatchObject({
+      surface: "antigravity-cli",
+      serviceId: "google-antigravity-cli",
+      enabled: true,
+      receiverStatus: "skipped",
+      source: "cli_hook",
+      serviceIds: ["google-antigravity-cli"],
+      localHookSignalOptIn: true,
+      tokenPrinted: false,
+      signalSubmitted: false,
+    });
+    expect(JSON.stringify(result.structuredContent)).not.toContain("secret_test_token");
+    expect(JSON.stringify(result.structuredContent)).not.toContain(configPath);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("disables local reporting after explicit confirmation", async () => {
     const configPath = tempConfigPath();
     vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", configPath);

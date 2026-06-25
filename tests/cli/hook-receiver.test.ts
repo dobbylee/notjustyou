@@ -147,6 +147,100 @@ describe("local hook receiver", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
+  it("accepts raw Antigravity hook payloads locally but returns only normalized metadata", async () => {
+    const submit = vi.fn();
+    const receiver = createLocalHookReceiver({
+      port: 0,
+      submit,
+    });
+    receivers.push(receiver);
+    const address = await receiver.start();
+
+    const response = await postHook(address.port, {
+      rawHook: "antigravity",
+      payload: {
+        hook_event_name: "Stop",
+        service_id: "google-antigravity-cli",
+        termination_reason: "error",
+        has_error: true,
+        fully_idle: true,
+        client_version: "2.0.1",
+        conversationId: "ec33ebf9-0cba-4100-8142-c61503f6c587",
+        workspacePaths: ["/Users/alice/private-project"],
+        transcriptPath: "/Users/alice/.gemini/antigravity-cli/transcript.jsonl",
+        artifactDirectoryPath: "/Users/alice/.gemini/antigravity-cli/artifacts",
+        error: "raw provider or local error text for alice@example.com",
+      },
+    });
+
+    const body = await response.json();
+    expect(response.status).toBe(202);
+    expect(body).toEqual({
+      ok: true,
+      mode: "preview",
+      payload: {
+        serviceId: "google-antigravity-cli",
+        source: "cli_hook",
+        symptom: "error",
+        errorCode: "antigravity_agent_error",
+        clientVersion: "2.0.1",
+      },
+    });
+    expect(JSON.stringify(body)).not.toContain("alice@example.com");
+    expect(JSON.stringify(body)).not.toContain("/Users/alice");
+    expect(JSON.stringify(body)).not.toContain("raw provider");
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed raw Antigravity hook envelopes before send readiness", async () => {
+    const submit = vi.fn();
+    const receiver = createLocalHookReceiver({
+      port: 0,
+      sendSignals: true,
+      readConfig: () => ({
+        ...baseConfig,
+        serviceIds: ["google-antigravity-cli"],
+        localHookSignalOptIn: true,
+      }),
+      submit,
+    });
+    receivers.push(receiver);
+    const address = await receiver.start();
+
+    const nonIdleResponse = await postHook(address.port, {
+      rawHook: "antigravity",
+      payload: {
+        hook_event_name: "Stop",
+        service_id: "google-antigravity-cli",
+        termination_reason: "error",
+        has_error: true,
+        fully_idle: "true",
+        workspacePaths: ["/Users/alice/private-project"],
+      },
+    });
+    await expect(nonIdleResponse.json()).resolves.toEqual({
+      ok: false,
+      error: "Antigravity stop hook is not fully idle.",
+    });
+
+    const reasonResponse = await postHook(address.port, {
+      rawHook: "antigravity",
+      payload: {
+        hook_event_name: "Stop",
+        service_id: "google-antigravity-cli",
+        termination_reason: "raw reason for alice@example.com",
+        has_error: true,
+        fully_idle: true,
+      },
+    });
+    await expect(reasonResponse.json()).resolves.toEqual({
+      ok: false,
+      error: "Antigravity stop hook termination reason is unsupported.",
+    });
+
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it("does not send when local hook opt-in is missing", async () => {
     const submit = vi.fn();
     const receiver = createLocalHookReceiver({
@@ -349,6 +443,54 @@ describe("local hook receiver", () => {
     expect(JSON.stringify(submit.mock.calls[0])).not.toContain("alice@example.com");
     expect(JSON.stringify(submit.mock.calls[0])).not.toContain("/Users/alice");
     expect(JSON.stringify(submit.mock.calls[0])).not.toContain("do not collect");
+  });
+
+  it("sends normalized Antigravity metadata without raw payload after opt-in", async () => {
+    const submit = vi.fn(async () => undefined);
+    const receiver = createLocalHookReceiver({
+      port: 0,
+      sendSignals: true,
+      readConfig: () => ({
+        ...baseConfig,
+        serviceIds: ["google-antigravity-cli"],
+        localHookSignalOptIn: true,
+      }),
+      submit,
+    });
+    receivers.push(receiver);
+    const address = await receiver.start();
+
+    const response = await postHook(address.port, {
+      rawHook: "antigravity",
+      payload: {
+        hook_event_name: "Stop",
+        service_id: "google-antigravity-cli",
+        termination_reason: "error",
+        has_error: true,
+        fully_idle: true,
+        client_version: "2.0.1",
+        workspacePaths: ["/Users/alice/private-project"],
+        transcriptPath: "/Users/alice/.gemini/antigravity-cli/transcript.jsonl",
+        error: "raw provider or local error text for alice@example.com",
+      },
+    });
+
+    expect(response.status).toBe(202);
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        serviceIds: ["google-antigravity-cli"],
+      }),
+      {
+        serviceId: "google-antigravity-cli",
+        source: "cli_hook",
+        symptom: "error",
+        errorCode: "antigravity_agent_error",
+        clientVersion: "2.0.1",
+      },
+    );
+    expect(JSON.stringify(submit.mock.calls[0])).not.toContain("alice@example.com");
+    expect(JSON.stringify(submit.mock.calls[0])).not.toContain("/Users/alice");
+    expect(JSON.stringify(submit.mock.calls[0])).not.toContain("raw provider");
   });
 });
 
