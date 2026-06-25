@@ -38,7 +38,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.1",
+          clientVersion: "0.3.2",
         });
 
         return jsonResponse({
@@ -68,7 +68,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("Collector registered.");
     expect(output).toContain("Token: saved locally; raw token is not printed.");
     expect(output).not.toContain("njy_raw_secret");
-    expect(readConfig()?.clientVersion).toBe("0.3.1");
+    expect(readConfig()?.clientVersion).toBe("0.3.2");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {
@@ -164,7 +164,7 @@ describe("CLI setup and registration", () => {
         "--enable-local-hooks",
       ]),
     ).rejects.toThrow(
-      "--enable-local-hooks currently supports anthropic-claude-code and cursor-ide only.",
+      "--enable-local-hooks currently supports anthropic-claude-code, cursor-ide, google-antigravity-cli, google-antigravity, and google-antigravity-ide only.",
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -215,7 +215,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.1",
+          clientVersion: "0.3.2",
         });
 
         return jsonResponse({
@@ -243,7 +243,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Claude Code reporting enabled.");
@@ -259,7 +259,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.1",
+          clientVersion: "0.3.2",
         });
 
         return jsonResponse({
@@ -287,10 +287,54 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Cursor reporting enabled.");
+    expect(output).toContain("Local hook receiver: skipped");
+    expect(output).not.toContain("njy_raw_secret");
+  });
+
+  it("enables Antigravity CLI reporting with one command", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["google-antigravity-cli"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.2",
+        });
+
+        return jsonResponse({
+          collectorId: "col_antigravity",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "enable",
+        "antigravity-cli",
+        "--base-url",
+        "http://localhost:3000",
+        "--skip-receiver",
+      ]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["google-antigravity-cli"],
+      localHookSignalOptIn: true,
+      clientVersion: "0.3.2",
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Antigravity CLI reporting enabled.");
     expect(output).toContain("Local hook receiver: skipped");
     expect(output).not.toContain("njy_raw_secret");
   });
@@ -305,7 +349,7 @@ describe("CLI setup and registration", () => {
       source: "api_middleware",
       serviceIds: ["openai-api"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
     });
 
     await expect(
@@ -328,7 +372,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
       localHookSignalOptIn: false,
     });
 
@@ -351,7 +395,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
       localHookSignalOptIn: true,
     });
 
@@ -375,7 +419,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
       localHookSignalOptIn: true,
     });
 
@@ -400,7 +444,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
       localHookSignalOptIn: true,
     });
 
@@ -424,7 +468,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.2",
       localHookSignalOptIn: true,
     });
 
@@ -439,7 +483,7 @@ describe("CLI setup and registration", () => {
 
   it("rejects unknown reporting surfaces", async () => {
     await expect(main(["enable", "codex", "--skip-receiver"])).rejects.toThrow(
-      "Supported reporting surfaces: claude-code, cursor.",
+      "Supported reporting surfaces: claude-code, cursor, antigravity-cli, antigravity, antigravity-ide.",
     );
   });
 

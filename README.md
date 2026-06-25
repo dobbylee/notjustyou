@@ -81,14 +81,15 @@ manual install instructions.
 
 ### Antigravity Plugin
 
-Antigravity support is available as a status-only local plugin package for
-Antigravity CLI and the Antigravity desktop app. Install it from a checkout with
-`agy plugin install packages/notjustyou-antigravity-plugin`, then ask an
-Antigravity status question. See
+Antigravity support is available as a local plugin package for Antigravity CLI
+and the Antigravity desktop app. Install it from a checkout with `agy plugin
+install packages/notjustyou-antigravity-plugin`, then ask an Antigravity status
+question. See
 [packages/notjustyou-antigravity-plugin](packages/notjustyou-antigravity-plugin)
 for details.
 
-The Antigravity plugin does not include hook reporting yet.
+The Antigravity plugin supports status lookup and optional local hook reporting
+after explicit opt-in.
 
 ### Codex Plugin
 
@@ -113,7 +114,7 @@ Current:
 - Opt-in installed-client signal APIs for metadata-only problem signals
 - Node SDK middleware for OpenAI API, Claude API, and Gemini API
 - Claude Code and Cursor plugins with opt-in local hook reporting
-- Codex and Antigravity status-only plugins
+- Codex status-only plugin and Antigravity plugin with opt-in local hook reporting
 - No account or login requirement
 
 Browser extensions are not part of the current release.

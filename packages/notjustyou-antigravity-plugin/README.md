@@ -1,12 +1,13 @@
 # Not Just You Antigravity Plugin
 
-Status-only plugin for Antigravity CLI, Antigravity, and Antigravity IDE.
+Plugin for Antigravity CLI, Antigravity, and Antigravity IDE.
 
 ## What It Provides
 
 - A Not Just You status skill for AI service status checks.
-- A bundled read-only Not Just You MCP server configuration.
+- A bundled Not Just You MCP server configuration for status lookup and explicit local reporting setup.
 - Public status lookups for community reports, installed-client signal aggregates, and official status summaries.
+- Optional metadata-only local hook reporting for coarse Antigravity `Stop` error events.
 
 ## Install
 
@@ -53,17 +54,48 @@ Antigravity CLI stages installed plugins under:
 
 ## Privacy Boundary
 
-This plugin is status-only. It uses the read-only `@notjustyou/mcp@0.1.0`
-status tools and does not send signals or require collector credentials.
+Install-only status lookup does not enable reporting. Antigravity hook reporting
+is optional and requires explicit setup through the bundled setup MCP tools or
+CLI fallback.
 
 It does not collect prompt text, request or response bodies, headers, API keys,
 cookies, source files, diffs, clipboard content, transcript files, exact IP
 addresses, account emails, machine names, workspace paths, file paths, or local
 usernames.
 
-Hook-based signal collection is intentionally not included in this plugin
-release. Current Antigravity hook input can include conversation ids, workspace
-paths, transcript paths, artifact paths, tool arguments, and error strings. A
-future Antigravity reporting flow must use explicit opt-in and a local allowlist
-adapter that derives coarse metadata without storing, logging, queuing, or
-sending raw hook payloads.
+Antigravity hook input can include conversation ids, workspace paths, transcript
+paths, artifact paths, tool arguments, and error strings. This plugin checks
+local opt-in config before reading hook stdin. After opt-in, the hook script
+forwards only an allowlisted local envelope to the localhost Not Just You
+receiver:
+
+- `hook_event_name`
+- `service_id`
+- `termination_reason`
+- `has_error`
+- `fully_idle`
+- `client_version`
+
+Raw Antigravity hook payloads are not stored, logged, queued, or sent to Not
+Just You. Public `/api/signals` is reached only through the local receiver after
+collector-token, source, service, and opt-in readiness checks pass.
+
+## Reporting Setup
+
+Ask Antigravity to set up Not Just You reporting; the `setup-reporting` skill
+explains the privacy boundary and asks for confirmation before enabling or
+disabling reporting.
+
+Fallback CLI commands:
+
+```bash
+njy enable antigravity-cli
+njy enable antigravity
+njy enable antigravity-ide
+njy disable antigravity-cli
+njy disable antigravity
+njy disable antigravity-ide
+```
+
+Keep the local hook receiver running while you want automatic Antigravity
+reports.

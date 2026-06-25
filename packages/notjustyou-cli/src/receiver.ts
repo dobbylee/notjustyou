@@ -12,6 +12,9 @@ const DEFAULT_RECEIVER_PORT = 8765;
 const SENDABLE_LOCAL_HOOK_SERVICES = new Set([
   "anthropic-claude-code",
   "cursor-ide",
+  "google-antigravity-cli",
+  "google-antigravity",
+  "google-antigravity-ide",
 ]);
 export const LOCAL_HOOK_RECEIVER_HEALTH = {
   ok: true,

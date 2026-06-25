@@ -125,13 +125,19 @@ export const TOOLS = [
     name: "get_reporting_setup_state",
     title: "Get Reporting Setup State",
     description:
-      "Read local Not Just You automatic reporting setup state for Claude Code or Cursor without exposing collector tokens or local file paths.",
+      "Read local Not Just You automatic reporting setup state for Claude Code, Cursor, or Antigravity without exposing collector tokens or local file paths.",
     inputSchema: {
       type: "object",
       properties: {
         surface: {
           type: "string",
-          enum: ["claude-code", "cursor"],
+          enum: [
+            "claude-code",
+            "cursor",
+            "antigravity-cli",
+            "antigravity",
+            "antigravity-ide",
+          ],
           description: "Reporting surface to inspect.",
         },
       },
@@ -146,13 +152,19 @@ export const TOOLS = [
     name: "enable_reporting",
     title: "Enable Local Reporting",
     description:
-      "Enable opt-in local hook reporting for Claude Code or Cursor after the user explicitly asks for or confirms setup. This writes local config, registers a collector token, and may start the localhost hook receiver. It does not submit a signal.",
+      "Enable opt-in local hook reporting for Claude Code, Cursor, or Antigravity after the user explicitly asks for or confirms setup. This writes local config, registers a collector token, and may start the localhost hook receiver. It does not submit a signal.",
     inputSchema: {
       type: "object",
       properties: {
         surface: {
           type: "string",
-          enum: ["claude-code", "cursor"],
+          enum: [
+            "claude-code",
+            "cursor",
+            "antigravity-cli",
+            "antigravity",
+            "antigravity-ide",
+          ],
           description: "Reporting surface to enable.",
         },
         confirmed: {
@@ -180,13 +192,19 @@ export const TOOLS = [
     name: "disable_reporting",
     title: "Disable Local Reporting",
     description:
-      "Disable opt-in local hook reporting for Claude Code or Cursor after the user explicitly asks for or confirms disabling. This updates local config only and does not delete public data.",
+      "Disable opt-in local hook reporting for Claude Code, Cursor, or Antigravity after the user explicitly asks for or confirms disabling. This updates local config only and does not delete public data.",
     inputSchema: {
       type: "object",
       properties: {
         surface: {
           type: "string",
-          enum: ["claude-code", "cursor"],
+          enum: [
+            "claude-code",
+            "cursor",
+            "antigravity-cli",
+            "antigravity",
+            "antigravity-ide",
+          ],
           description: "Reporting surface to disable.",
         },
         confirmed: {
