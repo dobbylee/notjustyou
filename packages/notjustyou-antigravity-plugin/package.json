@@ -1,0 +1,38 @@
+{
+  "name": "@notjustyou/antigravity-plugin",
+  "version": "0.1.0",
+  "description": "Status-only Antigravity plugin for Not Just You AI service status lookup.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dobbylee/notjustyou.git",
+    "directory": "packages/notjustyou-antigravity-plugin"
+  },
+  "homepage": "https://github.com/dobbylee/notjustyou#readme",
+  "bugs": {
+    "url": "https://github.com/dobbylee/notjustyou/issues"
+  },
+  "keywords": [
+    "ai-status",
+    "antigravity",
+    "mcp",
+    "notjustyou",
+    "status"
+  ],
+  "files": [
+    "plugin.json",
+    "mcp_config.json",
+    "skills",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "pack:dry-run": "pnpm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22 <25"
+  }
+}
