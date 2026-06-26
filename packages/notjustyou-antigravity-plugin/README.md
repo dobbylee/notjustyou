@@ -123,3 +123,9 @@ njy disable antigravity-ide --quiet
 
 Keep the local hook receiver running while you want automatic Antigravity
 reports.
+
+Reporting is best-effort and is not a guaranteed outage detector. It cannot
+report cases where Antigravity never starts, hooks are disabled, the local
+receiver is not configured, or the user's network cannot reach Not Just You.
+When automatic reporting cannot run, use the public Not Just You dashboard to
+submit an anonymous manual community report.
