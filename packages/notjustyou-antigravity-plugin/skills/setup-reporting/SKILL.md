@@ -55,12 +55,12 @@ If the user asks whether reporting is configured or enabled, call:
 If the setup MCP tools are unavailable, tell the user the fallback commands are:
 
 ```bash
-npx -y @notjustyou/cli@0.3.4 enable antigravity-cli --quiet
-npx -y @notjustyou/cli@0.3.4 enable antigravity --quiet
-npx -y @notjustyou/cli@0.3.4 enable antigravity-ide --quiet
-npx -y @notjustyou/cli@0.3.4 disable antigravity-cli --quiet
-npx -y @notjustyou/cli@0.3.4 disable antigravity --quiet
-npx -y @notjustyou/cli@0.3.4 disable antigravity-ide --quiet
+npx -y @notjustyou/cli@0.3.5 enable antigravity-cli --quiet
+npx -y @notjustyou/cli@0.3.5 enable antigravity --quiet
+npx -y @notjustyou/cli@0.3.5 enable antigravity-ide --quiet
+npx -y @notjustyou/cli@0.3.5 disable antigravity-cli --quiet
+npx -y @notjustyou/cli@0.3.5 disable antigravity --quiet
+npx -y @notjustyou/cli@0.3.5 disable antigravity-ide --quiet
 ```
 
 Do not use Bash, setup, register, hook receiver, curl, npm install, file reads, or any other command from this skill.

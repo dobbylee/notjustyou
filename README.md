@@ -2,7 +2,8 @@
 
 Not Just You is a privacy-safe status board for AI tools. It helps users see whether a problem is isolated to them or showing up across a wider surface.
 
-The current MVP is a public dashboard with anonymous community reports, official provider status badges, and opt-in metadata-only installed-client signals.
+The service combines a public dashboard, anonymous community reports, official
+provider status badges, and opt-in metadata-only installed-client signals.
 
 ## Use Not Just You
 
@@ -146,7 +147,8 @@ Not stored, queued, logged, or sent:
 
 Raw collector tokens are saved only in the local Not Just You config by
 `njy setup` and sent only as bearer auth to the configured Not Just You API.
-They are not printed or stored server-side as raw tokens.
+Raw collector tokens and collector ids are not printed by setup commands. Raw
+tokens are not stored server-side.
 
 The dashboard keeps community reports, official status, and installed-client
 signals visibly separate even when it shows a unified recent problem summary.

@@ -41,7 +41,10 @@ njy disable antigravity-ide
 - `/api/signals/summary`
 - `/api/official`
 
-`setup` registers an anonymous collector for future opt-in SDK collectors, writes the collector token to the local Not Just You config file, and runs a lightweight readiness check. The raw token is not printed.
+`setup` registers an anonymous collector for future opt-in SDK collectors,
+writes the collector token to the local Not Just You config file, and runs a
+lightweight readiness check. Raw collector tokens and collector ids are not
+printed.
 
 `enable claude-code`, `enable cursor`, and `enable antigravity-*` opt in to
 metadata-only local hook reporting, write a `cli_hook` collector config, and
@@ -78,7 +81,11 @@ adapters:
 njy register --source api_middleware --service openai-api --service anthropic-claude-api --service google-gemini-api
 ```
 
-`register` is the lower-level setup step. `doctor` checks public status reachability, local config, and collector token readiness. `payload-preview` validates a JSON fixture against the metadata-only signal boundary before any SDK collector sends similar data.
+`register` is the lower-level setup step. It also avoids printing raw collector
+tokens or collector ids. `doctor` checks public status reachability, local
+config, and collector token readiness. `payload-preview` validates a JSON
+fixture against the metadata-only signal boundary before any SDK collector sends
+similar data.
 
 ## Privacy Boundary
 

@@ -33,8 +33,8 @@ If the user confirms disabling reporting, call:
 If the setup MCP tools are unavailable, show the fallback commands:
 
 ```bash
-npx -y @notjustyou/cli@0.3.4 enable claude-code --quiet
-npx -y @notjustyou/cli@0.3.4 disable claude-code --quiet
+npx -y @notjustyou/cli@0.3.5 enable claude-code --quiet
+npx -y @notjustyou/cli@0.3.5 disable claude-code --quiet
 ```
 
 Do not run shell commands from this command file.

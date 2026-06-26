@@ -30,7 +30,7 @@ describe("CLI setup and registration", () => {
     });
   });
 
-  it("registers a collector, writes config, and does not print the raw token", async () => {
+  it("registers a collector, writes config, and does not print collector credentials", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith("/api/collectors/register")) {
@@ -38,7 +38,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -67,8 +67,9 @@ describe("CLI setup and registration", () => {
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Collector registered.");
     expect(output).toContain("Token: saved locally; raw token is not printed.");
+    expect(output).not.toContain("col_test");
     expect(output).not.toContain("njy_raw_secret");
-    expect(readConfig()?.clientVersion).toBe("0.3.4");
+    expect(readConfig()?.clientVersion).toBe("0.3.5");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {
@@ -109,6 +110,7 @@ describe("CLI setup and registration", () => {
 
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Allowed services: openai-api, anthropic-claude-api, google-gemini-api");
+    expect(output).not.toContain("col_multi");
     expect(output).not.toContain("njy_raw_secret");
   });
 
@@ -237,7 +239,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -265,7 +267,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Claude Code reporting enabled.");
@@ -281,7 +283,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -309,7 +311,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Cursor reporting enabled.");
@@ -325,7 +327,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -353,7 +355,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -371,7 +373,7 @@ describe("CLI setup and registration", () => {
       source: "api_middleware",
       serviceIds: ["openai-api"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
     });
 
     await expect(
@@ -394,7 +396,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
 
@@ -419,7 +421,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -428,7 +430,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide", "google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -449,7 +451,7 @@ describe("CLI setup and registration", () => {
       collectorId: "col_cursor_antigravity",
       serviceIds: ["cursor-ide", "google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -467,7 +469,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -480,7 +482,7 @@ describe("CLI setup and registration", () => {
             "google-antigravity-cli",
           ],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -524,7 +526,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide", "google-antigravity-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -533,7 +535,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide", "google-antigravity-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -576,7 +578,7 @@ describe("CLI setup and registration", () => {
         "google-antigravity-ide",
       ],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -585,7 +587,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide", "google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -657,7 +659,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: false,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -666,7 +668,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -689,7 +691,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -706,7 +708,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
 
@@ -730,7 +732,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
 
@@ -755,7 +757,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
 
@@ -782,7 +784,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: false,
     });
 
@@ -808,7 +810,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.4",
+      clientVersion: "0.3.5",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -817,7 +819,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.4",
+          clientVersion: "0.3.5",
         });
 
         return jsonResponse({
@@ -937,6 +939,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("OK signal auth readiness");
     expect(output).toContain("Setup complete.");
     expect(output).toContain("Next: configure the SDK collector");
+    expect(output).not.toContain("col_setup");
     expect(output).not.toContain("njy_setup_secret");
   });
 
