@@ -137,6 +137,11 @@ Collected or processed:
 Local hook reporting is opt-in. A local adapter may process vendor hook payloads
 in memory, but only normalized metadata is sent to `/api/signals`.
 
+Automatic reporting is best-effort. If a tool cannot start, its hook does not
+run, the local receiver is not configured, or the user's network cannot reach
+Not Just You, use the public dashboard to submit an anonymous manual community
+report instead.
+
 Not stored, queued, logged, or sent:
 
 - Prompt text, messages, commands, shell output, tool input or result bodies

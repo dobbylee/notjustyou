@@ -57,6 +57,8 @@ Reporting is best-effort. It can share Claude Code failures that reach a local
 failure hook, but it cannot report cases where Claude Code never starts, the
 plugin or hook is not trusted, the local receiver is not configured, or the
 user's network cannot reach Not Just You.
+When automatic reporting cannot run, use the public Not Just You dashboard to
+submit an anonymous manual community report.
 
 In the Claude Desktop app, use the Code tab's plugin manager to add the
 marketplace, install the plugin, and enable it. This plugin is for Claude Code
