@@ -54,8 +54,8 @@ describe("click analytics", () => {
       "2026050808",
       "2026050807",
     ]);
-    expect(getClickCountKey("copy_link", "2026050809")).toBe(
-      "click:v1:copy_link:2026050809",
+    expect(getClickCountKey("provider_tab:anthropic", "2026050809")).toBe(
+      "click:v1:provider_tab:anthropic:2026050809",
     );
   });
 
@@ -69,14 +69,6 @@ describe("click analytics", () => {
         expect.objectContaining({
           id: "provider_tab:anthropic",
           event: "provider_tab",
-        }),
-        expect.objectContaining({
-          id: "refresh_button",
-          event: "refresh_button",
-        }),
-        expect.objectContaining({
-          id: "copy_link",
-          event: "copy_link",
         }),
       ]),
     );

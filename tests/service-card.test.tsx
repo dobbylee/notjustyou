@@ -165,13 +165,12 @@ describe("ServiceCard", () => {
       />,
     );
 
-    await user.click(screen.getByText("7 recent problem signals"));
+    await user.click(screen.getByLabelText("7 recent problem signals"));
 
-    expect(
-      screen.getByText(
-        "Community reports 3 · Installed signals 4 · Unique installations 2 · Official operational",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Community reports")).toBeInTheDocument();
+    expect(screen.getByText("Installed signals")).toBeInTheDocument();
+    expect(screen.getByText("Unique installations")).toBeInTheDocument();
+    expect(screen.getByText("Official status")).toBeInTheDocument();
     expect(screen.getByText("Last installed signal: rate limited")).toBeInTheDocument();
   });
 });

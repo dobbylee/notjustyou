@@ -68,15 +68,15 @@ describe("summarizeMonitoring", () => {
         updatedAt: "2026-06-19T01:00:00.000Z",
         metrics: [
           {
-            id: "refresh_button",
-            event: "refresh_button",
-            label: "Refresh button",
+            id: "provider_tab:anthropic",
+            event: "provider_tab",
+            label: "Anthropic tab",
             total: 2,
           },
           {
-            id: "copy_link",
-            event: "copy_link",
-            label: "Copy link",
+            id: "report_button:openai-api:error",
+            event: "report_button",
+            label: "OpenAI API Error",
             total: 0,
           },
         ],
@@ -108,4 +108,3 @@ describe("summarizeMonitoring", () => {
     expect(summary.installedSignals.countsBySymptom.rate_limited).toBe(3);
   });
 });
-
