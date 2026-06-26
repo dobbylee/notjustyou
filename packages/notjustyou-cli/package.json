@@ -1,6 +1,6 @@
 {
   "name": "@notjustyou/cli",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Command line status lookup and opt-in local reporting setup for Not Just You AI service surfaces.",
   "license": "MIT",
   "repository": {

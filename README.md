@@ -81,10 +81,10 @@ manual install instructions.
 
 ### Antigravity Plugin
 
-Antigravity support is available as a local plugin package for Antigravity CLI
-and the Antigravity desktop app. Install it from a checkout with `agy plugin
-install packages/notjustyou-antigravity-plugin`, then ask an Antigravity status
-question. See
+Antigravity support is available as a plugin package for Antigravity CLI and
+the Antigravity desktop app. Install the published package by unpacking it and
+passing the plugin directory to `agy plugin install`, then ask an Antigravity
+status question. See
 [packages/notjustyou-antigravity-plugin](packages/notjustyou-antigravity-plugin)
 for details.
 

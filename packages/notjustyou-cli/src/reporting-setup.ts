@@ -9,7 +9,7 @@ import type { SignalSource } from "./types.js";
 
 export const DEFAULT_BASE_URL = "https://notjustyou.dev";
 export const CLIENT_NAME = "notjustyou-cli";
-export const CLIENT_VERSION = "0.3.2";
+export const CLIENT_VERSION = "0.3.3";
 export const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
 export const CURSOR_REPORTING_SERVICE = "cursor-ide";
 export const ANTIGRAVITY_CLI_REPORTING_SERVICE = "google-antigravity-cli";
@@ -96,6 +96,17 @@ export async function enableReporting(input: {
   let config = existingConfig;
 
   if (
+    config &&
+    config.source === "cli_hook" &&
+    config.localHookSignalOptIn === true &&
+    config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)
+  ) {
+    throw new Error(
+      `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
+    );
+  }
+
+  if (
     !config ||
     config.source !== "cli_hook" ||
     !config.serviceIds.includes(surface.serviceId) ||
@@ -106,16 +117,6 @@ export async function enableReporting(input: {
         `Existing config uses a different collector source. Automatic ${surface.displayName} reporting needs a cli_hook config.`,
       );
     }
-    if (
-      config &&
-      config.source === "cli_hook" &&
-      config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)
-    ) {
-      throw new Error(
-        `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
-      );
-    }
-
     config = await registerAndWriteConfig({
       baseUrl,
       source: "cli_hook",

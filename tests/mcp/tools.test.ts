@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, mkdtempSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { callTool, TOOLS } from "@/packages/notjustyou-mcp/src/tools";
@@ -243,6 +243,46 @@ describe("MCP tools", () => {
     ).rejects.not.toThrow(configPath);
   });
 
+  it("returns safe reporting conflict details without exposing token or path", async () => {
+    const configPath = tempConfigPath();
+    vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", configPath);
+    writeConfigFile(configPath, {
+      configVersion: 1,
+      baseUrl: "https://notjustyou.dev",
+      collectorId: "col_cursor",
+      collectorToken: "secret_cursor_token",
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.3",
+      localHookSignalOptIn: true,
+    });
+
+    await expect(
+      callTool("enable_reporting", {
+        surface: "antigravity-cli",
+        confirmed: true,
+        startReceiver: false,
+      }, "http://localhost:3000"),
+    ).rejects.toThrow(
+      "Failed to enable local reporting: Existing cli_hook config includes services outside Antigravity CLI.",
+    );
+    await expect(
+      callTool("enable_reporting", {
+        surface: "antigravity-cli",
+        confirmed: true,
+        startReceiver: false,
+      }, "http://localhost:3000"),
+    ).rejects.not.toThrow("secret_cursor_token");
+    await expect(
+      callTool("enable_reporting", {
+        surface: "antigravity-cli",
+        confirmed: true,
+        startReceiver: false,
+      }, "http://localhost:3000"),
+    ).rejects.not.toThrow(configPath);
+  });
+
   it("enables Cursor reporting through local config without submitting a signal", async () => {
     const configPath = tempConfigPath();
     vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", configPath);
@@ -375,6 +415,13 @@ describe("MCP tools", () => {
 
 function tempConfigPath() {
   return join(mkdtempSync(join(tmpdir(), "njy-mcp-config-")), "config.json");
+}
+
+function writeConfigFile(path: string, value: object) {
+  mkdirSync(join(path, ".."), {
+    recursive: true,
+  });
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
 function stubStatusFetch() {

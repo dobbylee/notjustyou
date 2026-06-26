@@ -38,7 +38,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.2",
+          clientVersion: "0.3.3",
         });
 
         return jsonResponse({
@@ -68,7 +68,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("Collector registered.");
     expect(output).toContain("Token: saved locally; raw token is not printed.");
     expect(output).not.toContain("njy_raw_secret");
-    expect(readConfig()?.clientVersion).toBe("0.3.2");
+    expect(readConfig()?.clientVersion).toBe("0.3.3");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {
@@ -215,7 +215,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.2",
+          clientVersion: "0.3.3",
         });
 
         return jsonResponse({
@@ -243,7 +243,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Claude Code reporting enabled.");
@@ -259,7 +259,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.2",
+          clientVersion: "0.3.3",
         });
 
         return jsonResponse({
@@ -287,7 +287,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Cursor reporting enabled.");
@@ -303,7 +303,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.2",
+          clientVersion: "0.3.3",
         });
 
         return jsonResponse({
@@ -331,7 +331,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -349,7 +349,7 @@ describe("CLI setup and registration", () => {
       source: "api_middleware",
       serviceIds: ["openai-api"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
     });
 
     await expect(
@@ -372,8 +372,8 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.2",
-      localHookSignalOptIn: false,
+      clientVersion: "0.3.3",
+      localHookSignalOptIn: true,
     });
 
     await expect(
@@ -382,8 +382,81 @@ describe("CLI setup and registration", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(readConfig()).toMatchObject({
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
+      localHookSignalOptIn: true,
+    });
+  });
+
+  it("does not replace an active cli_hook config for another service", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_cursor",
+      collectorToken: "njy_cursor_secret",
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.3",
+      localHookSignalOptIn: true,
+    });
+
+    await expect(
+      main(["enable", "antigravity-cli", "--skip-receiver"]),
+    ).rejects.toThrow("Existing cli_hook config includes services outside Antigravity CLI");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(readConfig()).toMatchObject({
+      serviceIds: ["cursor-ide"],
+      localHookSignalOptIn: true,
+    });
+  });
+
+  it("replaces a disabled cli_hook config for another service when enabling reporting", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_cursor",
+      collectorToken: "njy_cursor_secret",
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.1",
       localHookSignalOptIn: false,
     });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["google-antigravity-cli"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.3",
+        });
+
+        return jsonResponse({
+          collectorId: "col_antigravity",
+          collectorToken: "njy_new_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main(["enable", "antigravity-cli", "--skip-receiver"]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      collectorId: "col_antigravity",
+      source: "cli_hook",
+      serviceIds: ["google-antigravity-cli"],
+      localHookSignalOptIn: true,
+      clientVersion: "0.3.3",
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Antigravity CLI reporting enabled.");
+    expect(output).not.toContain("njy_cursor_secret");
+    expect(output).not.toContain("njy_new_secret");
   });
 
   it("disables Claude Code hook sending without printing the token", async () => {
@@ -395,7 +468,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
       localHookSignalOptIn: true,
     });
 
@@ -419,7 +492,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
       localHookSignalOptIn: true,
     });
 
@@ -444,7 +517,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
       localHookSignalOptIn: true,
     });
 
@@ -468,7 +541,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.2",
+      clientVersion: "0.3.3",
       localHookSignalOptIn: true,
     });
 

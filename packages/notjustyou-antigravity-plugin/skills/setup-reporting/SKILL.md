@@ -17,7 +17,8 @@ Before enabling reporting, explain that:
 - It does not send prompts, messages, command args, shell output, tool input or result bodies, file paths, file contents, transcript paths, artifact paths, headers, API keys, cookies, account emails, machine names, workspace identifiers, or local usernames.
 - It is best-effort installed-client reporting, not guaranteed outage detection.
 
-Ask which Antigravity surface the user wants to enable:
+Ask which single Antigravity surface the user wants to enable. Do not enable
+all three surfaces in one setup attempt:
 
 - `antigravity-cli` for Antigravity CLI.
 - `antigravity` for the Antigravity desktop app.
@@ -38,12 +39,12 @@ If the user confirms disabling reporting, call:
 If the setup MCP tools are unavailable, tell the user the fallback commands are:
 
 ```bash
-npx -y @notjustyou/cli@0.3.2 enable antigravity-cli
-npx -y @notjustyou/cli@0.3.2 enable antigravity
-npx -y @notjustyou/cli@0.3.2 enable antigravity-ide
-npx -y @notjustyou/cli@0.3.2 disable antigravity-cli
-npx -y @notjustyou/cli@0.3.2 disable antigravity
-npx -y @notjustyou/cli@0.3.2 disable antigravity-ide
+npx -y @notjustyou/cli@0.3.3 enable antigravity-cli
+npx -y @notjustyou/cli@0.3.3 enable antigravity
+npx -y @notjustyou/cli@0.3.3 enable antigravity-ide
+npx -y @notjustyou/cli@0.3.3 disable antigravity-cli
+npx -y @notjustyou/cli@0.3.3 disable antigravity
+npx -y @notjustyou/cli@0.3.3 disable antigravity-ide
 ```
 
 Do not use Bash, setup, register, hook receiver, curl, npm install, file reads, or any other command from this skill.
