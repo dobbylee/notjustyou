@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, Copy, RefreshCw } from "lucide-react";
+import { Activity, ExternalLink } from "lucide-react";
 import type { Provider, ProviderId, ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { SummaryResponse } from "@/lib/aggregation";
 import type { ClickEventInput } from "@/lib/clicks";
@@ -38,8 +38,6 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
   const [official, setOfficial] = useState<OfficialSummaryResponse | null>(null);
   const [pending, setPending] = useState<PendingMap>({});
   const [messages, setMessages] = useState<MessageMap>({});
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [copyMessage, setCopyMessage] = useState("");
   const [summaryMessage, setSummaryMessage] = useState("");
 
   const loadSummary = useCallback(async () => {
@@ -71,16 +69,6 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
       setSummaryMessage("Community reports unavailable.");
     }
   }, []);
-
-  const refreshSummary = useCallback(async () => {
-    setIsRefreshing(true);
-
-    try {
-      await loadSummary();
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [loadSummary]);
 
   const fetchOfficial = useCallback(async () => {
     const response = await fetch("/api/official", {
@@ -150,13 +138,6 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
     setSelectedProviderId(providerId);
   }
 
-  async function handleRefreshClick() {
-    recordClick({
-      event: "refresh_button",
-    });
-    await refreshSummary();
-  }
-
   async function handleReport(serviceId: string, status: ReportStatus) {
     recordClick({
       event: "report_button",
@@ -224,15 +205,6 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
     }
   }
 
-  async function handleCopyLink() {
-    recordClick({
-      event: "copy_link",
-    });
-    await navigator.clipboard.writeText(window.location.href);
-    setCopyMessage("Copied");
-    window.setTimeout(() => setCopyMessage(""), 1800);
-  }
-
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
@@ -256,49 +228,22 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
               {summary ? `updated ${formatUpdatedAt(summary.updatedAt)}` : "loading"}
             </div>
           </div>
-          <button
-            type="button"
-            aria-label="Refresh"
-            onClick={() => void handleRefreshClick()}
-            title="Refresh"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
-          >
-            <RefreshCw
-              aria-hidden="true"
-              className={isRefreshing ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"}
-            />
-          </button>
-          <button
-            type="button"
-            aria-label="Copy link"
-            onClick={() => void handleCopyLink()}
-            title="Copy link"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
-          >
-            <Copy aria-hidden="true" className="h-3.5 w-3.5" />
-          </button>
           <a
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
             aria-label="GitHub repository"
             title="GitHub repository"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white/70 text-slate-500 shadow-xs backdrop-blur-xs transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs transition-all duration-200 hover:border-slate-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >
-            <svg
-              aria-hidden="true"
-              className="h-[20px] w-[20px]"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-            </svg>
+            <span>GitHub</span>
+            <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
           </a>
         </div>
       </header>
 
       <div className="min-h-6 pt-2 text-right text-xs font-semibold text-slate-400" aria-live="polite">
-        {copyMessage || summaryMessage}
+        {summaryMessage}
       </div>
 
       <ProviderTabs
@@ -329,10 +274,11 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
         })}
       </section>
 
-      <footer className="mt-auto flex justify-end border-t border-slate-200 py-6 text-xs font-semibold text-slate-400">
+      <footer className="relative mt-auto flex items-center justify-center border-t border-slate-200 py-6 text-xs font-semibold text-slate-400">
+        <span>© 2026 Not Just You</span>
         <Link
           href="/privacy"
-          className="underline-offset-4 hover:text-slate-950 hover:underline"
+          className="absolute right-0 underline-offset-4 hover:text-slate-950 hover:underline"
         >
           Privacy
         </Link>

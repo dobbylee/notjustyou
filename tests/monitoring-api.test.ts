@@ -28,9 +28,9 @@ const reportStorage = {
     updatedAt: "2026-06-19T01:00:00.000Z",
     metrics: [
       {
-        id: "refresh_button",
-        event: "refresh_button",
-        label: "Refresh button",
+        id: "provider_tab:openai",
+        event: "provider_tab",
+        label: "OpenAI tab",
         total: 2,
       },
     ],
@@ -165,4 +165,3 @@ describe("monitoring API", () => {
     });
   });
 });
-

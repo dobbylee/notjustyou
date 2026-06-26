@@ -38,7 +38,7 @@ Avoid presenting mixed sources as a single undifferentiated report count.
 
 ## Product Analytics And Monitoring
 
-`/api/clicks` is product interaction analytics. It records aggregate dashboard interactions such as report buttons, provider tabs, refresh, and copy-link actions. Today it can be used as a lightweight way to inspect button-click volume, but it is not the long-term operational monitoring surface.
+`/api/clicks` is product interaction analytics. It records aggregate dashboard interactions for report buttons and provider tabs. Today it can be used as a lightweight way to inspect button-click volume, but it is not the long-term operational monitoring surface.
 
 Operational checks should use dedicated read APIs:
 

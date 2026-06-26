@@ -14,11 +14,7 @@ export const CLICK_COUNTER_TTL_SECONDS = (CLICK_WINDOW_HOURS + 24) * 60 * 60;
 
 const HOUR_MS = 60 * 60 * 1000;
 
-export type ClickEventName =
-  | "report_button"
-  | "provider_tab"
-  | "refresh_button"
-  | "copy_link";
+export type ClickEventName = "report_button" | "provider_tab";
 
 const clickEventSchema = z.discriminatedUnion("event", [
   z.object({
@@ -29,12 +25,6 @@ const clickEventSchema = z.discriminatedUnion("event", [
   z.object({
     event: z.literal("provider_tab"),
     providerId: z.string().min(1),
-  }),
-  z.object({
-    event: z.literal("refresh_button"),
-  }),
-  z.object({
-    event: z.literal("copy_link"),
   }),
 ]);
 
@@ -114,16 +104,6 @@ export function validateClickEvent(input: unknown) {
         metricId: getProviderTabMetricId(provider.id),
       };
     }
-    case "refresh_button":
-      return {
-        ok: true as const,
-        metricId: "refresh_button",
-      };
-    case "copy_link":
-      return {
-        ok: true as const,
-        metricId: "copy_link",
-      };
   }
 }
 
@@ -145,16 +125,6 @@ export function getClickMetricSpecs(): ClickMetricSpec[] {
       label: `${provider.name} tab`,
       providerId: provider.id,
     })),
-    {
-      id: "refresh_button",
-      event: "refresh_button",
-      label: "Refresh button",
-    },
-    {
-      id: "copy_link",
-      event: "copy_link",
-      label: "Copy link",
-    },
   ];
 }
 

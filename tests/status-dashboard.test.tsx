@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StatusDashboard } from "@/components/status-dashboard";
@@ -89,54 +89,35 @@ const signalSummaryResponse: SignalSummaryResponse = {
   ],
 };
 
-const originalClipboard = navigator.clipboard;
-
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
-  Object.defineProperty(navigator, "clipboard", {
-    configurable: true,
-    value: originalClipboard,
-  });
 });
 
 describe("StatusDashboard", () => {
-  it("loads status data, switches providers, refreshes, and copies the link", async () => {
+  it("loads status data, switches providers, and links to GitHub", async () => {
     const fetchMock = createFetchMock();
-    const writeText = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup();
     vi.stubGlobal("fetch", fetchMock);
-    stubClipboard(writeText);
 
     render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
 
     expect(await screen.findByLabelText("Last 10 minutes: 3 reports"))
       .toBeInTheDocument();
     expect(screen.getByText("Operational")).toBeInTheDocument();
-    expect(screen.getByText("7 recent problem signals")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Community reports 3 · Installed signals 4 · Unique installations 2 · Official operational",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("7 recent problem signals")).toBeInTheDocument();
+    expect(screen.getByText("Community reports")).toBeInTheDocument();
+    expect(screen.getByText("Installed signals")).toBeInTheDocument();
+    expect(screen.getByText("Unique installations")).toBeInTheDocument();
+    expect(screen.getByText("Official status")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "GitHub repository" }))
       .toHaveAttribute("href", "https://github.com/dobbylee/notjustyou");
+    expect(screen.getByText("GitHub")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Google" }));
 
     expect(screen.getByText("Antigravity IDE")).toBeInTheDocument();
     expect(screen.queryByText("Claude Code")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Refresh" }));
-
-    await waitFor(() => {
-      expect(summaryFetchCount(fetchMock)).toBe(2);
-    });
-
-    await user.click(screen.getByRole("button", { name: "Copy link" }));
-
-    expect(writeText).toHaveBeenCalledWith("http://localhost:3000/");
-    expect(screen.getByText("Copied")).toBeInTheDocument();
   });
 
   it("submits reports and applies the optimistic count update", async () => {
@@ -235,18 +216,4 @@ function jsonResponse(body: unknown) {
       "content-type": "application/json",
     },
   });
-}
-
-function stubClipboard(writeText: (text: string) => Promise<void>) {
-  Object.defineProperty(navigator, "clipboard", {
-    configurable: true,
-    value: {
-      writeText,
-    },
-  });
-}
-
-function summaryFetchCount(fetchMock: ReturnType<typeof createFetchMock>) {
-  return fetchMock.mock.calls.filter(([input]) => String(input) === "/api/summary")
-    .length;
 }
