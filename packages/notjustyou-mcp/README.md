@@ -79,7 +79,8 @@ The MCP server reads public status summaries:
 
 The setup tools may write local config and store a collector token locally after
 user confirmation. They do not print the token, expose local config paths, or
-submit signals directly.
+submit signals directly. Setup tool results are scoped to the requested surface
+and do not list other enabled hook service ids.
 
 It does not collect prompt text, request or response bodies, headers, API keys,
 cookies, source files, diffs, clipboard content, exact IP addresses, account

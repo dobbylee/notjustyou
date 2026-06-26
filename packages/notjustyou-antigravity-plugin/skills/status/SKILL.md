@@ -17,6 +17,12 @@ When the user asks about recent installed-client reports for one surface, call `
 
 When the user asks what the status skill reads or sends, call `explain_privacy`.
 
+Never read, print, quote, summarize, or display the local Not Just You config
+file. Never reveal `collectorToken`, collector token values, `collectorId`, or
+raw config JSON in any response. Reporting setup state must be checked only by
+the setup-reporting skill or bundled setup MCP tools, and answers must be a
+summary, not config contents.
+
 Keep manual community reports, installed-client signals, and official status separate in the answer. Do not infer a vendor-wide outage from one source alone.
 
 If the user asks about Antigravity reporting, explain that optional Antigravity hooks can forward only an allowlisted local hook envelope to a local receiver after local reporting opt-in. The local adapter stores, queues, logs, and sends only metadata-only signals, not prompts, messages, commands, outputs, tool bodies, file paths, transcript paths, artifact paths, emails, workspace identifiers, or account identifiers.

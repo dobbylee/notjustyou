@@ -2,7 +2,7 @@
 
 const RECEIVER_URL =
   process.env.NOTJUSTYOU_HOOK_RECEIVER_URL ?? "http://127.0.0.1:8765/hook";
-const CLIENT_VERSION = "0.3.1";
+const CLIENT_VERSION = "0.3.3";
 const RECEIVER_HEALTH = {
   ok: true,
   name: "notjustyou-hook-receiver",

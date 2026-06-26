@@ -189,10 +189,44 @@ describe("MCP tools", () => {
       configured: false,
       enabled: false,
       source: null,
-      serviceIds: [],
+      otherEnabledSurfaceCount: 0,
     });
+    expect(result.structuredContent).not.toHaveProperty("serviceIds");
     expect(JSON.stringify(result.structuredContent)).not.toContain("collectorToken");
     expect(JSON.stringify(result.structuredContent)).not.toContain(tmpdir());
+  });
+
+  it("does not report ambiguous Antigravity setup state as enabled", async () => {
+    const configPath = tempConfigPath();
+    vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", configPath);
+    writeConfigFile(configPath, {
+      configVersion: 1,
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_ambiguous",
+      collectorToken: "secret_ambiguous_token",
+      source: "cli_hook",
+      serviceIds: ["google-antigravity-cli", "google-antigravity-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
+      localHookSignalOptIn: true,
+    });
+
+    const result = await callTool("get_reporting_setup_state", {
+      surface: "antigravity-cli",
+    });
+
+    expect(result.structuredContent).toMatchObject({
+      surface: "antigravity-cli",
+      serviceId: "google-antigravity-cli",
+      configured: true,
+      enabled: false,
+      source: "cli_hook",
+      localHookSignalOptIn: true,
+      otherEnabledSurfaceCount: 1,
+    });
+    expect(result.structuredContent).not.toHaveProperty("serviceIds");
+    expect(JSON.stringify(result.structuredContent)).not.toContain("secret_ambiguous_token");
+    expect(JSON.stringify(result.structuredContent)).not.toContain("google-antigravity-ide");
   });
 
   it("requires explicit confirmation before enabling local reporting", async () => {
@@ -249,12 +283,12 @@ describe("MCP tools", () => {
     writeConfigFile(configPath, {
       configVersion: 1,
       baseUrl: "https://notjustyou.dev",
-      collectorId: "col_cursor",
-      collectorToken: "secret_cursor_token",
+      collectorId: "col_codex",
+      collectorToken: "secret_codex_token",
       source: "cli_hook",
-      serviceIds: ["cursor-ide"],
+      serviceIds: ["openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
 
@@ -265,7 +299,7 @@ describe("MCP tools", () => {
         startReceiver: false,
       }, "http://localhost:3000"),
     ).rejects.toThrow(
-      "Failed to enable local reporting: Existing cli_hook config includes services outside Antigravity CLI.",
+      "Failed to enable local reporting: Existing cli_hook config includes unsupported local hook service openai-codex-cli.",
     );
     await expect(
       callTool("enable_reporting", {
@@ -273,7 +307,7 @@ describe("MCP tools", () => {
         confirmed: true,
         startReceiver: false,
       }, "http://localhost:3000"),
-    ).rejects.not.toThrow("secret_cursor_token");
+    ).rejects.not.toThrow("secret_codex_token");
     await expect(
       callTool("enable_reporting", {
         surface: "antigravity-cli",
@@ -281,6 +315,62 @@ describe("MCP tools", () => {
         startReceiver: false,
       }, "http://localhost:3000"),
     ).rejects.not.toThrow(configPath);
+  });
+
+  it("adds a reporting surface without revealing other enabled service ids", async () => {
+    const configPath = tempConfigPath();
+    vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", configPath);
+    writeConfigFile(configPath, {
+      configVersion: 1,
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_cursor",
+      collectorToken: "secret_cursor_token",
+      source: "cli_hook",
+      serviceIds: ["cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
+      localHookSignalOptIn: true,
+    });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "http://localhost:3000/api/collectors/register") {
+        expect(String(init?.body)).toContain('"cursor-ide"');
+        expect(String(init?.body)).toContain('"google-antigravity-cli"');
+        return jsonResponse({
+          collectorId: "collector_test",
+          collectorToken: "secret_test_token",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callTool("enable_reporting", {
+      surface: "antigravity-cli",
+      confirmed: true,
+      startReceiver: false,
+    }, "http://localhost:3000");
+
+    expect(result.structuredContent).toMatchObject({
+      surface: "antigravity-cli",
+      serviceId: "google-antigravity-cli",
+      enabled: true,
+      otherEnabledSurfaceCount: 1,
+      tokenPrinted: false,
+      signalSubmitted: false,
+    });
+    expect(result.structuredContent).not.toHaveProperty("serviceIds");
+    expect(JSON.stringify(result.structuredContent)).not.toContain("cursor-ide");
+    expect(JSON.stringify(result.structuredContent)).not.toContain("secret_test_token");
+
+    const config = JSON.parse(readFileSync(configPath, "utf8")) as Record<string, unknown>;
+    expect(config).toMatchObject({
+      collectorToken: "secret_test_token",
+      source: "cli_hook",
+      serviceIds: ["cursor-ide", "google-antigravity-cli"],
+      localHookSignalOptIn: true,
+    });
   });
 
   it("enables Cursor reporting through local config without submitting a signal", async () => {
@@ -314,11 +404,12 @@ describe("MCP tools", () => {
       enabled: true,
       receiverStatus: "skipped",
       source: "cli_hook",
-      serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
+      otherEnabledSurfaceCount: 0,
       tokenPrinted: false,
       signalSubmitted: false,
     });
+    expect(result.structuredContent).not.toHaveProperty("serviceIds");
     expect(JSON.stringify(result.structuredContent)).not.toContain("secret_test_token");
     expect(JSON.stringify(result.structuredContent)).not.toContain(configPath);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -363,11 +454,12 @@ describe("MCP tools", () => {
       enabled: true,
       receiverStatus: "skipped",
       source: "cli_hook",
-      serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
+      otherEnabledSurfaceCount: 0,
       tokenPrinted: false,
       signalSubmitted: false,
     });
+    expect(result.structuredContent).not.toHaveProperty("serviceIds");
     expect(JSON.stringify(result.structuredContent)).not.toContain("secret_test_token");
     expect(JSON.stringify(result.structuredContent)).not.toContain(configPath);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -410,6 +502,49 @@ describe("MCP tools", () => {
 
     const config = JSON.parse(readFileSync(configPath, "utf8")) as Record<string, unknown>;
     expect(config.localHookSignalOptIn).toBe(false);
+  });
+
+  it("does not re-enable disabled multi-surface configs when disabling through MCP", async () => {
+    const configPath = tempConfigPath();
+    vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", configPath);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfigFile(configPath, {
+      configVersion: 1,
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_disabled",
+      collectorToken: "secret_disabled_token",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
+      localHookSignalOptIn: false,
+    });
+
+    const result = await callTool("disable_reporting", {
+      surface: "cursor",
+      confirmed: true,
+    });
+
+    expect(result.structuredContent).toMatchObject({
+      surface: "cursor",
+      serviceId: "cursor-ide",
+      changed: false,
+      enabled: false,
+      reason: "not_enabled_for_surface",
+      otherEnabledSurfaceCount: 0,
+      tokenPrinted: false,
+      signalSubmitted: false,
+    });
+    expect(result.structuredContent).not.toHaveProperty("serviceIds");
+    expect(JSON.stringify(result.structuredContent)).not.toContain("secret_disabled_token");
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const config = JSON.parse(readFileSync(configPath, "utf8")) as Record<string, unknown>;
+    expect(config).toMatchObject({
+      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      localHookSignalOptIn: false,
+    });
   });
 });
 

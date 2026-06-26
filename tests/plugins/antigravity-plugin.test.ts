@@ -27,7 +27,7 @@ describe("Antigravity plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.3"],
+          args: ["-y", "@notjustyou/mcp@0.2.4"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -174,7 +174,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.3",
+        clientVersion: "0.3.4",
         localHookSignalOptIn: true,
       }),
     );
@@ -184,6 +184,35 @@ describe("Antigravity plugin", () => {
         NOTJUSTYOU_CONFIG_PATH: configPath,
       }),
     ).toBe("google-antigravity-cli");
+  });
+
+  it("does not choose an Antigravity service when multiple Antigravity surfaces are configured", async () => {
+    const { getConfiguredAntigravityServiceId } = await importHookModule();
+    const configPath = join(
+      mkdtempSync(join(tmpdir(), "njy-antigravity-plugin-ambiguous-")),
+      "config.json",
+    );
+
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        configVersion: 1,
+        baseUrl: "https://notjustyou.dev",
+        collectorId: "col_test",
+        collectorToken: "njy_secret",
+        source: "cli_hook",
+        serviceIds: ["google-antigravity-cli", "google-antigravity-ide"],
+        clientName: "notjustyou-cli",
+        clientVersion: "0.3.4",
+        localHookSignalOptIn: true,
+      }),
+    );
+
+    expect(
+      getConfiguredAntigravityServiceId({
+        NOTJUSTYOU_CONFIG_PATH: configPath,
+      }),
+    ).toBeNull();
   });
 
   it("does not print raw hook payloads when receiver forwarding is unavailable", () => {
@@ -201,7 +230,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.3",
+        clientVersion: "0.3.4",
         localHookSignalOptIn: true,
       }),
     );
@@ -237,7 +266,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.3",
+        clientVersion: "0.3.4",
         localHookSignalOptIn: false,
       }),
     );
@@ -277,12 +306,13 @@ describe("Antigravity plugin", () => {
     );
 
     expect(skill).toContain("Ask for explicit confirmation before enabling or disabling reporting");
+    expect(skill).toContain("allowed-tools: mcp__plugin_notjustyou_status__get_reporting_setup_state mcp__plugin_notjustyou_status__enable_reporting mcp__plugin_notjustyou_status__disable_reporting");
     expect(skill).toContain("mcp__plugin_notjustyou_status__enable_reporting");
     expect(skill).toContain("mcp__plugin_notjustyou_status__disable_reporting");
     expect(skill).toContain("antigravity-cli");
     expect(skill).toContain("antigravity-ide");
     expect(skill).toContain("confirmed: true");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.3 enable antigravity-cli");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.4 enable antigravity-cli --quiet");
     expect(skill).toContain("Do not use Bash, setup, register, hook receiver");
   });
 
@@ -300,9 +330,28 @@ describe("Antigravity plugin", () => {
   it("documents published package installation for Antigravity", () => {
     const readme = readFileSync(join(pluginRoot, "README.md"), "utf8");
 
-    expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.1");
+    expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.2");
     expect(readme).toContain("agy plugin install");
     expect(readme).toContain("Do not use `npm install -g`");
+    expect(readme).toContain("preserving other already-enabled Claude Code or Cursor reporting surfaces");
+    expect(readme).toContain("Within the Antigravity family, choose one active surface at a time");
+    expect(readme).toContain("njy enable antigravity-cli --quiet");
+  });
+
+  it("forbids local config and collector credential disclosure in skills", () => {
+    const statusSkill = readFileSync(join(pluginRoot, "skills/status/SKILL.md"), "utf8");
+    const setupSkill = readFileSync(
+      join(pluginRoot, "skills/setup-reporting/SKILL.md"),
+      "utf8",
+    );
+    const skills = `${statusSkill}\n${setupSkill}`;
+
+    expect(skills).toContain("Never read, print, quote, summarize, or display");
+    expect(skills).toContain("Never reveal `collectorToken`");
+    expect(skills).toContain("raw config JSON");
+    expect(setupSkill).toContain("mcp__plugin_notjustyou_status__get_reporting_setup_state");
+    expect(setupSkill).toContain("Do not suggest `cat`, `jq`, `less`, `grep`, `sed`, `open`");
+    expect(setupSkill).not.toContain("enable antigravity-cli\n");
   });
 });
 

@@ -15,6 +15,10 @@ First explain:
 - It does not send prompts, commands, outputs, tool input or result bodies, file paths, file contents, headers, API keys, cookies, account emails, machine names, or local usernames.
 - It is best-effort installed-client reporting, not guaranteed outage detection.
 
+Never read, print, quote, summarize, or display the local Not Just You config
+file. Never reveal `collectorToken`, collector token values, `collectorId`, or
+raw config JSON in any response.
+
 Ask for explicit confirmation before enabling or disabling reporting.
 
 If the user confirms enablement, call:
@@ -30,8 +34,8 @@ If the user confirms disabling reporting, call:
 If the setup MCP tools are unavailable, show the fallback commands:
 
 ```bash
-npx -y @notjustyou/cli@0.3.1 enable cursor
-npx -y @notjustyou/cli@0.3.1 disable cursor
+npx -y @notjustyou/cli@0.3.4 enable cursor --quiet
+npx -y @notjustyou/cli@0.3.4 disable cursor --quiet
 ```
 
 Do not run shell commands from this command file.

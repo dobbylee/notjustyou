@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
 import { readFileSync, realpathSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { checkCollectorToken, fetchStatusData } from "./api.js";
-import { getConfigMode, getConfigPath, readConfig, writeConfig } from "./config.js";
+import { getConfigMode, getConfigPath, readConfig } from "./config.js";
 import { formatStatus } from "./format.js";
 import { previewPayload } from "./privacy.js";
-import { createLocalHookReceiver, LOCAL_HOOK_RECEIVER_HEALTH } from "./receiver.js";
+import { createLocalHookReceiver } from "./receiver.js";
 import {
   CLIENT_NAME,
   CLIENT_VERSION,
   DEFAULT_BASE_URL,
+  disableReporting,
+  enableReporting,
   getReportingSurface,
   registerAndWriteConfig,
+  type ReportingSurfaceId,
 } from "./reporting-setup.js";
 
 const WATCH_INTERVAL_MS = 2_000;
@@ -56,7 +58,7 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   if (parsed.command === "disable") {
-    runDisable(parsed);
+    await runDisable(parsed);
     return 0;
   }
 
@@ -228,92 +230,47 @@ async function runEnable(input: {
   quiet: boolean;
 }) {
   const surface = getReportingSurface(input.serviceId);
-
-  const existingConfig = readConfig();
-  let config = existingConfig;
-
-  if (
-    config &&
-    config.source === "cli_hook" &&
-    config.localHookSignalOptIn === true &&
-    config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)
-  ) {
-    throw new Error(
-      `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
-    );
-  }
-
-  if (
-    !config ||
-    config.source !== "cli_hook" ||
-    !config.serviceIds.includes(surface.serviceId) ||
-    config.localHookSignalOptIn !== true
-  ) {
-    if (config && config.source !== "cli_hook") {
-      throw new Error(
-        `Existing config uses a different collector source. Automatic ${surface.displayName} reporting needs a cli_hook config.`,
-      );
-    }
-    config = await registerAndWriteConfig({
-      baseUrl: input.baseUrl,
-      source: "cli_hook",
-      serviceIds: [surface.serviceId],
-      enableLocalHooks: true,
-    });
-  }
-
-  const receiverStatus = input.skipReceiver
-    ? "skipped"
-    : await ensureHookReceiverRunning();
+  const result = await enableReporting({
+    surface: input.serviceId as ReportingSurfaceId,
+    baseUrl: input.baseUrl,
+    startReceiver: !input.skipReceiver,
+  });
 
   if (!input.quiet) {
     console.log(`${surface.displayName} reporting enabled.`);
     console.log(`Config: ${getConfigPath()}`);
-    console.log(`Collector: ${config.collectorId}`);
     console.log("Allowed source: cli_hook");
-    console.log(`Allowed services: ${config.serviceIds.join(", ")}`);
-    console.log(`Local hook receiver: ${receiverStatus}`);
+    console.log(`Allowed services: ${result.serviceIds.join(", ")}`);
+    console.log(`Local hook receiver: ${result.receiverStatus}`);
     console.log("Token: saved locally; raw token is not printed.");
   }
 }
 
-function runDisable(input: { serviceId: string | undefined; quiet: boolean }) {
+async function runDisable(input: { serviceId: string | undefined; quiet: boolean }) {
   const surface = getReportingSurface(input.serviceId);
+  const result = await disableReporting({
+    surface: input.serviceId as ReportingSurfaceId,
+  });
 
-  const config = readConfig();
-  if (!config) {
+  if (result.reason === "not_configured") {
     if (!input.quiet) console.log(`${surface.displayName} reporting is not configured.`);
     return;
   }
 
-  if (config.source !== "cli_hook") {
+  if (result.reason === "not_enabled_for_surface") {
     if (!input.quiet) {
       console.log(`${surface.displayName} reporting is not enabled for this config.`);
     }
     return;
   }
-
-  if (!config.serviceIds.includes(surface.serviceId)) {
-    if (!input.quiet) {
-      console.log(`${surface.displayName} reporting is not enabled for this config.`);
-    }
-    return;
-  }
-
-  if (config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)) {
-    throw new Error(
-      `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
-    );
-  }
-
-  writeConfig({
-    ...config,
-    localHookSignalOptIn: false,
-  });
 
   if (!input.quiet) {
     console.log(`${surface.displayName} reporting disabled.`);
-    console.log("The local receiver may keep running, but it will not send hook signals.");
+    if (result.localHookSignalOptIn) {
+      console.log(`Remaining allowed services: ${result.serviceIds.join(", ")}`);
+    } else {
+      console.log("The local receiver may keep running, but it will not send hook signals.");
+    }
   }
 }
 
@@ -427,36 +384,6 @@ async function runHookReceiver(input: { port: string | undefined; send: boolean 
       void receiver.close().finally(resolve);
     });
   });
-}
-
-async function ensureHookReceiverRunning() {
-  if (await isHookReceiverRunning()) return "already running";
-
-  const entrypoint = process.argv[1] ?? fileURLToPath(import.meta.url);
-  const child = spawn(process.execPath, [realpathSync(entrypoint), "hook-receiver", "--send"], {
-    detached: true,
-    stdio: "ignore",
-  });
-  child.unref();
-
-  return "started";
-}
-
-async function isHookReceiverRunning() {
-  try {
-    const response = await fetch("http://127.0.0.1:8765/health", {
-      method: "GET",
-      signal: AbortSignal.timeout(500),
-    });
-    const body = await response.json();
-    return (
-      response.ok &&
-      body?.ok === LOCAL_HOOK_RECEIVER_HEALTH.ok &&
-      body?.name === LOCAL_HOOK_RECEIVER_HEALTH.name
-    );
-  } catch {
-    return false;
-  }
 }
 
 function formatError(error: unknown) {

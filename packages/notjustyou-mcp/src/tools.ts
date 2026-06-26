@@ -192,7 +192,7 @@ export const TOOLS = [
     name: "disable_reporting",
     title: "Disable Local Reporting",
     description:
-      "Disable opt-in local hook reporting for Claude Code, Cursor, or Antigravity after the user explicitly asks for or confirms disabling. This updates local config only and does not delete public data.",
+      "Disable opt-in local hook reporting for Claude Code, Cursor, or Antigravity after the user explicitly asks for or confirms disabling. This updates local config and may rotate the collector registration to keep any remaining enabled surfaces allowlisted. It does not delete public data.",
     inputSchema: {
       type: "object",
       properties: {
@@ -316,7 +316,7 @@ export async function callTool(
     const surface = readReportingSurface(args.surface);
 
     try {
-      return jsonToolResult(getReportingSetupState(surface));
+      return jsonToolResult(redactReportingSetupResult(getReportingSetupState(surface)));
     } catch {
       throw new ToolExecutionError("Failed to read local reporting setup state.");
     }
@@ -332,11 +332,13 @@ export async function callTool(
 
     try {
       return jsonToolResult({
-        ...(await enableReporting({
-          surface,
-          baseUrl: setupBaseUrl ?? baseUrl,
-          startReceiver,
-        })),
+        ...redactReportingSetupResult(
+          await enableReporting({
+            surface,
+            baseUrl: setupBaseUrl ?? baseUrl,
+            startReceiver,
+          }),
+        ),
         tokenPrinted: false,
         signalSubmitted: false,
       });
@@ -353,7 +355,7 @@ export async function callTool(
 
     try {
       return jsonToolResult({
-        ...disableReporting({ surface }),
+        ...redactReportingSetupResult(await disableReporting({ surface })),
         tokenPrinted: false,
         signalSubmitted: false,
       });
@@ -503,6 +505,23 @@ function jsonToolResult(value: object): ToolResult {
   };
 }
 
+function redactReportingSetupResult<T extends {
+  serviceId: string;
+  serviceIds?: string[];
+  localHookSignalOptIn?: boolean;
+}>(value: T) {
+  const { serviceIds, ...safeValue } = value;
+  const otherEnabledSurfaceCount =
+    value.localHookSignalOptIn === true && Array.isArray(serviceIds)
+      ? serviceIds.filter((serviceId) => serviceId !== value.serviceId).length
+      : 0;
+
+  return {
+    ...safeValue,
+    otherEnabledSurfaceCount,
+  };
+}
+
 function readObject(value: unknown) {
   if (value === undefined || value === null) return {};
 
@@ -593,7 +612,7 @@ function formatLocalReportingError(action: "enable" | "disable", error: unknown)
 function isSafeLocalReportingError(message: string) {
   return (
     message.startsWith("Existing config uses a different collector source.") ||
-    message.startsWith("Existing cli_hook config includes services outside ") ||
+    message.startsWith("Existing cli_hook config includes unsupported local hook service ") ||
     message.startsWith("--enable-local-hooks ") ||
     message.startsWith("Unsupported source: ") ||
     message.startsWith("Unsupported service: ")
