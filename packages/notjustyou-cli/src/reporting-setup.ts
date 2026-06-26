@@ -9,7 +9,7 @@ import type { SignalSource } from "./types.js";
 
 export const DEFAULT_BASE_URL = "https://notjustyou.dev";
 export const CLIENT_NAME = "notjustyou-cli";
-export const CLIENT_VERSION = "0.3.3";
+export const CLIENT_VERSION = "0.3.4";
 export const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
 export const CURSOR_REPORTING_SERVICE = "cursor-ide";
 export const ANTIGRAVITY_CLI_REPORTING_SERVICE = "google-antigravity-cli";
@@ -19,6 +19,11 @@ export const ANTIGRAVITY_IDE_REPORTING_SERVICE = "google-antigravity-ide";
 const LOCAL_HOOK_REPORTING_SERVICES = new Set([
   CLAUDE_CODE_REPORTING_SERVICE,
   CURSOR_REPORTING_SERVICE,
+  ANTIGRAVITY_CLI_REPORTING_SERVICE,
+  ANTIGRAVITY_REPORTING_SERVICE,
+  ANTIGRAVITY_IDE_REPORTING_SERVICE,
+]);
+const ANTIGRAVITY_REPORTING_SERVICES = new Set([
   ANTIGRAVITY_CLI_REPORTING_SERVICE,
   ANTIGRAVITY_REPORTING_SERVICE,
   ANTIGRAVITY_IDE_REPORTING_SERVICE,
@@ -95,32 +100,37 @@ export async function enableReporting(input: {
   const existingConfig = readConfig();
   let config = existingConfig;
 
-  if (
-    config &&
-    config.source === "cli_hook" &&
-    config.localHookSignalOptIn === true &&
-    config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)
-  ) {
-    throw new Error(
-      `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
-    );
+  if (config?.source === "cli_hook" && config.localHookSignalOptIn === true) {
+    assertOnlySupportedLocalHookServices(config.serviceIds);
   }
+
+  const needsAntigravityNormalization =
+    config?.source === "cli_hook" &&
+    config.localHookSignalOptIn === true &&
+    ANTIGRAVITY_REPORTING_SERVICES.has(surface.serviceId) &&
+    countAntigravityServiceIds(config.serviceIds) > 1;
 
   if (
     !config ||
     config.source !== "cli_hook" ||
     !config.serviceIds.includes(surface.serviceId) ||
-    config.localHookSignalOptIn !== true
+    config.localHookSignalOptIn !== true ||
+    needsAntigravityNormalization
   ) {
     if (config && config.source !== "cli_hook") {
       throw new Error(
         `Existing config uses a different collector source. Automatic ${surface.displayName} reporting needs a cli_hook config.`,
       );
     }
+    const activeServiceIds = getActiveLocalHookServiceIds(config);
+    const nextServiceIds = mergeReportingServiceIds(
+      activeServiceIds,
+      surface.serviceId,
+    );
     config = await registerAndWriteConfig({
-      baseUrl,
+      baseUrl: activeServiceIds.length > 0 && config ? config.baseUrl : baseUrl,
       source: "cli_hook",
-      serviceIds: [surface.serviceId],
+      serviceIds: nextServiceIds,
       enableLocalHooks: true,
     });
   }
@@ -140,7 +150,7 @@ export async function enableReporting(input: {
   };
 }
 
-export function disableReporting(input: { surface: ReportingSurfaceId }) {
+export async function disableReporting(input: { surface: ReportingSurfaceId }) {
   const surface = getReportingSurface(input.surface);
   const config = readConfig();
 
@@ -155,7 +165,11 @@ export function disableReporting(input: { surface: ReportingSurfaceId }) {
     };
   }
 
-  if (config.source !== "cli_hook" || !config.serviceIds.includes(surface.serviceId)) {
+  if (
+    config.source !== "cli_hook" ||
+    config.localHookSignalOptIn !== true ||
+    !config.serviceIds.includes(surface.serviceId)
+  ) {
     return {
       surface: input.surface,
       displayName: surface.displayName,
@@ -166,16 +180,26 @@ export function disableReporting(input: { surface: ReportingSurfaceId }) {
     };
   }
 
-  if (config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)) {
-    throw new Error(
-      `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
-    );
-  }
+  assertOnlySupportedLocalHookServices(config.serviceIds);
 
-  writeConfig({
-    ...config,
-    localHookSignalOptIn: false,
-  });
+  const remainingServiceIds = config.serviceIds.filter(
+    (serviceId) => serviceId !== surface.serviceId,
+  );
+
+  if (remainingServiceIds.length > 0) {
+    await registerAndWriteConfig({
+      baseUrl: config.baseUrl,
+      source: "cli_hook",
+      serviceIds: remainingServiceIds,
+      enableLocalHooks: true,
+    });
+  } else {
+    writeConfig({
+      ...config,
+      serviceIds: [surface.serviceId],
+      localHookSignalOptIn: false,
+    });
+  }
 
   return {
     surface: input.surface,
@@ -184,6 +208,8 @@ export function disableReporting(input: { surface: ReportingSurfaceId }) {
     changed: config.localHookSignalOptIn === true,
     enabled: false,
     reason: "disabled",
+    serviceIds: remainingServiceIds.length > 0 ? remainingServiceIds : [surface.serviceId],
+    localHookSignalOptIn: remainingServiceIds.length > 0,
   };
 }
 
@@ -201,7 +227,11 @@ export function getReportingSetupState(
     enabled:
       config?.source === "cli_hook" &&
       config.serviceIds.includes(surface.serviceId) &&
-      config.localHookSignalOptIn === true,
+      config.localHookSignalOptIn === true &&
+      !(
+        ANTIGRAVITY_REPORTING_SERVICES.has(surface.serviceId) &&
+        countAntigravityServiceIds(config.serviceIds) > 1
+      ),
     source: config?.source ?? null,
     serviceIds: config?.serviceIds ?? [],
     localHookSignalOptIn: config?.localHookSignalOptIn === true,
@@ -238,6 +268,15 @@ export async function registerAndWriteConfig(input: {
       "--enable-local-hooks currently supports anthropic-claude-code, cursor-ide, google-antigravity-cli, google-antigravity, and google-antigravity-ide only.",
     );
   }
+  if (
+    input.enableLocalHooks &&
+    serviceIds.filter((serviceId) => ANTIGRAVITY_REPORTING_SERVICES.has(serviceId))
+      .length > 1
+  ) {
+    throw new Error(
+      "--enable-local-hooks supports only one Antigravity service at a time.",
+    );
+  }
 
   const source = input.source as SignalSource;
   const registration = await registerCollector({
@@ -258,6 +297,53 @@ export async function registerAndWriteConfig(input: {
     clientVersion: CLIENT_VERSION,
     ...(input.enableLocalHooks ? { localHookSignalOptIn: true } : {}),
   });
+}
+
+function getActiveLocalHookServiceIds(
+  config: ReturnType<typeof readConfig>,
+) {
+  if (
+    !config ||
+    config.source !== "cli_hook" ||
+    config.localHookSignalOptIn !== true
+  ) {
+    return [];
+  }
+
+  assertOnlySupportedLocalHookServices(config.serviceIds);
+
+  return config.serviceIds;
+}
+
+function mergeReportingServiceIds(
+  activeServiceIds: string[],
+  nextServiceId: string,
+) {
+  const serviceIds = ANTIGRAVITY_REPORTING_SERVICES.has(nextServiceId)
+    ? activeServiceIds.filter(
+      (serviceId) => !ANTIGRAVITY_REPORTING_SERVICES.has(serviceId),
+    )
+    : activeServiceIds;
+
+  return [...serviceIds, nextServiceId];
+}
+
+function countAntigravityServiceIds(serviceIds: string[]) {
+  return serviceIds.filter((serviceId) =>
+    ANTIGRAVITY_REPORTING_SERVICES.has(serviceId),
+  ).length;
+}
+
+function assertOnlySupportedLocalHookServices(serviceIds: string[]) {
+  const unsupportedService = serviceIds.find(
+    (serviceId) => !LOCAL_HOOK_REPORTING_SERVICES.has(serviceId),
+  );
+
+  if (unsupportedService) {
+    throw new Error(
+      `Existing cli_hook config includes unsupported local hook service ${unsupportedService}. Re-run manual registration with supported hook services only.`,
+    );
+  }
 }
 
 async function ensureHookReceiverRunning() {

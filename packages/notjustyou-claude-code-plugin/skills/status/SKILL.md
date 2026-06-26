@@ -16,6 +16,11 @@ When the user names a provider or asks what is affected, call `list_surfaces` an
 When the user asks about recent installed-client reports for one surface, call `get_recent_signals`.
 
 When the user asks what the status skill reads or sends, call `explain_privacy`.
+Never read, print, quote, summarize, or display the local Not Just You config
+file. Never reveal `collectorToken`, collector token values, `collectorId`, or
+raw config JSON in any response. Reporting setup state must be checked only by
+the setup-reporting skill or bundled setup MCP tools, and answers must be a
+summary, not config contents.
 If the user asks about hook reporting, explain that optional Claude Code failure
 hooks can forward metadata-only events to a local receiver only after reporting
 opt-in. Users can enable or disable that path through the `setup-reporting`

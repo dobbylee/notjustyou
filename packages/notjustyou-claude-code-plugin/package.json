@@ -1,6 +1,6 @@
 {
   "name": "@notjustyou/claude-code-plugin",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Not Just You status and opt-in local hook reporting for Claude Code surfaces.",
   "license": "MIT",
   "repository": {

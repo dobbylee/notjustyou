@@ -17,9 +17,9 @@ run **Developer: Reload Window**.
 
 ```bash
 mkdir -p ~/.cursor/plugins/local/notjustyou
-npm pack @notjustyou/cursor-plugin@0.1.1
-tar -xzf notjustyou-cursor-plugin-0.1.1.tgz -C ~/.cursor/plugins/local/notjustyou --strip-components=1
-rm notjustyou-cursor-plugin-0.1.1.tgz
+npm pack @notjustyou/cursor-plugin@0.1.2
+tar -xzf notjustyou-cursor-plugin-0.1.2.tgz -C ~/.cursor/plugins/local/notjustyou --strip-components=1
+rm notjustyou-cursor-plugin-0.1.2.tgz
 ```
 
 For local development from a Not Just You checkout, symlink the package root
@@ -49,23 +49,24 @@ skill explains the privacy boundary and asks for confirmation before calling
 the bundled setup MCP tool.
 
 ```bash
-njy enable cursor
+njy enable cursor --quiet
 ```
 
 That command registers an anonymous `cli_hook` collector, saves the token only
 in the local Not Just You config file, and starts the localhost receiver in
-send mode. Keep the receiver running while you want automatic Cursor reports.
+send mode while preserving other already-enabled Not Just You hook reporting
+surfaces. Keep the receiver running while you want automatic Cursor reports.
 If the setup MCP tool is unavailable and you installed the CLI from npm but do
 not have `njy` on your `PATH`, use:
 
 ```bash
-npx -y @notjustyou/cli@0.3.1 enable cursor
+npx -y @notjustyou/cli@0.3.4 enable cursor --quiet
 ```
 
 To turn reporting off:
 
 ```bash
-njy disable cursor
+njy disable cursor --quiet
 ```
 
 The plugin hook does not call public `/api/signals` directly. It forwards only

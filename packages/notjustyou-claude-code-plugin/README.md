@@ -37,15 +37,16 @@ You can also ask the plugin to set up Not Just You reporting; the
 before calling the bundled setup MCP tool.
 
 ```bash
-njy enable claude-code
+njy enable claude-code --quiet
 ```
 
 That command registers an anonymous `cli_hook` collector, saves the token only
 in the local Not Just You config file, and starts the localhost receiver in
-send mode. To turn reporting off:
+send mode while preserving other already-enabled Not Just You hook reporting
+surfaces. To turn Claude Code reporting off:
 
 ```bash
-njy disable claude-code
+njy disable claude-code --quiet
 ```
 
 The plugin hook forwards only normalized metadata to the localhost receiver. It

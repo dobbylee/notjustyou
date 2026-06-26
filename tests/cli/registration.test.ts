@@ -38,7 +38,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.3",
+          clientVersion: "0.3.4",
         });
 
         return jsonResponse({
@@ -68,7 +68,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("Collector registered.");
     expect(output).toContain("Token: saved locally; raw token is not printed.");
     expect(output).not.toContain("njy_raw_secret");
-    expect(readConfig()?.clientVersion).toBe("0.3.3");
+    expect(readConfig()?.clientVersion).toBe("0.3.4");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {
@@ -207,6 +207,28 @@ describe("CLI setup and registration", () => {
     });
   });
 
+  it("rejects multiple Antigravity services in lower-level local hook registration", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "register",
+        "--source",
+        "cli_hook",
+        "--service",
+        "google-antigravity-cli",
+        "--service",
+        "google-antigravity-ide",
+        "--enable-local-hooks",
+      ]),
+    ).rejects.toThrow(
+      "--enable-local-hooks supports only one Antigravity service at a time.",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(readConfig()).toBeNull();
+  });
+
   it("enables Claude Code reporting with one command", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -215,7 +237,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.3",
+          clientVersion: "0.3.4",
         });
 
         return jsonResponse({
@@ -243,7 +265,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Claude Code reporting enabled.");
@@ -259,7 +281,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.3",
+          clientVersion: "0.3.4",
         });
 
         return jsonResponse({
@@ -287,7 +309,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Cursor reporting enabled.");
@@ -303,7 +325,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.3",
+          clientVersion: "0.3.4",
         });
 
         return jsonResponse({
@@ -331,7 +353,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -349,7 +371,7 @@ describe("CLI setup and registration", () => {
       source: "api_middleware",
       serviceIds: ["openai-api"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
     });
 
     await expect(
@@ -362,7 +384,7 @@ describe("CLI setup and registration", () => {
     });
   });
 
-  it("does not broaden an existing mixed cli_hook config", async () => {
+  it("does not broaden an existing cli_hook config with unsupported local hook services", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     writeConfig({
@@ -372,13 +394,15 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
 
     await expect(
       main(["enable", "claude-code", "--skip-receiver"]),
-    ).rejects.toThrow("Existing cli_hook config includes services outside Claude Code");
+    ).rejects.toThrow(
+      "Existing cli_hook config includes unsupported local hook service openai-codex-cli",
+    );
     expect(fetchMock).not.toHaveBeenCalled();
     expect(readConfig()).toMatchObject({
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
@@ -386,9 +410,8 @@ describe("CLI setup and registration", () => {
     });
   });
 
-  it("does not replace an active cli_hook config for another service", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
+  it("adds a supported reporting surface without disabling existing surfaces", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     writeConfig({
       baseUrl: "http://localhost:3000",
       collectorId: "col_cursor",
@@ -396,18 +419,233 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["cursor-ide", "google-antigravity-cli"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.4",
+        });
+
+        return jsonResponse({
+          collectorId: "col_cursor_antigravity",
+          collectorToken: "njy_new_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(
       main(["enable", "antigravity-cli", "--skip-receiver"]),
-    ).rejects.toThrow("Existing cli_hook config includes services outside Antigravity CLI");
-    expect(fetchMock).not.toHaveBeenCalled();
+    ).resolves.toBe(0);
     expect(readConfig()).toMatchObject({
-      serviceIds: ["cursor-ide"],
+      collectorId: "col_cursor_antigravity",
+      serviceIds: ["cursor-ide", "google-antigravity-cli"],
+      localHookSignalOptIn: true,
+      clientVersion: "0.3.4",
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Antigravity CLI reporting enabled.");
+    expect(output).toContain("Allowed services: cursor-ide, google-antigravity-cli");
+    expect(output).not.toContain("njy_cursor_secret");
+    expect(output).not.toContain("njy_new_secret");
+  });
+
+  it("supports Claude Code, Cursor, and one Antigravity surface together", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_claude_cursor",
+      collectorToken: "njy_claude_cursor_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: [
+            "anthropic-claude-code",
+            "cursor-ide",
+            "google-antigravity-cli",
+          ],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.4",
+        });
+
+        return jsonResponse({
+          collectorId: "col_claude_cursor_antigravity",
+          collectorToken: "njy_tri_surface_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main(["enable", "antigravity-cli", "--skip-receiver"]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      collectorId: "col_claude_cursor_antigravity",
+      serviceIds: [
+        "anthropic-claude-code",
+        "cursor-ide",
+        "google-antigravity-cli",
+      ],
+      localHookSignalOptIn: true,
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain(
+      "Allowed services: anthropic-claude-code, cursor-ide, google-antigravity-cli",
+    );
+    expect(output).not.toContain("njy_claude_cursor_secret");
+    expect(output).not.toContain("njy_tri_surface_secret");
+  });
+
+  it("replaces another Antigravity surface instead of configuring two ambiguous Antigravity hooks", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_antigravity_cli",
+      collectorToken: "njy_antigravity_cli_secret",
+      source: "cli_hook",
+      serviceIds: ["cursor-ide", "google-antigravity-cli"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
+      localHookSignalOptIn: true,
+    });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["cursor-ide", "google-antigravity-ide"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.4",
+        });
+
+        return jsonResponse({
+          collectorId: "col_cursor_antigravity_ide",
+          collectorToken: "njy_replaced_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main(["enable", "antigravity-ide", "--skip-receiver"]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      collectorId: "col_cursor_antigravity_ide",
+      serviceIds: ["cursor-ide", "google-antigravity-ide"],
+      localHookSignalOptIn: true,
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Antigravity IDE reporting enabled.");
+    expect(output).not.toContain("google-antigravity-cli");
+    expect(output).not.toContain("njy_antigravity_cli_secret");
+    expect(output).not.toContain("njy_replaced_secret");
+  });
+
+  it("normalizes stale configs that already include multiple Antigravity services", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_ambiguous_antigravity",
+      collectorToken: "njy_ambiguous_secret",
+      source: "cli_hook",
+      serviceIds: [
+        "cursor-ide",
+        "google-antigravity-cli",
+        "google-antigravity-ide",
+      ],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
+      localHookSignalOptIn: true,
+    });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["cursor-ide", "google-antigravity-cli"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.4",
+        });
+
+        return jsonResponse({
+          collectorId: "col_normalized_antigravity",
+          collectorToken: "njy_normalized_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main(["enable", "antigravity-cli", "--skip-receiver"]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      collectorId: "col_normalized_antigravity",
+      serviceIds: ["cursor-ide", "google-antigravity-cli"],
+      localHookSignalOptIn: true,
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Antigravity CLI reporting enabled.");
+    expect(output).not.toContain("google-antigravity-ide");
+    expect(output).not.toContain("njy_ambiguous_secret");
+    expect(output).not.toContain("njy_normalized_secret");
+  });
+
+  it("does not print config path, collector id, or token in quiet enable output", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith("/api/collectors/register")) {
+        return jsonResponse({
+          collectorId: "col_quiet",
+          collectorToken: "njy_quiet_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "enable",
+        "antigravity-cli",
+        "--base-url",
+        "http://localhost:3000",
+        "--skip-receiver",
+        "--quiet",
+      ]),
+    ).resolves.toBe(0);
+
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toBe("");
+    expect(output).not.toContain(process.env.NOTJUSTYOU_CONFIG_PATH ?? "");
+    expect(output).not.toContain("col_quiet");
+    expect(output).not.toContain("njy_quiet_secret");
   });
 
   it("replaces a disabled cli_hook config for another service when enabling reporting", async () => {
@@ -419,7 +657,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.1",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: false,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -428,7 +666,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.3",
+          clientVersion: "0.3.4",
         });
 
         return jsonResponse({
@@ -451,7 +689,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -468,7 +706,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
 
@@ -492,7 +730,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
 
@@ -517,7 +755,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
 
@@ -533,7 +771,36 @@ describe("CLI setup and registration", () => {
     );
   });
 
-  it("rejects disable for mixed local hook configs instead of disabling all services", async () => {
+  it("does not re-enable disabled multi-surface hook configs when disabling one surface", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_disabled",
+      collectorToken: "njy_disabled_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
+      localHookSignalOptIn: false,
+    });
+
+    await expect(main(["disable", "cursor"])).resolves.toBe(0);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(readConfig()).toMatchObject({
+      collectorId: "col_disabled",
+      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      localHookSignalOptIn: false,
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Cursor reporting is not enabled for this config.");
+    expect(output).not.toContain("njy_disabled_secret");
+  });
+
+  it("disables only the requested surface in a multi-surface hook config", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     writeConfig({
       baseUrl: "http://localhost:3000",
       collectorId: "col_mixed",
@@ -541,17 +808,40 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
       localHookSignalOptIn: true,
     });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["anthropic-claude-code"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.4",
+        });
 
-    await expect(main(["disable", "cursor"])).rejects.toThrow(
-      "Existing cli_hook config includes services outside Cursor.",
-    );
+        return jsonResponse({
+          collectorId: "col_claude_only",
+          collectorToken: "njy_rotated_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(main(["disable", "cursor"])).resolves.toBe(0);
     expect(readConfig()).toMatchObject({
-      serviceIds: ["anthropic-claude-code", "cursor-ide"],
+      collectorId: "col_claude_only",
+      serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
     });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Cursor reporting disabled.");
+    expect(output).toContain("Remaining allowed services: anthropic-claude-code");
+    expect(output).not.toContain("njy_mixed_secret");
+    expect(output).not.toContain("njy_rotated_secret");
   });
 
   it("rejects unknown reporting surfaces", async () => {

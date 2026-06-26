@@ -48,6 +48,14 @@ metadata-only local hook reporting, write a `cli_hook` collector config, and
 start the local hook receiver in send mode. Use the matching `disable` command
 to turn that local hook sending off.
 
+Guided local hook setup stores enabled agent surfaces in one local config. Each
+`enable` or setup MCP flow changes only the confirmed surface while preserving
+other already-enabled Claude Code or Cursor surfaces. Within the Antigravity
+family, enabling one surface replaces any other active Antigravity surface
+because the Antigravity hook cannot safely disambiguate multiple Antigravity
+service ids. The matching `disable` command removes only that surface. Codex
+remains status-only.
+
 The CLI does not submit reports or installed-client signals unless an opt-in
 collector path is enabled.
 

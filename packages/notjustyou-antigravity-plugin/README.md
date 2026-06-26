@@ -16,9 +16,9 @@ then install that directory with Antigravity:
 
 ```bash
 PLUGIN_TMP="$(mktemp -d)"
-npm pack @notjustyou/antigravity-plugin@0.2.1 --pack-destination "$PLUGIN_TMP"
+npm pack @notjustyou/antigravity-plugin@0.2.2 --pack-destination "$PLUGIN_TMP"
 mkdir -p "$PLUGIN_TMP/notjustyou"
-tar -xzf "$PLUGIN_TMP/notjustyou-antigravity-plugin-0.2.1.tgz" -C "$PLUGIN_TMP/notjustyou" --strip-components=1
+tar -xzf "$PLUGIN_TMP/notjustyou-antigravity-plugin-0.2.2.tgz" -C "$PLUGIN_TMP/notjustyou" --strip-components=1
 agy plugin install "$PLUGIN_TMP/notjustyou"
 ```
 
@@ -77,6 +77,11 @@ cookies, source files, diffs, clipboard content, transcript files, exact IP
 addresses, account emails, machine names, workspace paths, file paths, or local
 usernames.
 
+The local Not Just You config contains collector credentials. The plugin skills
+must not read, print, summarize, or display raw config JSON, `collectorToken`,
+collector token values, or `collectorId`. Use the bundled reporting setup tools
+for state summaries instead of inspecting config files.
+
 Antigravity hook input can include conversation ids, workspace paths, transcript
 paths, artifact paths, tool arguments, and error strings. This plugin checks
 local opt-in config before reading hook stdin. After opt-in, the hook script
@@ -100,15 +105,20 @@ Ask Antigravity to set up Not Just You reporting; the `setup-reporting` skill
 explains the privacy boundary and asks for confirmation before enabling or
 disabling reporting.
 
+Each setup request changes only the confirmed Antigravity surface while
+preserving other already-enabled Claude Code or Cursor reporting surfaces.
+Within the Antigravity family, choose one active surface at a time:
+`antigravity-cli`, `antigravity`, or `antigravity-ide`.
+
 Fallback CLI commands:
 
 ```bash
-njy enable antigravity-cli
-njy enable antigravity
-njy enable antigravity-ide
-njy disable antigravity-cli
-njy disable antigravity
-njy disable antigravity-ide
+njy enable antigravity-cli --quiet
+njy enable antigravity --quiet
+njy enable antigravity-ide --quiet
+njy disable antigravity-cli --quiet
+njy disable antigravity --quiet
+njy disable antigravity-ide --quiet
 ```
 
 Keep the local hook receiver running while you want automatic Antigravity
