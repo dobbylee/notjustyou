@@ -340,8 +340,8 @@ export async function callTool(
         tokenPrinted: false,
         signalSubmitted: false,
       });
-    } catch {
-      throw new ToolExecutionError("Failed to enable local reporting.");
+    } catch (error) {
+      throw new ToolExecutionError(formatLocalReportingError("enable", error));
     }
   }
 
@@ -357,8 +357,8 @@ export async function callTool(
         tokenPrinted: false,
         signalSubmitted: false,
       });
-    } catch {
-      throw new ToolExecutionError("Failed to disable local reporting.");
+    } catch (error) {
+      throw new ToolExecutionError(formatLocalReportingError("disable", error));
     }
   }
 
@@ -579,6 +579,25 @@ function readOptionalWindowMinutes(value: unknown) {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function formatLocalReportingError(action: "enable" | "disable", error: unknown) {
+  const actionText = action === "enable" ? "enable" : "disable";
+  if (error instanceof Error && isSafeLocalReportingError(error.message)) {
+    return `Failed to ${actionText} local reporting: ${error.message}`;
+  }
+
+  return `Failed to ${actionText} local reporting.`;
+}
+
+function isSafeLocalReportingError(message: string) {
+  return (
+    message.startsWith("Existing config uses a different collector source.") ||
+    message.startsWith("Existing cli_hook config includes services outside ") ||
+    message.startsWith("--enable-local-hooks ") ||
+    message.startsWith("Unsupported source: ") ||
+    message.startsWith("Unsupported service: ")
+  );
 }
 
 function numericRecord(value: Record<string, number>) {

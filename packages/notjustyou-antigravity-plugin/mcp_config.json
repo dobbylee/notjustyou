@@ -4,7 +4,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@notjustyou/mcp@0.2.2"
+        "@notjustyou/mcp@0.2.3"
       ],
       "env": {
         "NOTJUSTYOU_BASE_URL": "https://notjustyou.dev"

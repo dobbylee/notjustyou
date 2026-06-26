@@ -11,6 +11,20 @@ Plugin for Antigravity CLI, Antigravity, and Antigravity IDE.
 
 ## Install
 
+Install the published package by unpacking it into a local plugin directory,
+then install that directory with Antigravity:
+
+```bash
+PLUGIN_TMP="$(mktemp -d)"
+npm pack @notjustyou/antigravity-plugin@0.2.1 --pack-destination "$PLUGIN_TMP"
+mkdir -p "$PLUGIN_TMP/notjustyou"
+tar -xzf "$PLUGIN_TMP/notjustyou-antigravity-plugin-0.2.1.tgz" -C "$PLUGIN_TMP/notjustyou" --strip-components=1
+agy plugin install "$PLUGIN_TMP/notjustyou"
+```
+
+Do not use `npm install -g` for this plugin. Antigravity loads plugin
+directories, not global npm package locations.
+
 From a workspace checkout:
 
 ```bash

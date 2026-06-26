@@ -27,7 +27,7 @@ describe("Antigravity plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.2"],
+          args: ["-y", "@notjustyou/mcp@0.2.3"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -174,7 +174,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.2",
+        clientVersion: "0.3.3",
         localHookSignalOptIn: true,
       }),
     );
@@ -201,7 +201,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.2",
+        clientVersion: "0.3.3",
         localHookSignalOptIn: true,
       }),
     );
@@ -237,7 +237,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.2",
+        clientVersion: "0.3.3",
         localHookSignalOptIn: false,
       }),
     );
@@ -282,7 +282,7 @@ describe("Antigravity plugin", () => {
     expect(skill).toContain("antigravity-cli");
     expect(skill).toContain("antigravity-ide");
     expect(skill).toContain("confirmed: true");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.2 enable antigravity-cli");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.3 enable antigravity-cli");
     expect(skill).toContain("Do not use Bash, setup, register, hook receiver");
   });
 
@@ -295,6 +295,14 @@ describe("Antigravity plugin", () => {
     expect(packageJson.publishConfig).toEqual({
       access: "public",
     });
+  });
+
+  it("documents published package installation for Antigravity", () => {
+    const readme = readFileSync(join(pluginRoot, "README.md"), "utf8");
+
+    expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.1");
+    expect(readme).toContain("agy plugin install");
+    expect(readme).toContain("Do not use `npm install -g`");
   });
 });
 

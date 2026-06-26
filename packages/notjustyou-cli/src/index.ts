@@ -233,6 +233,17 @@ async function runEnable(input: {
   let config = existingConfig;
 
   if (
+    config &&
+    config.source === "cli_hook" &&
+    config.localHookSignalOptIn === true &&
+    config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)
+  ) {
+    throw new Error(
+      `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
+    );
+  }
+
+  if (
     !config ||
     config.source !== "cli_hook" ||
     !config.serviceIds.includes(surface.serviceId) ||
@@ -243,16 +254,6 @@ async function runEnable(input: {
         `Existing config uses a different collector source. Automatic ${surface.displayName} reporting needs a cli_hook config.`,
       );
     }
-    if (
-      config &&
-      config.source === "cli_hook" &&
-      config.serviceIds.some((serviceId) => serviceId !== surface.serviceId)
-    ) {
-      throw new Error(
-        `Existing cli_hook config includes services outside ${surface.displayName}. Re-run manual registration for a ${surface.displayName}-only hook config.`,
-      );
-    }
-
     config = await registerAndWriteConfig({
       baseUrl: input.baseUrl,
       source: "cli_hook",
