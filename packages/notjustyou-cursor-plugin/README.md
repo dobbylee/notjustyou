@@ -85,7 +85,7 @@ or the user's network cannot reach Not Just You.
 The status skill reads public aggregate status APIs through `@notjustyou/mcp`.
 The setup MCP tools can write local reporting config after explicit
 confirmation, but they do not submit signals directly or print collector
-tokens.
+tokens or collector ids.
 
 It does not send prompt text, request or response bodies, headers, API keys,
 cookies, source files, diffs, clipboard content, exact IP addresses, account
