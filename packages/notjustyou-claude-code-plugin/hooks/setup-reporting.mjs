@@ -7,7 +7,7 @@ import { join } from "node:path";
 
 const CONSENT_VALUE = process.argv[2];
 const SERVICE_ID = "anthropic-claude-code";
-const CLI_PACKAGE = "@notjustyou/cli@0.3.4";
+const CLI_PACKAGE = "@notjustyou/cli@0.3.5";
 const RECEIVER_URL = "http://127.0.0.1:8765/hook";
 const RECEIVER_HEALTH = {
   ok: true,

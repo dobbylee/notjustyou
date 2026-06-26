@@ -1,7 +1,7 @@
 {
   "name": "notjustyou",
   "displayName": "Not Just You",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Adds Not Just You status tools and optional local hook reporting for Cursor surfaces.",
   "author": {
     "name": "Not Just You"

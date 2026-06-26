@@ -15,7 +15,7 @@ describe("Claude Code status plugin", () => {
       name: "notjustyou",
       description:
         "Adds Not Just You status tools and optional local hook reporting for Claude Code surfaces.",
-      version: "0.3.3",
+      version: "0.3.4",
       license: "MIT",
       userConfig: {
         enableReporting: {
@@ -34,7 +34,7 @@ describe("Claude Code status plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.4"],
+          args: ["-y", "@notjustyou/mcp@0.2.5"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -67,7 +67,7 @@ describe("Claude Code status plugin", () => {
     expect(hooks.hooks).not.toHaveProperty("PostToolUseFailure");
     expect(serializedPlugin).toContain("http://127.0.0.1:8765/hook");
     expect(hookImplementation).toContain("${user_config.enableReporting}");
-    expect(hookImplementation).toContain("@notjustyou/cli@0.3.4");
+    expect(hookImplementation).toContain("@notjustyou/cli@0.3.5");
     expect(hookImplementation).toContain("enable\", \"claude-code\"");
     expect(hookImplementation).not.toContain("submit_signal");
     expect(hookImplementation).not.toContain("/api/signals");
@@ -93,7 +93,7 @@ describe("Claude Code status plugin", () => {
       eventName: "StopFailure",
       symptom: "rate_limited",
       errorCode: "claude_rate_limit",
-      clientVersion: "0.3.3",
+      clientVersion: "0.3.4",
     });
     expect(previewPayload(payload)).toMatchObject({
       ok: true,
@@ -140,8 +140,8 @@ describe("Claude Code status plugin", () => {
     expect(skill).toContain("mcp__plugin_notjustyou_status__disable_reporting");
     expect(skill).toContain('surface: "claude-code"');
     expect(skill).toContain("confirmed: true");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.4 enable claude-code");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.4 disable claude-code");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.5 enable claude-code");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.5 disable claude-code");
     expect(skill).toContain("Never reveal `collectorToken`");
     expect(skill).toContain("raw config JSON");
     expect(skill).toContain("Do not suggest `cat`, `jq`, `less`, `grep`, `sed`, `open`");
@@ -162,7 +162,7 @@ describe("Claude Code status plugin", () => {
     expect(command).toContain("Ask for explicit confirmation before enabling or disabling reporting");
     expect(command).toContain("mcp__plugin_notjustyou_status__enable_reporting");
     expect(command).toContain("mcp__plugin_notjustyou_status__disable_reporting");
-    expect(command).toContain("npx -y @notjustyou/cli@0.3.4 enable claude-code");
+    expect(command).toContain("npx -y @notjustyou/cli@0.3.5 enable claude-code");
     expect(command).toContain("Never reveal `collectorToken`");
     expect(command).toContain("raw config JSON");
     expect(command).toContain("Do not run shell commands from this command file.");
@@ -182,7 +182,7 @@ describe("Claude Code status plugin", () => {
             source: {
               source: "npm",
               package: "@notjustyou/claude-code-plugin",
-            version: "0.3.3",
+            version: "0.3.4",
           },
         },
       ],

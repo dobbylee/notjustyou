@@ -17,9 +17,9 @@ run **Developer: Reload Window**.
 
 ```bash
 mkdir -p ~/.cursor/plugins/local/notjustyou
-npm pack @notjustyou/cursor-plugin@0.1.2
-tar -xzf notjustyou-cursor-plugin-0.1.2.tgz -C ~/.cursor/plugins/local/notjustyou --strip-components=1
-rm notjustyou-cursor-plugin-0.1.2.tgz
+npm pack @notjustyou/cursor-plugin@0.1.3
+tar -xzf notjustyou-cursor-plugin-0.1.3.tgz -C ~/.cursor/plugins/local/notjustyou --strip-components=1
+rm notjustyou-cursor-plugin-0.1.3.tgz
 ```
 
 For local development from a Not Just You checkout, symlink the package root
@@ -60,7 +60,7 @@ If the setup MCP tool is unavailable and you installed the CLI from npm but do
 not have `njy` on your `PATH`, use:
 
 ```bash
-npx -y @notjustyou/cli@0.3.4 enable cursor --quiet
+npx -y @notjustyou/cli@0.3.5 enable cursor --quiet
 ```
 
 To turn reporting off:

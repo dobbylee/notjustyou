@@ -196,7 +196,6 @@ async function runSetup(input: {
   console.log("");
   console.log("Setup complete.");
   console.log(`Config: ${getConfigPath()}`);
-  console.log(`Collector: ${config.collectorId}`);
   console.log(`Allowed source: ${config.source}`);
   console.log(`Allowed services: ${config.serviceIds.join(", ")}`);
   console.log("Next: configure the SDK collector to reuse this local config.");
@@ -217,7 +216,6 @@ async function runRegister(input: {
 
   console.log("Collector registered.");
   console.log(`Config: ${getConfigPath()}`);
-  console.log(`Collector: ${config.collectorId}`);
   console.log(`Allowed source: ${config.source}`);
   console.log(`Allowed services: ${config.serviceIds.join(", ")}`);
   console.log("Token: saved locally; raw token is not printed.");

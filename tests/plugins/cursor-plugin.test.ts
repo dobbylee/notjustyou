@@ -18,7 +18,7 @@ describe("Cursor status plugin", () => {
       displayName: "Not Just You",
       description:
         "Adds Not Just You status tools and optional local hook reporting for Cursor surfaces.",
-      version: "0.1.2",
+      version: "0.1.3",
       license: "MIT",
     });
     expect(manifest.name).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
@@ -31,7 +31,7 @@ describe("Cursor status plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.4"],
+          args: ["-y", "@notjustyou/mcp@0.2.5"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -131,7 +131,7 @@ describe("Cursor status plugin", () => {
         source: "cli_hook",
         serviceIds: ["cursor-ide"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.4",
+        clientVersion: "0.3.5",
         localHookSignalOptIn: true,
       }),
     );
@@ -210,8 +210,8 @@ describe("Cursor status plugin", () => {
     expect(skill).toContain("mcp__plugin_notjustyou_status__disable_reporting");
     expect(skill).toContain('surface: "cursor"');
     expect(skill).toContain("confirmed: true");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.4 enable cursor");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.4 disable cursor");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.5 enable cursor");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.5 disable cursor");
     expect(skill).toContain("Never reveal `collectorToken`");
     expect(skill).toContain("raw config JSON");
     expect(skill).toContain("Do not suggest `cat`, `jq`, `less`, `grep`, `sed`, `open`");
@@ -232,7 +232,7 @@ describe("Cursor status plugin", () => {
     expect(command).toContain("Ask for explicit confirmation before enabling or disabling reporting");
     expect(command).toContain("mcp__plugin_notjustyou_status__enable_reporting");
     expect(command).toContain("mcp__plugin_notjustyou_status__disable_reporting");
-    expect(command).toContain("npx -y @notjustyou/cli@0.3.4 enable cursor");
+    expect(command).toContain("npx -y @notjustyou/cli@0.3.5 enable cursor");
     expect(command).toContain("Never reveal `collectorToken`");
     expect(command).toContain("raw config JSON");
     expect(command).toContain("Do not run shell commands from this command file.");
@@ -250,7 +250,7 @@ describe("Cursor status plugin", () => {
         {
           name: "notjustyou",
           source: "packages/notjustyou-cursor-plugin",
-      version: "0.1.2",
+      version: "0.1.3",
           category: "Developer Tools",
         },
       ],
