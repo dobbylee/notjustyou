@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/logo.png" alt="Not Just You logo" width="96" height="96">
+  <img src="public/logo.png" alt="Not Just You logo" width="128">
 </p>
 
-# Not Just You
+<h1 align="center">Not Just You</h1>
 
 Not Just You helps AI tool users check whether a problem is only on their
 machine or showing up across a wider surface.
