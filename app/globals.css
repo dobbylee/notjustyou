@@ -29,22 +29,6 @@
   --gray-bg: rgba(107, 114, 128, 0.08);
   --gray-border: rgba(107, 114, 128, 0.2);
 
-  /* Button Pastels (Option E style) */
-  --slow-button-bg: rgba(255, 138, 76, 0.1);
-  --slow-button-bg-hover: rgba(255, 138, 76, 0.2);
-  --slow-button-border: rgba(255, 138, 76, 0.2);
-  --slow-button-text: #e65100;
-
-  --error-button-bg: rgba(244, 63, 94, 0.08);
-  --error-button-bg-hover: rgba(244, 63, 94, 0.18);
-  --error-button-border: rgba(244, 63, 94, 0.25);
-  --error-button-text: #be123c;
-
-  --down-button-bg: rgba(59, 130, 246, 0.08);
-  --down-button-bg-hover: rgba(59, 130, 246, 0.18);
-  --down-button-border: rgba(59, 130, 246, 0.22);
-  --down-button-text: #1d4ed8;
-  --down-button-label-text: #1d4ed8;
 }
 
 * {
@@ -60,28 +44,6 @@ body {
   margin: 0;
   color: var(--foreground);
   letter-spacing: -0.01em;
-}
-
-/* Glassmorphism card utilities */
-.glass-card {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 
-    0 12px 28px -18px rgba(15, 23, 42, 0.28),
-    0 2px 8px -4px rgba(15, 23, 42, 0.16),
-    0 0 0 1px rgba(15, 23, 42, 0.03);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(15, 23, 42, 0.12);
-  box-shadow: 
-    0 18px 36px -20px rgba(15, 23, 42, 0.32),
-    0 4px 12px -6px rgba(15, 23, 42, 0.18),
-    0 0 25px 0 rgba(244, 63, 94, 0.12);
 }
 
 button,

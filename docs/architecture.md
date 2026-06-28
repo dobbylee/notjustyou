@@ -1,16 +1,17 @@
 # Architecture
 
-Not Just You is a public status board for AI tools. The product combines community reporting, official provider status, and opt-in installed-client signals without treating those sources as the same kind of data.
+Not Just You is a status layer for AI tools. The product combines tool-local status lookup, official provider status, opt-in installed-client signals, and fallback community reporting without treating those sources as the same kind of data.
 
 ## Current Product
 
 The current app is a Next.js status board backed by Redis.
 
-- Users can submit `Slow`, `Error`, or `Down` reports without signing in.
+- The public dashboard is a compact shared status view with secondary fallback controls for `Slow`, `Error`, or `Down` community reports.
 - Reports are deduped for the same service over a short window.
 - Official provider status is fetched separately where a reliable mapping exists.
 - Opt-in SDK middleware can submit metadata-only API problem signals for OpenAI API, Claude API, and Gemini API.
-- The dashboard polls for recent state and renders provider surface cards.
+- CLI, MCP, plugins, and SDK collectors are the primary surfaces for checking status or contributing opt-in signals where problems happen.
+- The dashboard polls for recent state and renders provider surface cards with source breakdown visible by default.
 
 Redis is required at runtime. There is no in-memory fallback.
 
@@ -21,24 +22,27 @@ The product has three source families:
 | Source family | API | Storage | UI role |
 | --- | --- | --- | --- |
 | Manual community reports | `POST /api/report`, `GET /api/summary` | report counters | user-submitted recent reports |
-| Official status | `GET /api/official` | official status cache | provider status badge |
+| Official status | `GET /api/official` | official status cache | labeled official status row |
 | Installed-client signals | `/api/signals` APIs | signal counters | opt-in metadata-only problem signals |
 
 These families must stay separate in storage, API contracts, tests, and backend aggregation.
 
-The dashboard may show a unified recent problem summary when it helps users understand volume, but that summary is presentation-only and must keep source breakdown available. A compact card can show the combined count first, then expose the breakdown on hover, focus, or tap. For example:
+The dashboard may show a unified recent problem summary when it helps users understand volume, but that summary is presentation-only and must keep source breakdown visible. A compact card can show the combined count first, then show the source rows nearby. For example:
 
 ```text
-18 recent problem signals
-10 community reports · 8 installed signals · 4 installations
 Official status: operational
+Community reports: 10
+Installed signals: 8
 ```
 
 Avoid presenting mixed sources as a single undifferentiated report count.
+Approximate unique-installation counts may remain available through detailed
+API, CLI, or MCP surfaces, but the compact dashboard should not compress
+multiple installed-signal metrics into one ambiguous value.
 
 ## Product Analytics And Monitoring
 
-`/api/clicks` is product interaction analytics. It records aggregate dashboard interactions for report buttons and provider tabs. Today it can be used as a lightweight way to inspect button-click volume, but it is not the long-term operational monitoring surface.
+`/api/clicks` is product interaction analytics. It records aggregate dashboard interactions for provider tabs and fallback report controls. Today it can be used as a lightweight way to inspect dashboard interaction volume, but it is not the long-term operational monitoring surface.
 
 Operational checks should use dedicated read APIs:
 

@@ -127,5 +127,5 @@ reports.
 Reporting is best-effort and is not a guaranteed outage detector. It cannot
 report cases where Antigravity never starts, hooks are disabled, the local
 receiver is not configured, or the user's network cannot reach Not Just You.
-When automatic reporting cannot run, use the public Not Just You dashboard to
-submit an anonymous manual community report.
+When automatic reporting cannot run, use the public Not Just You dashboard's
+fallback manual community report control.

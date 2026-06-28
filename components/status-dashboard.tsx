@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, ExternalLink } from "lucide-react";
+import Image from "next/image";
 import type { Provider, ProviderId, ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { SummaryResponse } from "@/lib/aggregation";
 import type { ClickEventInput } from "@/lib/clicks";
@@ -24,6 +24,7 @@ interface OfficialSummaryResponse {
 
 type PendingMap = Record<string, ReportStatus | null>;
 type MessageMap = Record<string, string>;
+type SignalSummaryStatus = "loading" | "available" | "unavailable";
 
 const GITHUB_URL = "https://github.com/dobbylee/notjustyou";
 
@@ -35,6 +36,8 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
   const [signalSummary, setSignalSummary] = useState<SignalSummaryResponse | null>(
     null,
   );
+  const [signalSummaryStatus, setSignalSummaryStatus] =
+    useState<SignalSummaryStatus>("loading");
   const [official, setOfficial] = useState<OfficialSummaryResponse | null>(null);
   const [pending, setPending] = useState<PendingMap>({});
   const [messages, setMessages] = useState<MessageMap>({});
@@ -63,9 +66,15 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
       setSummary((await summaryResponse.json()) as SummaryResponse);
       if (signalResult.status === "fulfilled" && signalResult.value.ok) {
         setSignalSummary((await signalResult.value.json()) as SignalSummaryResponse);
+        setSignalSummaryStatus("available");
+      } else {
+        setSignalSummary(null);
+        setSignalSummaryStatus("unavailable");
       }
       setSummaryMessage("");
     } catch {
+      setSignalSummary(null);
+      setSignalSummaryStatus("unavailable");
       setSummaryMessage("Community reports unavailable.");
     }
   }, []);
@@ -206,84 +215,85 @@ export function StatusDashboard({ providers, services }: StatusDashboardProps) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-blue-600 uppercase">
-            <Activity aria-hidden="true" className="h-3.5 w-3.5 animate-pulse" />
-            <span>Live community signal</span>
-          </div>
-          <h1 className="mt-2.5 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Not Just You
-          </h1>
-        </div>
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <header className="bg-white shadow-sm">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            aria-label="Not Just You home"
+            title="Not Just You"
+            className="inline-flex items-center gap-1.5 rounded-md text-slate-950 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+          >
+            <Image
+              src="/logo.png"
+              alt=""
+              width={48}
+              height={48}
+              priority
+              className="h-12 w-12 rounded-sm"
+            />
+            <span className="leading-none text-xl font-extrabold tracking-tight">
+              Not Just You
+            </span>
+          </Link>
 
-        <div className="flex justify-end gap-3 items-center">
-          <div className="min-w-36 text-right text-xs font-semibold text-slate-400">
-            <div className="flex items-center justify-end gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-              <span>Live</span>
-            </div>
-            <div className="mt-0.5 text-[10px] text-slate-500/70 font-medium">
-              {summary ? `updated ${formatUpdatedAt(summary.updatedAt)}` : "loading"}
-            </div>
-          </div>
           <a
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
-            aria-label="GitHub repository"
             title="GitHub repository"
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs transition-all duration-200 hover:border-slate-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+            className="text-base text-slate-500 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
           >
-            <span>GitHub</span>
-            <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+            GitHub
           </a>
         </div>
       </header>
 
-      <div className="min-h-6 pt-2 text-right text-xs font-semibold text-slate-400" aria-live="polite">
-        {summaryMessage}
-      </div>
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+        <div className="min-h-6 text-right text-xs font-semibold text-slate-400" aria-live="polite">
+          {summaryMessage}
+        </div>
 
-      <ProviderTabs
-        providers={providers}
-        selectedProviderId={selectedProviderId}
-        onSelect={handleSelectProvider}
-      />
+        <ProviderTabs
+          providers={providers}
+          selectedProviderId={selectedProviderId}
+          onSelect={handleSelectProvider}
+        />
 
-      <section className="grid gap-4 py-5 md:grid-cols-2">
-        {selectedServices.map((service) => {
-          const serviceSummary =
-            summariesByServiceId.get(service.id) ?? createEmptyServiceSummary(service.id);
-          const officialStatus = officialByServiceId.get(service.id);
-          const installedSignals = signalSummaryByServiceId.get(service.id);
+        <section className="grid gap-3 py-5 md:grid-cols-2">
+          {selectedServices.map((service) => {
+            const serviceSummary =
+              summariesByServiceId.get(service.id) ?? createEmptyServiceSummary(service.id);
+            const officialStatus = officialByServiceId.get(service.id);
+            const installedSignals = signalSummaryByServiceId.get(service.id);
 
-          return (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              summary={serviceSummary}
-              signalSummary={installedSignals}
-              officialStatus={officialStatus}
-              pendingStatus={pending[service.id] ?? null}
-              message={messages[service.id]}
-              onReport={handleReport}
-            />
-          );
-        })}
-      </section>
+            return (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                summary={serviceSummary}
+                signalSummary={installedSignals}
+                signalSummaryStatus={signalSummaryStatus}
+                officialStatus={officialStatus}
+                pendingStatus={pending[service.id] ?? null}
+                message={messages[service.id]}
+                onReport={handleReport}
+              />
+            );
+          })}
+        </section>
 
-      <footer className="relative mt-auto flex items-center justify-center border-t border-slate-200 py-6 text-xs font-semibold text-slate-400">
-        <span>© 2026 Not Just You</span>
-        <Link
-          href="/privacy"
-          className="absolute right-0 underline-offset-4 hover:text-slate-950 hover:underline"
-        >
-          Privacy
-        </Link>
-      </footer>
-    </main>
+        <footer className="relative mt-auto flex items-center justify-center border-t border-slate-200 py-6 text-sm font-semibold text-slate-400">
+          <span>© 2026 Not Just You</span>
+          <Link
+            href="/privacy"
+            className="absolute right-0 top-1/2 -translate-y-1/2 text-sm font-normal text-slate-500 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+          >
+            Privacy
+          </Link>
+        </footer>
+      </main>
+    </div>
   );
 }
 
@@ -339,18 +349,6 @@ function getReportLabel(status: ReportStatus) {
     case "down":
       return "Down";
   }
-}
-
-function formatUpdatedAt(isoTimestamp: string) {
-  const diffSeconds = Math.max(
-    0,
-    Math.round((Date.now() - new Date(isoTimestamp).getTime()) / 1000),
-  );
-
-  if (diffSeconds < 2) return "just now";
-  if (diffSeconds < 60) return `${diffSeconds}s ago`;
-
-  return `${Math.floor(diffSeconds / 60)}m ago`;
 }
 
 function recordClick(input: ClickEventInput) {

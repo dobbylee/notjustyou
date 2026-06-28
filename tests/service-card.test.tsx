@@ -50,6 +50,7 @@ describe("ServiceCard", () => {
         service={service}
         summary={summary}
         signalSummary={undefined}
+        signalSummaryStatus="available"
         officialStatus={officialStatus}
         pendingStatus={null}
         message="Thanks - counted."
@@ -58,11 +59,15 @@ describe("ServiceCard", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Claude Code" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Last 10 minutes: 3 reports")).toBeInTheDocument();
+    expect(screen.getByLabelText("3 recent problem signals")).toBeInTheDocument();
+    expect(screen.getByText("Official status")).toBeInTheDocument();
     expect(screen.getByText("Operational")).toBeInTheDocument();
-    expect(screen.getByText("No significant reports")).toBeInTheDocument();
+    expect(screen.getByText("Community reports")).toBeInTheDocument();
+    expect(screen.getByText("Installed signals")).toBeInTheDocument();
+    expect(screen.queryByText(/No significant reports/)).not.toBeInTheDocument();
     expect(screen.getByText("Thanks - counted.")).toBeInTheDocument();
 
+    await user.click(screen.getByText("Manual community report"));
     await user.click(
       screen.getByRole("button", {
         name: "Report Claude Code as error. Current count 1.",
@@ -72,12 +77,15 @@ describe("ServiceCard", () => {
     expect(onReport).toHaveBeenCalledWith("anthropic-claude-code", "error");
   });
 
-  it("disables report buttons and labels the pending status while sending", () => {
+  it("disables fallback report buttons and labels the pending status while sending", async () => {
+    const user = userEvent.setup();
+
     render(
       <ServiceCard
         service={service}
         summary={summary}
         signalSummary={undefined}
+        signalSummaryStatus="available"
         officialStatus={officialStatus}
         pendingStatus="slow"
         message={undefined}
@@ -85,6 +93,7 @@ describe("ServiceCard", () => {
       />,
     );
 
+    await user.click(screen.getByText("Manual community report"));
     const reportButtons = screen.getAllByRole("button", {
       name: /Report Claude Code as/,
     });
@@ -110,6 +119,7 @@ describe("ServiceCard", () => {
         service={serviceWithoutOfficial}
         summary={{ ...summary, serviceId: "google-antigravity" }}
         signalSummary={undefined}
+        signalSummaryStatus="available"
         officialStatus={undefined}
         pendingStatus={null}
         message={undefined}
@@ -118,12 +128,12 @@ describe("ServiceCard", () => {
     );
 
     expect(screen.queryByText("Unknown")).not.toBeInTheDocument();
-    expect(screen.getByText("No significant reports")).toBeInTheDocument();
+    expect(screen.getByText("Official status")).toBeInTheDocument();
+    expect(screen.getByText("Not connected")).toBeInTheDocument();
+    expect(screen.queryByText(/No significant reports/)).not.toBeInTheDocument();
   });
 
-  it("shows installed signal breakdown only when installed signals exist", async () => {
-    const user = userEvent.setup();
-
+  it("shows installed signal breakdown when installed signals exist", () => {
     render(
       <ServiceCard
         service={service}
@@ -158,6 +168,7 @@ describe("ServiceCard", () => {
             observedAt: "2026-05-09T00:00:00.000Z",
           },
         }}
+        signalSummaryStatus="available"
         officialStatus={officialStatus}
         pendingStatus={null}
         message={undefined}
@@ -165,12 +176,75 @@ describe("ServiceCard", () => {
       />,
     );
 
-    await user.click(screen.getByLabelText("7 recent problem signals"));
-
+    expect(screen.getByLabelText("7 recent problem signals")).toBeInTheDocument();
     expect(screen.getByText("Community reports")).toBeInTheDocument();
     expect(screen.getByText("Installed signals")).toBeInTheDocument();
-    expect(screen.getByText("Unique installations")).toBeInTheDocument();
-    expect(screen.getByText("Official status")).toBeInTheDocument();
-    expect(screen.getByText("Last installed signal: rate limited")).toBeInTheDocument();
+    expect(screen.getByText("4")).toBeInTheDocument();
+    expect(screen.queryByText(/installations/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Unique installations")).not.toBeInTheDocument();
+    expect(screen.queryByText("Last installed signal: rate limited")).not
+      .toBeInTheDocument();
+  });
+
+  it("distinguishes unavailable installed signals from zero installed signals", () => {
+    render(
+      <ServiceCard
+        service={service}
+        summary={summary}
+        signalSummary={undefined}
+        signalSummaryStatus="unavailable"
+        officialStatus={officialStatus}
+        pendingStatus={null}
+        message={undefined}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Installed signals")).toBeInTheDocument();
+    expect(screen.getByText("Unavailable")).toBeInTheDocument();
+    expect(screen.queryByText("Unique installations")).not.toBeInTheDocument();
+  });
+
+  it("hides installation wording when installed signals are zero", () => {
+    render(
+      <ServiceCard
+        service={service}
+        summary={summary}
+        signalSummary={{
+          serviceId: "anthropic-claude-code",
+          countsBySource: {
+            api_middleware: 0,
+            cli_hook: 0,
+            ide_extension: 0,
+            browser_extension: 0,
+            mcp_monitor: 0,
+            local_probe: 0,
+          },
+          countsBySymptom: {
+            slow: 0,
+            error: 0,
+            down: 0,
+            rate_limited: 0,
+            auth_error: 0,
+            model_unavailable: 0,
+            network_error: 0,
+            tool_failure: 0,
+            permission_blocked: 0,
+            unknown: 0,
+          },
+          total: 0,
+          uniqueInstallationsApprox: 0,
+        }}
+        signalSummaryStatus="available"
+        officialStatus={officialStatus}
+        pendingStatus={null}
+        message={undefined}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Installed signals")).toBeInTheDocument();
+    expect(screen.getAllByText("0")).not.toHaveLength(0);
+    expect(screen.queryByText(/installations/)).not.toBeInTheDocument();
   });
 });

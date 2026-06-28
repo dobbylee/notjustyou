@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StatusDashboard } from "@/components/status-dashboard";
@@ -102,17 +102,22 @@ describe("StatusDashboard", () => {
 
     render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
 
-    expect(await screen.findByLabelText("Last 10 minutes: 3 reports"))
+    expect(await screen.findByLabelText("7 recent problem signals"))
       .toBeInTheDocument();
-    expect(screen.getByText("Operational")).toBeInTheDocument();
-    expect(screen.getByLabelText("7 recent problem signals")).toBeInTheDocument();
-    expect(screen.getByText("Community reports")).toBeInTheDocument();
-    expect(screen.getByText("Installed signals")).toBeInTheDocument();
-    expect(screen.getByText("Unique installations")).toBeInTheDocument();
-    expect(screen.getByText("Official status")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "GitHub repository" }))
+    const claudeCodeCard = getServiceCard("Claude Code");
+    expect(within(claudeCodeCard).getByText("Official status")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Operational")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Community reports")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Installed signals")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("4")).toBeInTheDocument();
+    expect(within(claudeCodeCard).queryByText(/installations/)).not
+      .toBeInTheDocument();
+    expect(within(claudeCodeCard).queryByText("Unique installations")).not
+      .toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "GitHub" }))
       .toHaveAttribute("href", "https://github.com/dobbylee/notjustyou");
-    expect(screen.getByText("GitHub")).toBeInTheDocument();
+    expect(screen.queryByText("Live")).not.toBeInTheDocument();
+    expect(screen.queryByText(/updated/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Google" }));
 
@@ -127,12 +132,13 @@ describe("StatusDashboard", () => {
 
     render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
 
-    await screen.findByRole("button", {
-      name: "Report Claude Code as slow. Current count 2.",
-    });
+    await screen.findByLabelText("7 recent problem signals");
+    await user.click(
+      within(getServiceCard("Claude Code")).getByText("Manual community report"),
+    );
 
     await user.click(
-      screen.getByRole("button", {
+      within(getServiceCard("Claude Code")).getByRole("button", {
         name: "Report Claude Code as slow. Current count 2.",
       }),
     );
@@ -163,19 +169,58 @@ describe("StatusDashboard", () => {
 
     render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
 
-    expect(await screen.findByLabelText("Last 10 minutes: 3 reports"))
+    expect(await screen.findByLabelText("3 recent problem signals"))
       .toBeInTheDocument();
-    expect(screen.queryByText("7 recent problem signals")).not.toBeInTheDocument();
+    const claudeCodeCard = getServiceCard("Claude Code");
+    expect(within(claudeCodeCard).getByText("Community reports")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Installed signals")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Unavailable")).toBeInTheDocument();
+    expect(within(claudeCodeCard).queryByText("Unique installations")).not
+      .toBeInTheDocument();
     expect(screen.queryByText("Community reports unavailable.")).not
       .toBeInTheDocument();
   });
+
+  it("marks installed signals unavailable when the community summary request fails", async () => {
+    const fetchMock = createFetchMock({
+      failCommunitySummary: true,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+
+    expect(await screen.findByText("Community reports unavailable."))
+      .toBeInTheDocument();
+    const claudeCodeCard = getServiceCard("Claude Code");
+    expect(within(claudeCodeCard).getByText("Installed signals")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Unavailable")).toBeInTheDocument();
+  });
 });
 
-function createFetchMock(options: { failSignalSummary?: boolean } = {}) {
+function getServiceCard(serviceName: string) {
+  const heading = screen.getByRole("heading", { name: serviceName });
+  const card = heading.closest("article");
+
+  if (!card) {
+    throw new Error(`Missing service card for ${serviceName}`);
+  }
+
+  return card;
+}
+
+function createFetchMock(
+  options: { failCommunitySummary?: boolean; failSignalSummary?: boolean } = {},
+) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
 
     if (url === "/api/summary") {
+      if (options.failCommunitySummary) {
+        return new Response("Unavailable", {
+          status: 503,
+        });
+      }
+
       return jsonResponse(summaryResponse);
     }
 

@@ -79,8 +79,8 @@ Reporting is not a guaranteed outage detector. It can share coarse Cursor agent
 or session errors that reach local hooks, but it cannot report cases where
 Cursor never starts, hooks are disabled, the local receiver is not configured,
 or the user's network cannot reach Not Just You.
-When automatic reporting cannot run, use the public Not Just You dashboard to
-submit an anonymous manual community report.
+When automatic reporting cannot run, use the public Not Just You dashboard's
+fallback manual community report control.
 
 ## Privacy Boundary
 
