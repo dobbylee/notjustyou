@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -9,17 +10,45 @@ export const metadata: Metadata = {
   },
 };
 
+const GITHUB_URL = "https://github.com/dobbylee/notjustyou";
+
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/"
-        className="text-sm font-medium text-blue-700 hover:text-blue-900"
-      >
-        Not Just You
-      </Link>
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <header className="bg-white shadow-sm">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            aria-label="Not Just You home"
+            title="Not Just You"
+            className="inline-flex items-center gap-1.5 rounded-md text-slate-950 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+          >
+            <Image
+              src="/logo.png"
+              alt=""
+              width={48}
+              height={48}
+              priority
+              className="h-12 w-12 rounded-sm"
+            />
+            <span className="leading-none text-xl font-extrabold tracking-tight">
+              Not Just You
+            </span>
+          </Link>
 
-      <article className="mt-8">
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noreferrer"
+            title="GitHub repository"
+            className="text-base text-slate-500 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+          >
+            GitHub
+          </a>
+        </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-8 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-semibold text-slate-950">Privacy</h1>
         <p className="mt-4 text-sm leading-6 text-slate-600">
           Not Just You is a small public status board. It does not require an
@@ -95,8 +124,8 @@ export default function PrivacyPage() {
           <h2 className="text-base font-semibold text-slate-950">Analytics</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Vercel Web Analytics may be used to understand page views, referrers,
-            and basic traffic patterns. Button clicks are stored as aggregate
-            Redis counters for report buttons and provider tabs.
+            and basic traffic patterns. Fallback report control clicks and
+            provider tabs are stored as aggregate Redis counters.
           </p>
         </section>
 
@@ -123,7 +152,11 @@ export default function PrivacyPage() {
             breakdown visible.
           </p>
         </section>
-      </article>
-    </main>
+      </main>
+
+      <footer className="mx-auto flex w-full max-w-3xl items-center justify-center border-t border-slate-200 px-4 py-6 text-sm font-semibold text-slate-400 sm:px-6 lg:px-8">
+        <span>© 2026 Not Just You</span>
+      </footer>
+    </div>
   );
 }

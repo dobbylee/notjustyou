@@ -8,7 +8,7 @@ Manual community reports, official status, and installed-client signals are sepa
 
 Manual community reports:
 
-- submitted by a user pressing `Slow`, `Error`, or `Down`
+- submitted by a user through the dashboard fallback `Slow`, `Error`, or `Down` controls
 - handled by `/api/report`
 - summarized by `/api/summary`
 
@@ -16,7 +16,7 @@ Official status:
 
 - fetched from provider status sources
 - handled by `/api/official`
-- displayed as a separate badge
+- displayed as a separate official status row
 
 Installed-client signals:
 
@@ -147,13 +147,16 @@ symptom, status code, and sanitized error code. Slow signals are not coalesced.
 
 ## Display Rules
 
-The UI can show exact counts because count volume is useful to users. The compact default can show a combined recent signal count, but source breakdown must remain visible through hover, focus, or tap:
+The UI can show exact counts because count volume is useful to users. The compact default can show a combined recent signal count, but source breakdown should remain visible by default:
 
 - combined recent problem signal count
 - community report counts
 - installed signal counts
-- approximate unique installation counts
 - official status outside the combined count
+
+Detailed API, CLI, and MCP surfaces can expose approximate unique installation
+counts when the extra metric is useful, but the compact dashboard should keep
+the default installed-signal value to a single count.
 
 Use wording that reflects confidence:
 

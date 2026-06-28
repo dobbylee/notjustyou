@@ -42,6 +42,10 @@ export const metadata: Metadata = {
     title,
     description,
   },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
