@@ -57,6 +57,9 @@ codex plugin marketplace add dobbylee/notjustyou
 codex plugin add notjustyou@notjustyou
 ```
 
+Codex installs from this GitHub repository as a Codex marketplace source. It is
+not distributed as an npm plugin package.
+
 Cursor and Antigravity plugins are distributed as packages and currently use
 manual local plugin installation. See:
 
@@ -110,4 +113,4 @@ tokens are not stored server-side.
 
 ## License
 
-MIT
+[MIT](LICENSE)
