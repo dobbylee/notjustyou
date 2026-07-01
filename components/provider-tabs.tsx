@@ -23,16 +23,16 @@ export function ProviderTabs({
           aria-pressed={provider.id === selectedProviderId}
           onClick={() => onSelect(provider.id)}
           className={clsx(
-            "relative h-12 shrink-0 text-base font-bold tracking-tight transition-colors duration-200 focus-visible:outline-none",
+            "relative h-12 shrink-0 text-base font-semibold tracking-tight transition-colors duration-200 focus-visible:outline-none",
             provider.id === selectedProviderId
-              ? "text-slate-950"
-              : "text-slate-400 hover:text-slate-900",
+              ? "font-semibold text-slate-900"
+              : "font-semibold text-slate-500 hover:text-slate-800",
           )}
         >
           {provider.name}
           {provider.id === selectedProviderId && (
             <span
-              className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-slate-950"
+              className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-slate-900"
               style={{ transform: "translateY(1px)" }}
             />
           )}

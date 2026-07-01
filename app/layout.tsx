@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { Lora } from "next/font/google";
 import "./globals.css";
 
-const lora = Lora({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-lora",
-  display: "swap",
+  variable: "--font-sans",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const title = "Not Just You";
 const description =
-  "AI outage reports for ChatGPT, Claude, Gemini, Cursor, and coding tools.";
+  "Status checks and metadata-only problem signals for AI tools.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
@@ -53,8 +57,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={lora.className}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="antialiased font-sans">
         {children}
         <Analytics />
       </body>

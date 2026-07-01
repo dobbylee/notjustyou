@@ -1,34 +1,38 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), monospace;
+}
 
 :root {
   color-scheme: light;
-  --foreground: #17191c;
-  --muted: #5e6872;
-  --line: rgba(23, 25, 28, 0.08);
-  --panel: rgba(255, 255, 255, 0.75);
-  
-  /* Status Colors */
-  --green: #10b981;
-  --green-bg: rgba(16, 185, 129, 0.08);
-  --green-border: rgba(16, 185, 129, 0.2);
-  
-  --blue: #3b82f6;
-  --blue-bg: rgba(59, 130, 246, 0.08);
-  --blue-border: rgba(59, 130, 246, 0.2);
-  
-  --amber: #d97706;
-  --amber-bg: rgba(217, 119, 6, 0.08);
-  --amber-border: rgba(217, 119, 6, 0.2);
-  
-  --red: #ef4444;
-  --red-bg: rgba(239, 68, 68, 0.08);
-  --red-border: rgba(239, 68, 68, 0.2);
-  
-  --gray: #6b7280;
-  --gray-bg: rgba(107, 114, 128, 0.08);
-  --gray-border: rgba(107, 114, 128, 0.2);
+  --foreground: #0f172a;
+  --background: #f8fafc;
+  --muted: #475569;
+  --line: rgba(15, 23, 42, 0.08);
+  --panel: rgba(255, 255, 255, 0.65);
 
+  /* Status Colors (Optimized for Soft Light Theme) */
+  --green: #10b981;
+  --green-bg: rgba(16, 185, 129, 0.06);
+  --green-border: rgba(16, 185, 129, 0.15);
+
+  --blue: #3b82f6;
+  --blue-bg: rgba(59, 130, 246, 0.06);
+  --blue-border: rgba(59, 130, 246, 0.15);
+
+  --amber: #f59e0b;
+  --amber-bg: rgba(245, 158, 11, 0.06);
+  --amber-border: rgba(245, 158, 11, 0.15);
+
+  --red: #ef4444;
+  --red-bg: rgba(239, 68, 68, 0.06);
+  --red-border: rgba(239, 68, 68, 0.15);
+
+  --gray: #64748b;
+  --gray-bg: rgba(100, 116, 139, 0.06);
+  --gray-border: rgba(100, 116, 139, 0.15);
 }
 
 * {
@@ -37,20 +41,27 @@
 
 html {
   min-height: 100%;
+  background: var(--background);
 }
 
 body {
   min-height: 100%;
   margin: 0;
   color: var(--foreground);
-  letter-spacing: -0.01em;
+  background: #f8fafc;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0;
+  overflow-x: hidden;
 }
 
 button,
 input,
 textarea,
 select {
-  font: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 button {
@@ -62,5 +73,34 @@ button:disabled {
 }
 
 ::selection {
-  background: #dbeafe;
+  background: rgba(59, 130, 246, 0.15);
+  color: #0f172a;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid #f8fafc;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.glow-rose {
+  box-shadow: 0 0 40px -10px rgba(239, 68, 68, 0.12);
+}
+
+code {
+  font-family: var(--font-mono);
 }
