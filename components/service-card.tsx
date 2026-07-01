@@ -28,16 +28,16 @@ const reportButtonClassNames: Record<
   { button: string; count: string }
 > = {
   slow: {
-    button: "hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800",
-    count: "text-amber-700",
+    button: "hover:border-amber-400 hover:bg-amber-50/50 hover:text-amber-700",
+    count: "text-amber-600",
   },
   error: {
-    button: "hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800",
-    count: "text-rose-700",
+    button: "hover:border-rose-400 hover:bg-rose-50/50 hover:text-rose-700",
+    count: "text-rose-600",
   },
   down: {
-    button: "hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800",
-    count: "text-blue-700",
+    button: "hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700",
+    count: "text-blue-600",
   },
 };
 
@@ -58,10 +58,10 @@ export function ServiceCard({
   const recentProblemSignalTotal = summary.total + installedSignalTotal;
 
   return (
-    <article className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm">
+    <article className="rounded-xl border border-slate-200/80 bg-white/50 backdrop-blur-md p-6 transition-all duration-300 hover:border-slate-300 hover:bg-white/85 hover:shadow-md hover:shadow-slate-100">
       <div className="flex min-h-12 items-center justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="truncate text-xl font-bold tracking-tight text-slate-900">
+          <h2 className="truncate text-xl font-bold tracking-tight text-slate-800">
             {service.name}
           </h2>
         </div>
@@ -71,10 +71,10 @@ export function ServiceCard({
 
       <section
         role="group"
-        className="mt-3"
+        className="mt-4"
         aria-label={`${recentProblemSignalTotal} recent problem signals`}
       >
-        <div className="divide-y divide-slate-200 rounded-md border border-slate-200 bg-slate-50/70 text-sm">
+        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200/60 bg-white/30 text-sm overflow-hidden">
           <SignalBreakdownRow
             label="Official status"
             value={formatOfficialStatusValue(service, officialStatus)}
@@ -96,10 +96,10 @@ export function ServiceCard({
         </div>
       </section>
 
-      <details className="group mt-3 border-t border-slate-200 pt-2.5">
-        <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-3 rounded-md bg-slate-50 px-3 text-xs font-semibold text-slate-600 outline-none transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500/25">
+      <details className="group mt-4 border-t border-slate-250/20 pt-3">
+        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-lg bg-slate-50/10 border border-slate-200/60 px-3.5 py-2 text-sm font-bold text-slate-500 outline-none transition-all hover:bg-slate-100/70 hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/25">
           <span>Manual community report</span>
-          <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-slate-400 group-open:text-slate-600">
+          <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs font-bold text-slate-400 group-open:text-slate-550">
             Fallback
           </span>
         </summary>
@@ -112,14 +112,14 @@ export function ServiceCard({
               onClick={() => onReport(service.id, status)}
               aria-label={`Report ${service.name} as ${reportLabels[status].toLowerCase()}. Current count ${summary.counts[status]}.`}
               className={clsx(
-                "flex min-h-10 items-center justify-between rounded-md border border-slate-200 bg-white px-2.5 text-left text-xs font-semibold text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50",
+                "flex min-h-11 items-center justify-between rounded-lg border border-slate-200 bg-white/80 px-3 text-left text-sm font-semibold text-slate-600 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:shadow-sm",
                 reportButtonClassNames[status].button,
               )}
             >
               <span>{pendingStatus === status ? "Sending" : reportLabels[status]}</span>
               <span
                 className={clsx(
-                  "font-bold tabular-nums",
+                  "font-extrabold font-mono",
                   reportButtonClassNames[status].count,
                 )}
               >
@@ -128,9 +128,11 @@ export function ServiceCard({
             </button>
           ))}
         </div>
-        <div className="mt-2 min-h-4 text-xs text-slate-500" aria-live="polite">
-          {message}
-        </div>
+        {message && (
+          <div className="mt-2 min-h-4 text-sm text-slate-400 font-medium" aria-live="polite">
+            {message}
+          </div>
+        )}
       </details>
     </article>
   );
@@ -142,16 +144,16 @@ function RecentProblemTotal({ total }: { total: number }) {
   return (
     <div
       className={clsx(
-        "shrink-0 rounded-md border px-2 py-1 text-center",
+        "flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-center transition-all",
         hasSignals
-          ? "border-rose-200 bg-rose-50 text-rose-800"
-          : "border-slate-200 bg-slate-50 text-slate-500",
+          ? "border-rose-250 bg-rose-50/70 text-rose-600 glow-rose"
+          : "border-slate-200 bg-slate-50 text-slate-450",
       )}
     >
-      <div className="text-[10px] font-semibold uppercase leading-none">
+      <div className="text-xs font-bold leading-none whitespace-nowrap">
         recent signals
       </div>
-      <div className="mt-0.5 text-lg font-extrabold leading-none tabular-nums">
+      <div className="text-lg font-extrabold font-mono leading-none tabular-nums text-slate-700">
         {total}
       </div>
     </div>
@@ -172,15 +174,16 @@ function SignalBreakdownRow({
   pill?: boolean;
 }) {
   return (
-    <div className="flex min-h-8 items-center justify-between gap-3 px-3 py-1.5">
-      <div className="shrink-0 text-xs font-semibold text-slate-500">{label}</div>
+    <div className="flex min-h-10 items-center justify-between gap-3 px-3.5 py-2">
+      <div className="shrink-0 text-sm font-medium text-slate-500">{label}</div>
       <div
         className={clsx(
-          "min-w-0 text-right text-xs font-bold tabular-nums",
+          "min-w-0 text-right font-semibold font-mono tabular-nums",
+          pill ? "text-xs" : "text-sm",
           pill
             ? getRowPillClassName(tone)
             : muted
-              ? "text-slate-500"
+              ? "text-slate-400"
               : getRowToneClassName(tone),
         )}
       >
@@ -248,23 +251,23 @@ function getRowToneClassName(tone: "default" | "good" | "warn" | "bad" | "muted"
     case "bad":
       return "text-rose-700";
     case "muted":
-      return "text-slate-500";
+      return "text-slate-400";
     case "default":
-      return "text-slate-900";
+      return "text-slate-800";
   }
 }
 
 function getRowPillClassName(tone: "default" | "good" | "warn" | "bad" | "muted") {
   switch (tone) {
     case "good":
-      return "rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700";
+      return "rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-emerald-700 font-semibold";
     case "warn":
-      return "rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700";
+      return "rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-700 font-semibold";
     case "bad":
-      return "rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-rose-700";
+      return "rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-rose-700 font-semibold";
     case "muted":
-      return "rounded-full border border-slate-200 bg-white px-2 py-0.5 text-slate-500";
+      return "rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-slate-500 font-semibold";
     case "default":
-      return "rounded-full border border-slate-200 bg-white px-2 py-0.5 text-slate-900";
+      return "rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-slate-700 font-semibold";
   }
 }

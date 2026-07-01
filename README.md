@@ -14,9 +14,9 @@ Manual community reporting remains available as a fallback signal.
 
 ### Dashboard
 
-Open [notjustyou.dev](https://notjustyou.dev) to see recent AI service signals
-with separate rows for official status, community reports, and installed-client
-signals.
+Open [Web Dashboard](https://notjustyou.dev/#dashboard) to see recent
+AI service signals with separate rows for official status, community reports,
+and installed-client signals.
 
 ### CLI
 
