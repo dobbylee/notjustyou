@@ -117,7 +117,7 @@ export default function Home() {
               Official status, manual reports, and installed-client signals stay separated
             </span>
             <span className="block">
-              so users can see where each signal came from before they decide what to trust.
+              so users can see whether others are experiencing the same issue before deciding what to do next.
             </span>
           </p>
         </div>
