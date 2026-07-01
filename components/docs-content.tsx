@@ -83,12 +83,12 @@ const servicesByProvider = PROVIDERS.map((provider) => ({
 
 export function DocsContent() {
   return (
-    <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <aside>
+    <div className="grid min-w-0 gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <aside className="min-w-0">
         <DocsSectionNav items={docsSections} />
         <nav
           aria-label="Docs sections"
-          className="flex gap-2 overflow-x-auto pb-3 lg:hidden"
+          className="flex min-w-0 gap-2 overflow-x-auto pb-3 lg:hidden"
         >
           {docsSections.map((section) => (
             <a
@@ -298,7 +298,13 @@ function CodeBlock({ code, compact = false }: { code: string; compact?: boolean 
             key={`${line}-${lineIndex}`}
             className="flex min-h-9 items-center border-b border-slate-200/70 last:border-b-0"
           >
-            <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre px-4 py-2">
+            <code
+              className={`min-w-0 flex-1 overflow-x-auto px-4 py-2 ${
+                compact
+                  ? "whitespace-pre-wrap break-all sm:whitespace-pre sm:break-normal"
+                  : "whitespace-pre"
+              }`}
+            >
               {line || " "}
             </code>
             {canCopy && (
