@@ -32,7 +32,7 @@ export async function handleJsonRpcMessage(message: unknown) {
         serverInfo: {
           name: "notjustyou-mcp",
           title: "Not Just You MCP",
-            version: "0.2.5",
+            version: "0.2.6",
         },
         instructions:
           "Not Just You status lookup and explicit local reporting setup. This server does not submit signals directly.",

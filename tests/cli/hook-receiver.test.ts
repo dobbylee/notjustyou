@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { request as httpRequest } from "node:http";
 import {
   assertLocalReceiverHost,
   createLocalHookReceiver,
@@ -27,14 +28,46 @@ describe("local hook receiver", () => {
   it("exposes an explicit receiver health check", async () => {
     const receiver = createLocalHookReceiver({
       port: 0,
+      readConfig: () => baseConfig,
     });
     receivers.push(receiver);
     const address = await receiver.start();
 
-    const response = await fetch(`http://127.0.0.1:${address.port}/health`);
+    const response = await fetch(`http://127.0.0.1:${address.port}/health`, {
+      headers: receiverHeaders(),
+    });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(LOCAL_HOOK_RECEIVER_HEALTH);
+    await expect(response.json()).resolves.toEqual({
+      ...LOCAL_HOOK_RECEIVER_HEALTH,
+      mode: "preview",
+    });
+  });
+
+  it("rejects unauthenticated, cross-origin, and non-json hook requests", async () => {
+    const submit = vi.fn();
+    const receiver = createLocalHookReceiver({
+      port: 0,
+      readConfig: () => baseConfig,
+      submit,
+    });
+    receivers.push(receiver);
+    const { port } = await receiver.start();
+    const url = `http://127.0.0.1:${port}/hook`;
+
+    expect((await fetch(url, { method: "POST", headers: receiverHeaders(), body: "{}" })).status).toBe(415);
+    expect((await fetch(url, {
+      method: "POST",
+      headers: { ...receiverHeaders(), "content-type": "application/json", origin: "https://evil.example" },
+      body: "{}",
+    })).status).toBe(403);
+    expect((await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    })).status).toBe(401);
+    expect(await postHookWithHost(port, "evil.example")).toBe(403);
+    expect(submit).not.toHaveBeenCalled();
   });
 
   it("accepts metadata-only hook events without sending by default", async () => {
@@ -42,6 +75,7 @@ describe("local hook receiver", () => {
     const receiver = createLocalHookReceiver({
       port: 0,
       submit,
+      readConfig: () => baseConfig,
     });
     receivers.push(receiver);
     const address = await receiver.start();
@@ -75,6 +109,7 @@ describe("local hook receiver", () => {
   it("rejects unknown and sensitive hook fields", async () => {
     const receiver = createLocalHookReceiver({
       port: 0,
+      readConfig: () => baseConfig,
     });
     receivers.push(receiver);
     const address = await receiver.start();
@@ -109,6 +144,7 @@ describe("local hook receiver", () => {
     const receiver = createLocalHookReceiver({
       port: 0,
       submit,
+      readConfig: () => baseConfig,
     });
     receivers.push(receiver);
     const address = await receiver.start();
@@ -152,6 +188,7 @@ describe("local hook receiver", () => {
     const receiver = createLocalHookReceiver({
       port: 0,
       submit,
+      readConfig: () => baseConfig,
     });
     receivers.push(receiver);
     const address = await receiver.start();
@@ -503,6 +540,7 @@ const baseConfig: CliConfig = {
   serviceIds: ["anthropic-claude-code"],
   clientName: "notjustyou-cli",
   clientVersion: "0.3.0",
+  localReceiverToken: "receiver-secret",
 };
 
 function validHook() {
@@ -521,7 +559,36 @@ function postHook(port: number, body: unknown) {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      ...receiverHeaders(),
     },
     body: JSON.stringify(body),
+  });
+}
+
+function receiverHeaders() {
+  return { "x-notjustyou-receiver-token": "receiver-secret" };
+}
+
+function postHookWithHost(port: number, host: string) {
+  return new Promise<number | undefined>((resolve, reject) => {
+    const request = httpRequest(
+      {
+        hostname: "127.0.0.1",
+        port,
+        path: "/hook",
+        method: "POST",
+        headers: {
+          ...receiverHeaders(),
+          "content-type": "application/json",
+          host,
+        },
+      },
+      (response) => {
+        response.resume();
+        response.on("end", () => resolve(response.statusCode));
+      },
+    );
+    request.on("error", reject);
+    request.end("{}");
   });
 }

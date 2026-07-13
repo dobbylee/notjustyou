@@ -76,6 +76,7 @@ export interface CliConfig {
   clientName: string;
   clientVersion: string;
   localHookSignalOptIn?: boolean;
+  localReceiverToken?: string;
 }
 
 export type PayloadPreviewResult =

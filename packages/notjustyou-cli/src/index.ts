@@ -305,12 +305,15 @@ async function runDoctor(input: { baseUrl: string }) {
 
     checks.push(`OK local config (${getConfigPath()})`);
     const configMode = getConfigMode();
+    const configModeReady = isPrivateConfigModeAcceptable(configMode);
     checks.push(
-      configMode === 0o600
-        ? "OK local config permissions (0600)"
+      configModeReady
+        ? process.platform === "win32"
+          ? "OK local config permissions (platform-managed)"
+          : "OK local config permissions (0600)"
         : "FAIL local config permissions (expected 0600)",
     );
-    failed = failed || configMode !== 0o600;
+    failed = failed || !configModeReady;
     checks.push(`OK collector allowlist (${config.source}: ${config.serviceIds.join(", ")})`);
 
     if (normalizeUrlForCompare(input.baseUrl) !== normalizeUrlForCompare(config.baseUrl)) {
@@ -333,6 +336,13 @@ async function runDoctor(input: { baseUrl: string }) {
 
   console.log(checks.join("\n"));
   return failed ? 1 : 0;
+}
+
+export function isPrivateConfigModeAcceptable(
+  mode: number,
+  platform = process.platform,
+) {
+  return platform === "win32" || mode === 0o600;
 }
 
 function runPayloadPreview(input: { fixture: string | undefined }) {

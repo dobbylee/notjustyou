@@ -11,7 +11,7 @@
       "name": "notjustyou",
       "source": "packages/notjustyou-cursor-plugin",
       "description": "AI service status and opt-in local hook reporting for Cursor surfaces.",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "author": {
         "name": "Not Just You"
       },

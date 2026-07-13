@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { timingSafeEqual } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import { readConfig } from "./config.js";
 import { submitSignal } from "./api.js";
@@ -45,8 +46,27 @@ export function createLocalHookReceiver(options: LocalHookReceiverOptions = {}) 
   const signalSubmitter = options.submit ?? submitSignal;
 
   const server = createServer(async (request, response) => {
+    if (!hasLocalHost(request.headers.host)) {
+      writeJson(response, 403, { ok: false, error: "Local Host header required." });
+      return;
+    }
+
+    if (!hasAllowedOrigin(request.headers.origin)) {
+      writeJson(response, 403, { ok: false, error: "Cross-origin requests are not allowed." });
+      return;
+    }
+
+    const config = configReader();
+    if (!hasReceiverToken(request, config?.localReceiverToken)) {
+      writeJson(response, 401, { ok: false, error: "Local receiver authentication failed." });
+      return;
+    }
+
     if (request.method === "GET" && request.url === "/health") {
-      writeJson(response, 200, LOCAL_HOOK_RECEIVER_HEALTH);
+      writeJson(response, 200, {
+        ...LOCAL_HOOK_RECEIVER_HEALTH,
+        mode: shouldSend ? "send" : "preview",
+      });
       return;
     }
 
@@ -55,6 +75,11 @@ export function createLocalHookReceiver(options: LocalHookReceiverOptions = {}) 
         ok: false,
         error: "Use POST /hook.",
       });
+      return;
+    }
+
+    if (!request.headers["content-type"]?.toLowerCase().startsWith("application/json")) {
+      writeJson(response, 415, { ok: false, error: "Hook payload must use application/json." });
       return;
     }
 
@@ -98,7 +123,6 @@ export function createLocalHookReceiver(options: LocalHookReceiverOptions = {}) 
       return;
     }
 
-    const config = configReader();
     if (!config) {
       writeJson(response, 409, {
         ok: false,
@@ -159,6 +183,33 @@ export function createLocalHookReceiver(options: LocalHookReceiverOptions = {}) 
         });
       }),
   };
+}
+
+function hasLocalHost(host: string | undefined) {
+  if (!host) return false;
+  try {
+    return LOCAL_RECEIVER_HOSTS.has(new URL(`http://${host}`).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function hasAllowedOrigin(origin: string | undefined) {
+  if (!origin) return true;
+  try {
+    const url = new URL(origin);
+    return url.protocol === "http:" && LOCAL_RECEIVER_HOSTS.has(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function hasReceiverToken(request: IncomingMessage, expected: string | undefined) {
+  const actual = request.headers["x-notjustyou-receiver-token"];
+  if (typeof actual !== "string" || !expected) return false;
+  const actualBuffer = Buffer.from(actual);
+  const expectedBuffer = Buffer.from(expected);
+  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
 }
 
 export function assertLocalReceiverHost(host: string) {

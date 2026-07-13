@@ -83,6 +83,7 @@ export function scheduleSignalQueueDrain(sender: SignalQueueSender, delayMs = 0)
     drainTimerAt = null;
     void drainSignalQueue();
   }, delayMs);
+  drainTimer.unref();
   drainTimerAt = scheduledAt;
 }
 

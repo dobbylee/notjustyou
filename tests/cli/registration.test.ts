@@ -38,7 +38,7 @@ describe("CLI setup and registration", () => {
           source: "api_middleware",
           serviceIds: ["openai-api"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -69,7 +69,7 @@ describe("CLI setup and registration", () => {
     expect(output).toContain("Token: saved locally; raw token is not printed.");
     expect(output).not.toContain("col_test");
     expect(output).not.toContain("njy_raw_secret");
-    expect(readConfig()?.clientVersion).toBe("0.3.5");
+    expect(readConfig()?.clientVersion).toBe("0.3.6");
   });
 
   it("registers multiple API middleware services when --service is repeated", async () => {
@@ -149,6 +149,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
+      localReceiverToken: expect.any(String),
     });
   });
 
@@ -206,6 +207,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
+      localReceiverToken: expect.any(String),
     });
   });
 
@@ -239,7 +241,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -267,12 +269,105 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Claude Code reporting enabled.");
     expect(output).toContain("Local hook receiver: skipped");
     expect(output).not.toContain("njy_raw_secret");
+  });
+
+  it("migrates an enabled legacy hook config to local receiver authentication", async () => {
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_legacy",
+      collectorToken: "njy_legacy_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.4",
+      localHookSignalOptIn: true,
+    });
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.endsWith("/api/collectors/register")) {
+        return jsonResponse({
+          collectorId: "col_migrated",
+          collectorToken: "njy_migrated_secret",
+          expiresAt: null,
+        });
+      }
+      throw new Error(`Unhandled URL: ${url}`);
+    }));
+
+    await expect(main(["enable", "claude-code", "--skip-receiver", "--quiet"]))
+      .resolves.toBe(0);
+    expect(readConfig()).toMatchObject({
+      collectorId: "col_migrated",
+      localHookSignalOptIn: true,
+      localReceiverToken: expect.any(String),
+    });
+  });
+
+  it("rejects a preview receiver instead of reporting send readiness", async () => {
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_hook",
+      collectorToken: "njy_hook_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.6",
+      localHookSignalOptIn: true,
+      localReceiverToken: "receiver-secret-token",
+    });
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "http://127.0.0.1:8765/health") {
+        return jsonResponse({
+          ok: true,
+          name: "notjustyou-hook-receiver",
+          mode: "preview",
+        });
+      }
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(main(["enable", "claude-code", "--quiet"])).rejects.toThrow(
+      "Local hook receiver is running in preview mode. Stop it before enabling reporting.",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses an authenticated send receiver without spawning another one", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    writeConfig({
+      baseUrl: "http://localhost:3000",
+      collectorId: "col_hook",
+      collectorToken: "njy_hook_secret",
+      source: "cli_hook",
+      serviceIds: ["anthropic-claude-code"],
+      clientName: "notjustyou-cli",
+      clientVersion: "0.3.6",
+      localHookSignalOptIn: true,
+      localReceiverToken: "receiver-secret-token",
+    });
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "http://127.0.0.1:8765/health") {
+        return jsonResponse({
+          ok: true,
+          name: "notjustyou-hook-receiver",
+          mode: "send",
+        });
+      }
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(main(["enable", "claude-code"])).resolves.toBe(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(log.mock.calls.flat().join("\n")).toContain(
+      "Local hook receiver: already running",
+    );
   });
 
   it("enables Cursor reporting with one command", async () => {
@@ -283,7 +378,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -311,7 +406,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Cursor reporting enabled.");
@@ -327,7 +422,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -355,7 +450,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -373,7 +468,7 @@ describe("CLI setup and registration", () => {
       source: "api_middleware",
       serviceIds: ["openai-api"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
     });
 
     await expect(
@@ -396,7 +491,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
 
@@ -421,7 +516,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -430,7 +525,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide", "google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -451,7 +546,7 @@ describe("CLI setup and registration", () => {
       collectorId: "col_cursor_antigravity",
       serviceIds: ["cursor-ide", "google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -469,7 +564,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -482,7 +577,7 @@ describe("CLI setup and registration", () => {
             "google-antigravity-cli",
           ],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -526,7 +621,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide", "google-antigravity-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -535,7 +630,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide", "google-antigravity-ide"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -578,7 +673,7 @@ describe("CLI setup and registration", () => {
         "google-antigravity-ide",
       ],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -587,7 +682,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["cursor-ide", "google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -659,7 +754,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: false,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -668,7 +763,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["google-antigravity-cli"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({
@@ -691,7 +786,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli"],
       localHookSignalOptIn: true,
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
     });
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
@@ -708,7 +803,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
 
@@ -732,7 +827,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
 
@@ -757,7 +852,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
 
@@ -784,7 +879,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: false,
     });
 
@@ -810,7 +905,7 @@ describe("CLI setup and registration", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -819,7 +914,7 @@ describe("CLI setup and registration", () => {
           source: "cli_hook",
           serviceIds: ["anthropic-claude-code"],
           clientName: "notjustyou-cli",
-          clientVersion: "0.3.5",
+          clientVersion: "0.3.6",
         });
 
         return jsonResponse({

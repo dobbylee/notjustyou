@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -9,7 +10,7 @@ import type { SignalSource } from "./types.js";
 
 export const DEFAULT_BASE_URL = "https://notjustyou.dev";
 export const CLIENT_NAME = "notjustyou-cli";
-export const CLIENT_VERSION = "0.3.5";
+export const CLIENT_VERSION = "0.3.6";
 export const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
 export const CURSOR_REPORTING_SERVICE = "cursor-ide";
 export const ANTIGRAVITY_CLI_REPORTING_SERVICE = "google-antigravity-cli";
@@ -115,6 +116,7 @@ export async function enableReporting(input: {
     config.source !== "cli_hook" ||
     !config.serviceIds.includes(surface.serviceId) ||
     config.localHookSignalOptIn !== true ||
+    !config.localReceiverToken ||
     needsAntigravityNormalization
   ) {
     if (config && config.source !== "cli_hook") {
@@ -132,6 +134,7 @@ export async function enableReporting(input: {
       source: "cli_hook",
       serviceIds: nextServiceIds,
       enableLocalHooks: true,
+      localReceiverToken: config?.localReceiverToken,
     });
   }
 
@@ -192,6 +195,7 @@ export async function disableReporting(input: { surface: ReportingSurfaceId }) {
       source: "cli_hook",
       serviceIds: remainingServiceIds,
       enableLocalHooks: true,
+      localReceiverToken: config.localReceiverToken,
     });
   } else {
     writeConfig({
@@ -253,6 +257,7 @@ export async function registerAndWriteConfig(input: {
   source: string;
   serviceIds: string[];
   enableLocalHooks: boolean;
+  localReceiverToken?: string;
 }) {
   assertSupportedSource(input.source);
   const serviceIds = [...new Set(input.serviceIds)];
@@ -296,6 +301,9 @@ export async function registerAndWriteConfig(input: {
     clientName: CLIENT_NAME,
     clientVersion: CLIENT_VERSION,
     ...(input.enableLocalHooks ? { localHookSignalOptIn: true } : {}),
+    ...(input.enableLocalHooks
+      ? { localReceiverToken: input.localReceiverToken ?? randomUUID() }
+      : {}),
   });
 }
 
@@ -347,7 +355,15 @@ function assertOnlySupportedLocalHookServices(serviceIds: string[]) {
 }
 
 async function ensureHookReceiverRunning() {
-  if (await isHookReceiverRunning()) return "already running";
+  const config = readConfig();
+  const receiverToken = config?.localReceiverToken;
+  if (!receiverToken) throw new Error("Local receiver token is missing.");
+
+  const mode = await getHookReceiverMode(receiverToken);
+  if (mode === "send") return "already running";
+  if (mode === "preview") {
+    throw new Error("Local hook receiver is running in preview mode. Stop it before enabling reporting.");
+  }
 
   const child = spawn(process.execPath, [getCliEntrypoint(), "hook-receiver", "--send"], {
     detached: true,
@@ -355,23 +371,33 @@ async function ensureHookReceiverRunning() {
   });
   child.unref();
 
-  return "started";
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    if ((await getHookReceiverMode(receiverToken)) === "send") return "started";
+  }
+
+  throw new Error("Local hook receiver did not become ready in send mode.");
 }
 
-async function isHookReceiverRunning() {
+async function getHookReceiverMode(receiverToken: string) {
   try {
     const response = await fetch("http://127.0.0.1:8765/health", {
       method: "GET",
+      headers: {
+        "x-notjustyou-receiver-token": receiverToken,
+      },
       signal: AbortSignal.timeout(500),
     });
     const body = await response.json();
-    return (
-      response.ok &&
+    return response.ok &&
       body?.ok === LOCAL_HOOK_RECEIVER_HEALTH.ok &&
       body?.name === LOCAL_HOOK_RECEIVER_HEALTH.name
-    );
+      ? body.mode === "send" || body.mode === "preview"
+        ? body.mode
+        : null
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 

@@ -97,4 +97,17 @@ If local hook reporting is enabled, a local adapter may receive vendor hook
 payloads in memory to derive metadata-only signals. Raw vendor payload fields
 are not stored, queued, logged, or sent to Not Just You.
 
-The local config stores only `baseUrl`, `collectorId`, `collectorToken`, allowed `source`, allowed service ids, client name, and client version. v1 stores the token in a local file with private file permissions; OS keychain storage is later work.
+The local config stores only `baseUrl`, `collectorId`, `collectorToken`, allowed
+`source`, allowed service ids, client name, and client version. v1 stores the
+token in a local file with private file permissions; OS keychain storage is
+later work.
+
+Opt-in hook configs also contain a separate random localhost receiver token.
+Hook adapters use it only to authenticate local `/health` and `/hook` requests;
+it is never sent to the public Not Just You API. Existing hook configs are
+upgraded with this token the next time reporting is enabled.
+
+On macOS and Linux, `doctor` requires private `0600` config permissions. Windows
+does not expose equivalent POSIX owner/group/other mode bits, so `doctor` checks
+the readable config and collector readiness without treating the missing POSIX
+mode as a failure.

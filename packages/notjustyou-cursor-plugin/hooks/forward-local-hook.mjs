@@ -14,20 +14,22 @@ const RECEIVER_HEALTH = {
 };
 
 async function main() {
-  if (!isCursorReportingConfigured()) return;
+  const config = readCursorReportingConfig();
+  if (!config) return;
 
   const input = await readStdinJson();
   const event = toRawCursorHookEnvelope(input, process.argv[2]);
   if (!event) return;
 
   if (!isLocalReceiverUrl(RECEIVER_URL)) return;
-  if (!(await isNotJustYouReceiver(RECEIVER_URL))) return;
+  if (!(await isNotJustYouReceiver(RECEIVER_URL, config.localReceiverToken))) return;
 
   try {
     await fetch(RECEIVER_URL, {
       method: "POST",
       headers: {
         "content-type": "application/json",
+        "x-notjustyou-receiver-token": config.localReceiverToken,
       },
       body: JSON.stringify(event),
       signal: AbortSignal.timeout(1000),
@@ -38,6 +40,10 @@ async function main() {
 }
 
 export function isCursorReportingConfigured(env = process.env) {
+  return Boolean(readCursorReportingConfig(env));
+}
+
+function readCursorReportingConfig(env = process.env) {
   const configPath = getConfigPath(env);
   if (!existsSync(configPath)) return false;
 
@@ -47,10 +53,11 @@ export function isCursorReportingConfigured(env = process.env) {
       config?.source === "cli_hook" &&
       config?.localHookSignalOptIn === true &&
       Array.isArray(config?.serviceIds) &&
-      config.serviceIds.includes(SERVICE_ID)
-    );
+      config.serviceIds.includes(SERVICE_ID) &&
+      typeof config.localReceiverToken === "string"
+    ) ? { localReceiverToken: config.localReceiverToken } : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -122,18 +129,22 @@ export function isLocalReceiverUrl(value) {
   }
 }
 
-async function isNotJustYouReceiver(value) {
+async function isNotJustYouReceiver(value, receiverToken) {
   try {
     const healthUrl = new URL("/health", value);
     const response = await fetch(healthUrl, {
       method: "GET",
+      headers: {
+        "x-notjustyou-receiver-token": receiverToken,
+      },
       signal: AbortSignal.timeout(500),
     });
     const body = await response.json();
     return (
       response.ok &&
       body?.ok === RECEIVER_HEALTH.ok &&
-      body?.name === RECEIVER_HEALTH.name
+      body?.name === RECEIVER_HEALTH.name &&
+      body?.mode === "send"
     );
   } catch {
     return false;

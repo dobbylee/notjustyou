@@ -92,8 +92,7 @@ function readErrorCode(error: unknown, serviceId: SupportedServiceId) {
       readString(record.status);
 
     if (geminiValue) {
-      const sanitized = geminiValue.replace(/[^a-zA-Z0-9_.:-]/g, "_").slice(0, 120);
-      return sanitized || undefined;
+      return normalizeErrorCodeValue(geminiValue);
     }
 
     return undefined;
@@ -108,9 +107,19 @@ function readErrorCode(error: unknown, serviceId: SupportedServiceId) {
     readString(record.name);
 
   if (!value) return undefined;
+  return normalizeErrorCodeValue(value);
+}
 
-  const sanitized = value.replace(/[^a-zA-Z0-9_.:-]/g, "_").slice(0, 120);
-  return sanitized || undefined;
+function normalizeErrorCodeValue(value: string) {
+  if (!/^[a-zA-Z][a-zA-Z0-9_.:-]{0,119}$/.test(value)) return undefined;
+
+  return (
+    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(value) ||
+    /(?:^|[\s'"])(?:\/Users\/|\/home\/|~\/|[A-Za-z]:\\Users\\)/.test(value) ||
+    /\b(?:Bearer\s+\S+|sk-[A-Za-z0-9_-]{8,}|AIza[A-Za-z0-9_-]{20,}|njy_[A-Za-z0-9_-]+|api[_-]?key\s*[:=]|token\s*[:=]|cookie\s*[:=])/i.test(value)
+  )
+    ? undefined
+    : value;
 }
 
 function readString(value: unknown) {

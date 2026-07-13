@@ -38,4 +38,5 @@ export interface ProblemSignalPayload {
   errorCode?: string;
   installationId: string;
   clientVersion: string;
+  signalId: string;
 }
