@@ -38,6 +38,7 @@ export const problemSignalInputSchema = z
     installationId: z.string().min(1).max(120).optional(),
     clientVersion: z.string().min(1).max(80).optional(),
     regionHint: z.string().min(1).max(40).optional(),
+    signalId: z.string().min(16).max(80).regex(/^[A-Za-z0-9_-]+$/).optional(),
   })
   .strict()
   .refine((value) => Boolean(getService(value.serviceId)), {

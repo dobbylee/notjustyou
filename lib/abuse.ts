@@ -2,13 +2,21 @@ import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
 
 export function getRequestFingerprint(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for") ?? "";
-  const realIp = request.headers.get("x-real-ip") ?? "";
-  const userAgent = request.headers.get("user-agent") ?? "";
-  const acceptLanguage = request.headers.get("accept-language") ?? "";
-  const ip = forwardedFor.split(",")[0]?.trim() || realIp || "unknown";
+  const address = getTrustedClientAddress(request);
 
-  return createHash("sha256")
-    .update([ip, userAgent, acceptLanguage].join("\n"))
-    .digest("hex");
+  return createHash("sha256").update(address).digest("hex");
+}
+
+export function getTrustedClientAddress(request: NextRequest) {
+  if (process.env.VERCEL === "1") {
+    const vercelForwardedFor = request.headers
+      .get("x-vercel-forwarded-for")
+      ?.trim();
+    if (vercelForwardedFor) return vercelForwardedFor;
+  }
+
+  // NextRequest does not expose the direct socket address. Outside the
+  // deployment proxy we therefore use one shared, conservative abuse bucket
+  // instead of trusting client-controlled forwarding headers.
+  return "unknown";
 }
