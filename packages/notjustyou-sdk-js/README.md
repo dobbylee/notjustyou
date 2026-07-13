@@ -76,6 +76,7 @@ The SDK sends only metadata for allowed collector configs:
 - status code, when available
 - short sanitized error code, when available
 - random installation id
+- random per-observation signal id for retry deduplication
 - configured collector client version
 
 The random installation id is stored in local Not Just You config so repeated
@@ -86,6 +87,8 @@ the raw installation id.
 The SDK does not send provider request bodies, provider response bodies,
 prompts, provider headers, provider API keys, cookies, source files, diffs,
 clipboard content, raw provider error objects, or raw provider error messages.
+It drops error-code values that resemble credentials, emails, usernames in
+paths, or local file paths instead of trying to rewrite those values.
 Signal submission uses the local collector token as Not Just You collector auth.
 
 ## Slow Signals
@@ -114,6 +117,11 @@ jitter, and server `retryAfterSeconds` when present.
 Repeated local failure signals are coalesced for 30 seconds by service id,
 source, symptom, status code, and sanitized error code. Coalescing limits noisy
 repeated failures without changing the wrapped call result.
+
+One random signal id is retained across retries of the same observation. The
+server uses a short-lived collector-scoped HMAC to avoid double counting when a
+write succeeds but its response is lost. Retry timers do not keep short-lived
+Node processes open, so delivery remains best effort when a process exits.
 
 ## Diagnostics
 

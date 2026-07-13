@@ -123,5 +123,14 @@ function parseConfig(input: unknown): CliConfig {
     throw new Error("Config field localHookSignalOptIn must be a boolean.");
   }
 
+  if (
+    config.localReceiverToken !== undefined &&
+    (typeof config.localReceiverToken !== "string" ||
+      config.localReceiverToken.length < 16 ||
+      config.localReceiverToken.length > 120)
+  ) {
+    throw new Error("Config field localReceiverToken must be a 16-120 character string.");
+  }
+
   return config as unknown as CliConfig;
 }

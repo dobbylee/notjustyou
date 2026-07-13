@@ -27,7 +27,7 @@ describe("Antigravity plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.5"],
+          args: ["-y", "@notjustyou/mcp@0.2.6"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -60,6 +60,7 @@ describe("Antigravity plugin", () => {
       "node ./hooks/forward-local-hook.mjs Stop",
     );
     expect(serializedPlugin).toContain("http://127.0.0.1:8765/hook");
+    expect(hookImplementation).toContain("x-notjustyou-receiver-token");
     expect(hookImplementation).not.toContain("submit_signal");
     expect(hookImplementation).not.toContain("/api/signals");
     expect(hookImplementation).not.toContain("collectorToken");
@@ -174,8 +175,9 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.5",
+        clientVersion: "0.3.6",
         localHookSignalOptIn: true,
+        localReceiverToken: "receiver-secret-token",
       }),
     );
 
@@ -203,7 +205,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli", "google-antigravity-ide"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.5",
+        clientVersion: "0.3.6",
         localHookSignalOptIn: true,
       }),
     );
@@ -230,7 +232,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.5",
+        clientVersion: "0.3.6",
         localHookSignalOptIn: true,
       }),
     );
@@ -266,7 +268,7 @@ describe("Antigravity plugin", () => {
         source: "cli_hook",
         serviceIds: ["google-antigravity-cli"],
         clientName: "notjustyou-cli",
-        clientVersion: "0.3.5",
+        clientVersion: "0.3.6",
         localHookSignalOptIn: false,
       }),
     );
@@ -312,7 +314,7 @@ describe("Antigravity plugin", () => {
     expect(skill).toContain("antigravity-cli");
     expect(skill).toContain("antigravity-ide");
     expect(skill).toContain("confirmed: true");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.5 enable antigravity-cli --quiet");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.6 enable antigravity-cli --quiet");
     expect(skill).toContain("Do not use Bash, setup, register, hook receiver");
   });
 
@@ -330,7 +332,7 @@ describe("Antigravity plugin", () => {
   it("documents published package installation for Antigravity", () => {
     const readme = readFileSync(join(pluginRoot, "README.md"), "utf8");
 
-    expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.3");
+    expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.4");
     expect(readme).toContain("agy plugin install");
     expect(readme).toContain("Do not use `npm install -g`");
     expect(readme).toContain("preserving other already-enabled Claude Code or Cursor reporting surfaces");

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { writeConfig } from "@/packages/notjustyou-cli/src/config";
-import { main } from "@/packages/notjustyou-cli/src/index";
+import { isPrivateConfigModeAcceptable, main } from "@/packages/notjustyou-cli/src/index";
 
 const originalConfigPath = process.env.NOTJUSTYOU_CONFIG_PATH;
 
@@ -21,6 +21,10 @@ afterEach(() => {
 });
 
 describe("CLI doctor", () => {
+  it("does not require POSIX owner/group mode semantics on Windows", () => {
+    expect(isPrivateConfigModeAcceptable(0o666, "win32")).toBe(true);
+    expect(isPrivateConfigModeAcceptable(0o666, "linux")).toBe(false);
+  });
   it("checks public status and collector token readiness", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     writeConfig({

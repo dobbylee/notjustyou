@@ -1,6 +1,6 @@
 {
   "name": "@notjustyou/sdk-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Node.js metadata-only SDK collector for Not Just You AI service surfaces.",
   "license": "MIT",
   "repository": {

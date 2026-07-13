@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readSdkConfig } from "./config.js";
 import { normalizeProviderError } from "./normalize.js";
 import { enqueueSignal, scheduleSignalQueueDrain } from "./queue.js";
@@ -52,7 +53,7 @@ export async function recordAiCall<T>(
 
 function scheduleBestEffort(
   options: RecordAiCallOptions,
-  partialPayload: Omit<ProblemSignalPayload, "installationId" | "clientVersion">,
+  partialPayload: Omit<ProblemSignalPayload, "installationId" | "clientVersion" | "signalId">,
 ) {
   if (!isSupportedServiceId(options.serviceId)) return;
 
@@ -63,7 +64,7 @@ function scheduleBestEffort(
 
 async function submitBestEffort(
   options: RecordAiCallOptions,
-  partialPayload: Omit<ProblemSignalPayload, "installationId" | "clientVersion">,
+  partialPayload: Omit<ProblemSignalPayload, "installationId" | "clientVersion" | "signalId">,
 ) {
   try {
     if (!isSupportedServiceId(options.serviceId)) return;
@@ -79,6 +80,7 @@ async function submitBestEffort(
       ...partialPayload,
       installationId: config.installationId,
       clientVersion: config.clientVersion,
+      signalId: randomUUID(),
     };
 
     const expectedBaseUrl = config.baseUrl;

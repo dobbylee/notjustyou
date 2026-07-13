@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const CONSENT_VALUE = process.argv[2];
 const SERVICE_ID = "anthropic-claude-code";
-const CLI_PACKAGE = "@notjustyou/cli@0.3.5";
+const CLI_PACKAGE = "@notjustyou/cli@0.3.6";
 const RECEIVER_URL = "http://127.0.0.1:8765/hook";
 const RECEIVER_HEALTH = {
   ok: true,
@@ -15,10 +15,36 @@ const RECEIVER_HEALTH = {
 };
 
 async function main() {
-  if (CONSENT_VALUE !== "true") return;
-  if (isReportingConfigured() && (await isReceiverRunning())) return;
+  const reportingConfigured = readReportingConfig();
+  const managedMarker = getManagedMarkerPath();
 
-  const args = ["-y", CLI_PACKAGE, "enable", "claude-code", "--quiet"];
+  if (CONSENT_VALUE !== "true") {
+    if (!managedMarker || !existsSync(managedMarker)) return;
+    if (reportingConfigured?.enabled) {
+      spawnCli(["-y", CLI_PACKAGE, "disable", "claude-code", "--quiet"]);
+    } else {
+      unlinkSync(managedMarker);
+    }
+    return;
+  }
+
+  if (managedMarker) {
+    mkdirSync(dirname(managedMarker), { recursive: true, mode: 0o700 });
+    writeFileSync(managedMarker, "plugin-option\n", { mode: 0o600 });
+  }
+
+  if (
+    reportingConfigured?.enabled &&
+    reportingConfigured.localReceiverToken &&
+    (await isReceiverRunning(reportingConfigured.localReceiverToken))
+  ) {
+    return;
+  }
+
+  spawnCli(["-y", CLI_PACKAGE, "enable", "claude-code", "--quiet"]);
+}
+
+function spawnCli(args) {
   const child = spawn(getNpxCommand(), args, {
     detached: true,
     stdio: "ignore",
@@ -27,39 +53,58 @@ async function main() {
   child.unref();
 }
 
-function isReportingConfigured() {
+function readReportingConfig() {
   const configPath = getConfigPath();
-  if (!existsSync(configPath)) return false;
+  if (!existsSync(configPath)) return null;
 
   try {
     const config = JSON.parse(readFileSync(configPath, "utf8"));
-    return (
+    const enabled =
       config?.source === "cli_hook" &&
       config?.localHookSignalOptIn === true &&
       Array.isArray(config?.serviceIds) &&
-      config.serviceIds.includes(SERVICE_ID)
-    );
+      config.serviceIds.includes(SERVICE_ID);
+    return enabled
+      ? {
+          enabled: true,
+          ...(typeof config.localReceiverToken === "string"
+            ? { localReceiverToken: config.localReceiverToken }
+            : {}),
+        }
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 function getConfigPath() {
-  return join(homedir(), ".config", "notjustyou", "config.json");
+  if (process.env.NOTJUSTYOU_CONFIG_PATH) return process.env.NOTJUSTYOU_CONFIG_PATH;
+  const configHome = process.env.XDG_CONFIG_HOME?.trim() || join(homedir(), ".config");
+  return join(configHome, "notjustyou", "config.json");
 }
 
-async function isReceiverRunning() {
+function getManagedMarkerPath() {
+  return process.env.CLAUDE_PLUGIN_DATA
+    ? join(process.env.CLAUDE_PLUGIN_DATA, "notjustyou-reporting-managed")
+    : join(dirname(getConfigPath()), "claude-plugin-reporting-managed");
+}
+
+async function isReceiverRunning(receiverToken) {
   try {
     const healthUrl = new URL("/health", RECEIVER_URL);
     const response = await fetch(healthUrl, {
       method: "GET",
+      headers: {
+        "x-notjustyou-receiver-token": receiverToken,
+      },
       signal: AbortSignal.timeout(500),
     });
     const body = await response.json();
     return (
       response.ok &&
       body?.ok === RECEIVER_HEALTH.ok &&
-      body?.name === RECEIVER_HEALTH.name
+      body?.name === RECEIVER_HEALTH.name &&
+      body?.mode === "send"
     );
   } catch {
     return false;
@@ -83,6 +128,9 @@ function getSafeEnv() {
     "TMPDIR",
     "TEMP",
     "TMP",
+    "XDG_CONFIG_HOME",
+    "NOTJUSTYOU_CONFIG_PATH",
+    "CLAUDE_PLUGIN_DATA",
     "SystemRoot",
     "ComSpec",
   ]) {

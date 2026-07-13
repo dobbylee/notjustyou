@@ -1,6 +1,8 @@
 import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { recordAiCall } from "@/packages/notjustyou-sdk-js/src/index";
 import {
@@ -78,6 +80,9 @@ describe("recordAiCall", () => {
       clientVersion: "0.1.0",
     });
     expect(payload.installationId).toEqual(expect.any(String));
+    expect(payload.signalId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
     expect(JSON.stringify(payload)).not.toContain("do not send this message");
     expect(JSON.stringify(payload)).not.toContain("authorization");
     expect(JSON.stringify(payload)).not.toContain("prompt");
@@ -287,6 +292,18 @@ describe("recordAiCall", () => {
     expect(serialized).not.toContain("private diff");
     expect(serialized).not.toContain("private file");
     expect(serialized).not.toContain("person@example.com");
+  });
+
+  it.each([
+    "sk-proj-1234567890SECRET",
+    "person@example.com",
+    "/Users/person/project/error.ts",
+    "C:\\Users\\person\\project\\error.ts",
+    "src/private/error.ts",
+  ])("drops a sensitive or path-like provider error code: %s", async (code) => {
+    const payload = await captureFailurePayload({ status: 500, code });
+
+    expect(payload).not.toHaveProperty("errorCode");
   });
 
   it("sends an opt-in slow signal when duration crosses the threshold", async () => {
@@ -798,6 +815,56 @@ describe("recordAiCall", () => {
     expect(queued[0].nextAttemptAt - Date.now()).toBe(1100);
   });
 
+  it("keeps one signal id across retries", async () => {
+    vi.useFakeTimers();
+    const payloads: ProblemSignalPayload[] = [];
+    enqueueSignal(makePayload({ signalId: "signal-test" }), Date.now());
+
+    scheduleSignalQueueDrain(async (payload) => {
+      payloads.push(payload);
+      if (payloads.length === 1) throw { retryable: true, retryAfterMs: 1 };
+    });
+
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runOnlyPendingTimersAsync();
+    expect(payloads.map((payload) => payload.signalId)).toEqual([
+      "signal-test",
+      "signal-test",
+    ]);
+  });
+
+  it("does not keep a child process open for a delayed retry", () => {
+    const queueModule = pathToFileURL(
+      join(process.cwd(), "packages/notjustyou-sdk-js/src/queue.ts"),
+    ).href;
+    const script = `
+      import { drainSignalQueue, enqueueSignal } from ${JSON.stringify(queueModule)};
+      const payload = {
+        serviceId: "openai-api",
+        source: "api_middleware",
+        symptom: "error",
+        observedAt: new Date().toISOString(),
+        durationMs: 1,
+        installationId: "installation-test",
+        clientVersion: "0.1.1",
+        signalId: "signal-test-1234"
+      };
+      enqueueSignal(payload, Date.now(), async () => {
+        throw { retryable: true, retryAfterMs: 60_000 };
+      });
+      await drainSignalQueue();
+    `;
+
+    const result = spawnSync(
+      process.execPath,
+      ["--experimental-strip-types", "--input-type=module", "--eval", script],
+      { encoding: "utf8", timeout: 2_000 },
+    );
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+  });
+
   it("defers config writes until after returning the wrapped value", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
@@ -910,6 +977,7 @@ function makePayload(overrides: Partial<ProblemSignalPayload> = {}): ProblemSign
     statusCode: 503,
     errorCode: "server_error",
     installationId: "installation-test",
+    signalId: "signal-test",
     clientVersion: "0.1.0",
     ...overrides,
   };

@@ -3,13 +3,13 @@
   "hooks": {
     "stop": [
       {
-        "command": "node ./hooks/forward-local-hook.mjs stop",
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/forward-local-hook.mjs\" stop",
         "timeout": 5
       }
     ],
     "sessionEnd": [
       {
-        "command": "node ./hooks/forward-local-hook.mjs sessionEnd",
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/forward-local-hook.mjs\" sessionEnd",
         "timeout": 5
       }
     ]

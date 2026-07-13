@@ -34,8 +34,8 @@ If the user confirms disabling reporting, call:
 If the setup MCP tools are unavailable, show the fallback commands:
 
 ```bash
-npx -y @notjustyou/cli@0.3.5 enable cursor --quiet
-npx -y @notjustyou/cli@0.3.5 disable cursor --quiet
+npx -y @notjustyou/cli@0.3.6 enable cursor --quiet
+npx -y @notjustyou/cli@0.3.6 disable cursor --quiet
 ```
 
 Do not run shell commands from this command file.

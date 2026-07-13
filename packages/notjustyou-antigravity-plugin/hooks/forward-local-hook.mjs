@@ -19,15 +19,16 @@ const RECEIVER_HEALTH = {
 
 async function main() {
   const hookEventName = process.argv[2] ?? "Stop";
-  const serviceId = getConfiguredAntigravityServiceId();
-  if (!serviceId) return writeHookResponse(hookEventName);
+  const config = readAntigravityReportingConfig();
+  if (!config) return writeHookResponse(hookEventName);
+  const { serviceId, localReceiverToken } = config;
 
   const input = await readStdinJson();
   const event = toRawAntigravityHookEnvelope(input, hookEventName, serviceId);
   if (!event) return writeHookResponse(hookEventName);
 
   if (!isLocalReceiverUrl(RECEIVER_URL)) return writeHookResponse(hookEventName);
-  if (!(await isNotJustYouReceiver(RECEIVER_URL))) {
+  if (!(await isNotJustYouReceiver(RECEIVER_URL, localReceiverToken))) {
     return writeHookResponse(hookEventName);
   }
 
@@ -36,6 +37,7 @@ async function main() {
       method: "POST",
       headers: {
         "content-type": "application/json",
+        "x-notjustyou-receiver-token": localReceiverToken,
       },
       body: JSON.stringify(event),
       signal: AbortSignal.timeout(1000),
@@ -48,6 +50,10 @@ async function main() {
 }
 
 export function getConfiguredAntigravityServiceId(env = process.env) {
+  return readAntigravityReportingConfig(env)?.serviceId ?? null;
+}
+
+function readAntigravityReportingConfig(env = process.env) {
   const configPath = getConfigPath(env);
   if (!existsSync(configPath)) return null;
 
@@ -59,8 +65,10 @@ export function getConfiguredAntigravityServiceId(env = process.env) {
 
     if (configuredServices.length !== 1) return null;
 
-    return config?.source === "cli_hook" && config?.localHookSignalOptIn === true
-      ? configuredServices[0]
+    return config?.source === "cli_hook" &&
+      config?.localHookSignalOptIn === true &&
+      typeof config.localReceiverToken === "string"
+      ? { serviceId: configuredServices[0], localReceiverToken: config.localReceiverToken }
       : null;
   } catch {
     return null;
@@ -136,18 +144,22 @@ export function isLocalReceiverUrl(value) {
   }
 }
 
-async function isNotJustYouReceiver(value) {
+async function isNotJustYouReceiver(value, receiverToken) {
   try {
     const healthUrl = new URL("/health", value);
     const response = await fetch(healthUrl, {
       method: "GET",
+      headers: {
+        "x-notjustyou-receiver-token": receiverToken,
+      },
       signal: AbortSignal.timeout(500),
     });
     const body = await response.json();
     return (
       response.ok &&
       body?.ok === RECEIVER_HEALTH.ok &&
-      body?.name === RECEIVER_HEALTH.name
+      body?.name === RECEIVER_HEALTH.name &&
+      body?.mode === "send"
     );
   } catch {
     return false;

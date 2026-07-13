@@ -207,7 +207,7 @@ describe("MCP tools", () => {
       source: "cli_hook",
       serviceIds: ["google-antigravity-cli", "google-antigravity-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
 
@@ -288,7 +288,7 @@ describe("MCP tools", () => {
       source: "cli_hook",
       serviceIds: ["openai-codex-cli"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
 
@@ -328,7 +328,7 @@ describe("MCP tools", () => {
       source: "cli_hook",
       serviceIds: ["cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: true,
     });
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -517,7 +517,7 @@ describe("MCP tools", () => {
       source: "cli_hook",
       serviceIds: ["anthropic-claude-code", "cursor-ide"],
       clientName: "notjustyou-cli",
-      clientVersion: "0.3.5",
+      clientVersion: "0.3.6",
       localHookSignalOptIn: false,
     });
 

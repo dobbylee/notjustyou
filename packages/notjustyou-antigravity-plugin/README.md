@@ -16,9 +16,9 @@ then install that directory with Antigravity:
 
 ```bash
 PLUGIN_TMP="$(mktemp -d)"
-npm pack @notjustyou/antigravity-plugin@0.2.3 --pack-destination "$PLUGIN_TMP"
+npm pack @notjustyou/antigravity-plugin@0.2.4 --pack-destination "$PLUGIN_TMP"
 mkdir -p "$PLUGIN_TMP/notjustyou"
-tar -xzf "$PLUGIN_TMP/notjustyou-antigravity-plugin-0.2.3.tgz" -C "$PLUGIN_TMP/notjustyou" --strip-components=1
+tar -xzf "$PLUGIN_TMP/notjustyou-antigravity-plugin-0.2.4.tgz" -C "$PLUGIN_TMP/notjustyou" --strip-components=1
 agy plugin install "$PLUGIN_TMP/notjustyou"
 ```
 
