@@ -35,6 +35,20 @@ describe("site pages", () => {
     expect(screen.getByText(/"symptom": "network_error"/)).toBeInTheDocument();
     expect(screen.queryByText(/"kept":/)).not.toBeInTheDocument();
     expect(screen.queryByText(/"dropped":/)).not.toBeInTheDocument();
+    const privacyHeading = screen.getByRole("heading", {
+      name: "Privacy boundary by default",
+    });
+    const privacySection = privacyHeading.closest("section");
+
+    expect(privacyHeading).toHaveClass("text-balance");
+    expect(privacySection).not.toBeNull();
+    expect(privacySection?.querySelectorAll("p > span.block")).toHaveLength(0);
+    expect(privacySection?.querySelector("pre")).toHaveClass(
+      "min-w-0",
+      "max-w-full",
+      "text-xs",
+      "sm:text-sm",
+    );
     expect(screen.getAllByText(/npm install -g @notjustyou\/cli/).length)
       .toBeGreaterThan(0);
     expect(screen.getAllByText(/plugin install notjustyou@notjustyou/).length)

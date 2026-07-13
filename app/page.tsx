@@ -146,60 +146,47 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="grid items-center gap-12 border-b border-slate-200/50 py-16 md:py-24 lg:grid-cols-2">
-        <div>
-          <h2 className="text-3xl font-extrabold text-slate-800 md:text-4xl">
-            Privacy boundary by default
+      <section className="grid min-w-0 items-center gap-12 border-b border-slate-200/50 py-16 md:py-24 lg:grid-cols-2">
+        <div className="min-w-0 text-center lg:text-left">
+          <h2 className="text-balance text-3xl font-extrabold text-slate-800 md:text-4xl">
+            Privacy boundary <span className="whitespace-nowrap">by default</span>
           </h2>
-          <p className="mt-4 text-base font-medium leading-7 text-slate-600 text-balance">
-            <span className="block">
-              Installed clients send service-level metadata only.
-            </span>
-            <span className="block">
-              Prompt text, provider bodies, headers, API keys, file paths,
-            </span>
-            <span className="block">
-              and account identifiers are outside the collection boundary.
-            </span>
+          <p className="mx-auto mt-4 max-w-2xl text-pretty text-base font-medium leading-7 text-slate-600 lg:mx-0">
+            Installed clients send{" "}
+            <span className="whitespace-nowrap">service-level metadata</span> only.
+            Prompt text, provider bodies, headers, API keys, file paths, and
+            account identifiers are outside the collection boundary.
           </p>
 
-          <div className="mt-8 space-y-4">
-            <div className="flex gap-3">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mt-0.5">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-slate-800">Collected metadata</h4>
-                <p className="mt-1 text-base font-medium leading-7 text-slate-600 text-pretty">
-                  <span className="block">
-                    Service id, symptom, status code when available,
-                  </span>
-                  <span className="block">
-                    duration, short error code, source, and observed time.
-                  </span>
-                </p>
-              </div>
+          <div className="mt-8 space-y-5">
+            <div>
+              <h4 className="flex items-center justify-center gap-2 text-base font-bold text-slate-800 lg:justify-start">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                </span>
+                Collected metadata
+              </h4>
+              <p className="mx-auto mt-2 max-w-2xl text-pretty text-base font-medium leading-7 text-slate-600 lg:mx-0">
+                Service id, symptom, status code when available, duration,
+                short error code, source, and observed time.
+              </p>
             </div>
-            <div className="flex gap-3">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 mt-0.5">
-                <Lock className="h-3.5 w-3.5" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-slate-800">Excluded payloads</h4>
-                <p className="mt-1 text-base font-medium leading-7 text-slate-600 text-pretty">
-                  <span className="block">
-                    Prompts, messages, request or response bodies, headers,
-                  </span>
-                  <span className="block">
-                    API keys, cookies, file paths, exact IP addresses, usernames.
-                  </span>
-                </p>
-              </div>
+            <div>
+              <h4 className="flex items-center justify-center gap-2 text-base font-bold text-slate-800 lg:justify-start">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-600">
+                  <Lock className="h-3.5 w-3.5" />
+                </span>
+                Excluded payloads
+              </h4>
+              <p className="mx-auto mt-2 max-w-2xl text-pretty text-base font-medium leading-7 text-slate-600 lg:mx-0">
+                Prompts, messages, request or response bodies, headers, API
+                keys, cookies, file paths, exact IP addresses, usernames.
+              </p>
             </div>
           </div>
         </div>
 
-        <pre className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-100 p-6 text-left font-mono text-sm leading-7 text-slate-800">
+        <pre className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-slate-100 p-4 text-left font-mono text-xs leading-6 text-slate-800 sm:p-6 sm:text-sm sm:leading-7">
           <code>{metadataSignalExample}</code>
         </pre>
       </section>
