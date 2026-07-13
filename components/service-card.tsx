@@ -9,8 +9,9 @@ import type { SignalServiceSummary } from "@/lib/signals/aggregation";
 interface ServiceCardProps {
   service: ServiceSurface;
   summary: ServiceSummary;
+  communitySummaryStatus: "loading" | "available" | "stale" | "unavailable";
   signalSummary?: SignalServiceSummary;
-  signalSummaryStatus: "loading" | "available" | "unavailable";
+  signalSummaryStatus: "loading" | "available" | "stale" | "unavailable";
   officialStatus: OfficialServiceStatus | undefined;
   pendingStatus: ReportStatus | null;
   message: string | undefined;
@@ -44,6 +45,7 @@ const reportButtonClassNames: Record<
 export function ServiceCard({
   service,
   summary,
+  communitySummaryStatus,
   signalSummary,
   signalSummaryStatus,
   officialStatus,
@@ -51,11 +53,15 @@ export function ServiceCard({
   message,
   onReport,
 }: ServiceCardProps) {
-  const canUseInstalledSignalSummary = signalSummaryStatus === "available";
+  const canUseInstalledSignalSummary =
+    signalSummaryStatus === "available" || signalSummaryStatus === "stale";
   const installedSignalTotal = canUseInstalledSignalSummary
     ? signalSummary?.total ?? 0
     : 0;
-  const recentProblemSignalTotal = summary.total + installedSignalTotal;
+  const canUseCommunitySummary =
+    communitySummaryStatus === "available" || communitySummaryStatus === "stale";
+  const communityReportTotal = canUseCommunitySummary ? summary.total : 0;
+  const recentProblemSignalTotal = communityReportTotal + installedSignalTotal;
 
   return (
     <article className="rounded-xl border border-slate-200/80 bg-white/50 backdrop-blur-md p-6 transition-all duration-300 hover:border-slate-300 hover:bg-white/85 hover:shadow-md hover:shadow-slate-100">
@@ -83,7 +89,11 @@ export function ServiceCard({
           />
           <SignalBreakdownRow
             label="Community reports"
-            value={summary.total}
+            value={formatSourceSummaryValue(
+              communitySummaryStatus,
+              communityReportTotal,
+            )}
+            muted={communitySummaryStatus !== "available"}
           />
           <SignalBreakdownRow
             label="Installed signals"
@@ -110,7 +120,11 @@ export function ServiceCard({
               type="button"
               disabled={pendingStatus !== null}
               onClick={() => onReport(service.id, status)}
-              aria-label={`Report ${service.name} as ${reportLabels[status].toLowerCase()}. Current count ${summary.counts[status]}.`}
+              aria-label={
+                canUseCommunitySummary
+                  ? `Report ${service.name} as ${reportLabels[status].toLowerCase()}. ${communitySummaryStatus === "stale" ? "Last known" : "Current"} count ${summary.counts[status]}.`
+                  : `Report ${service.name} as ${reportLabels[status].toLowerCase()}. Community count unavailable.`
+              }
               className={clsx(
                 "flex min-h-11 items-center justify-between rounded-lg border border-slate-200 bg-white/80 px-3 text-left text-sm font-semibold text-slate-600 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 hover:shadow-sm",
                 reportButtonClassNames[status].button,
@@ -123,7 +137,7 @@ export function ServiceCard({
                   reportButtonClassNames[status].count,
                 )}
               >
-                {summary.counts[status]}
+                {canUseCommunitySummary ? summary.counts[status] : "—"}
               </span>
             </button>
           ))}
@@ -231,8 +245,20 @@ function formatInstalledSignalValue(
 ) {
   if (signalSummaryStatus === "loading") return "Loading";
   if (signalSummaryStatus === "unavailable") return "Unavailable";
+  if (signalSummaryStatus === "stale") return `${installedSignalTotal} (stale)`;
 
   return installedSignalTotal;
+}
+
+function formatSourceSummaryValue(
+  status: ServiceCardProps["communitySummaryStatus"],
+  total: number,
+) {
+  if (status === "loading") return "Loading";
+  if (status === "unavailable") return "Unavailable";
+  if (status === "stale") return `${total} (stale)`;
+
+  return total;
 }
 
 function formatStatusValue(status: OfficialServiceStatus["overall"]) {

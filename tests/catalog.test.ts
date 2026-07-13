@@ -44,7 +44,7 @@ describe("catalog", () => {
     expect(officialComponentByServiceId).toEqual(
       new Map([
         ["openai-codex-cli", "CLI"],
-        ["openai-codex-app", "App"],
+        ["openai-codex-app", "Codex in ChatGPT Desktop"],
         ["openai-chatgpt", "Conversations"],
         ["openai-api", "Chat Completions"],
       ]),

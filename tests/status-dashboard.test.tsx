@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StatusDashboard } from "@/components/status-dashboard";
@@ -90,6 +90,7 @@ const signalSummaryResponse: SignalSummaryResponse = {
 };
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -181,7 +182,7 @@ describe("StatusDashboard", () => {
       .toBeInTheDocument();
   });
 
-  it("marks installed signals unavailable when the community summary request fails", async () => {
+  it("keeps installed signals available when the community summary request fails", async () => {
     const fetchMock = createFetchMock({
       failCommunitySummary: true,
     });
@@ -192,8 +193,269 @@ describe("StatusDashboard", () => {
     expect(await screen.findByText("Community reports unavailable."))
       .toBeInTheDocument();
     const claudeCodeCard = getServiceCard("Claude Code");
-    expect(within(claudeCodeCard).getByText("Installed signals")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Community reports")).toBeInTheDocument();
     expect(within(claudeCodeCard).getByText("Unavailable")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getByText("Installed signals")).toBeInTheDocument();
+    expect(within(claudeCodeCard).getAllByText("4")).toHaveLength(2);
+    expect(within(claudeCodeCard).getByLabelText("4 recent problem signals"))
+      .toBeInTheDocument();
+  });
+
+  it("keeps last successful source values visible through a transient failure", async () => {
+    const baseFetchMock = createFetchMock();
+    let failRefresh = false;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (
+        failRefresh &&
+        (url === "/api/summary" ||
+          url === "/api/signals/summary" ||
+          url === "/api/official")
+      ) {
+        return Promise.resolve(new Response("Unavailable", { status: 503 }));
+      }
+      return baseFetchMock(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+
+    expect(await screen.findByLabelText("7 recent problem signals"))
+      .toBeInTheDocument();
+    failRefresh = true;
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(await screen.findByText("Community reports unavailable."))
+      .toBeInTheDocument();
+    const card = getServiceCard("Claude Code");
+    expect(within(card).getByText("3 (stale)")).toBeInTheDocument();
+    expect(within(card).getByText("4 (stale)")).toBeInTheDocument();
+    expect(within(card).getByText("Operational")).toBeInTheDocument();
+    expect(within(card).getByLabelText("7 recent problem signals"))
+      .toBeInTheDocument();
+
+    failRefresh = false;
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await waitFor(() => {
+      expect(within(card).queryByText(/\(stale\)/)).not.toBeInTheDocument();
+    });
+  });
+
+  it("coalesces slow polls instead of starving their successful response", async () => {
+    vi.useFakeTimers();
+    const slowSummary = deferred<Response>();
+    const baseFetchMock = createFetchMock();
+    let communitySummaryCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/summary") {
+        communitySummaryCalls += 1;
+        if (communitySummaryCalls === 1) return slowSummary.promise;
+      }
+      return baseFetchMock(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+    expect(communitySummaryCalls).toBe(1);
+
+    slowSummary.resolve(jsonResponse(summaryResponse));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByLabelText("7 recent problem signals")).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
+    expect(communitySummaryCalls).toBe(2);
+  });
+
+  it("refreshes official status on its own interval and when the page becomes visible", async () => {
+    vi.useFakeTimers();
+    const fetchMock = createFetchMock();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(countFetches(fetchMock, "/api/official")).toBe(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(59_999);
+    });
+    expect(countFetches(fetchMock, "/api/official")).toBe(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(countFetches(fetchMock, "/api/official")).toBe(2);
+
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: false,
+    });
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+      await Promise.resolve();
+    });
+    expect(countFetches(fetchMock, "/api/official")).toBe(3);
+  });
+
+  it("does not let a stale poll overwrite an accepted optimistic report", async () => {
+    const staleSummary = deferred<Response>();
+    const baseFetchMock = createFetchMock();
+    let communitySummaryCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/summary") {
+        communitySummaryCalls += 1;
+        if (communitySummaryCalls === 2) {
+          return staleSummary.promise;
+        }
+      }
+
+      return baseFetchMock(input, init);
+    });
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+
+    expect(await screen.findByLabelText("7 recent problem signals"))
+      .toBeInTheDocument();
+
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(communitySummaryCalls).toBe(2);
+
+    await user.click(
+      within(getServiceCard("Claude Code")).getByText("Manual community report"),
+    );
+    await user.click(
+      within(getServiceCard("Claude Code")).getByRole("button", {
+        name: "Report Claude Code as slow. Current count 2.",
+      }),
+    );
+    expect(screen.getByText("Thanks - counted.")).toBeInTheDocument();
+
+    staleSummary.resolve(jsonResponse(summaryResponse));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: "Report Claude Code as slow. Current count 3.",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("runs an authoritative refresh after a rejected report", async () => {
+    const reportResponse = deferred<Response>();
+    const baseFetchMock = createFetchMock();
+    let communitySummaryCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/summary") communitySummaryCalls += 1;
+      if (url === "/api/report") return reportResponse.promise;
+      return baseFetchMock(input, init);
+    });
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+    expect(await screen.findByLabelText("7 recent problem signals"))
+      .toBeInTheDocument();
+    await user.click(
+      within(getServiceCard("Claude Code")).getByText("Manual community report"),
+    );
+    await user.click(
+      within(getServiceCard("Claude Code")).getByRole("button", {
+        name: "Report Claude Code as slow. Current count 2.",
+      }),
+    );
+
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(communitySummaryCalls).toBe(1);
+
+    reportResponse.resolve(
+      jsonResponse({
+        ok: false,
+        counted: false,
+        reason: "cooldown",
+        cooldownSeconds: 120,
+      }),
+    );
+
+    expect(await screen.findByText("Already counted. Try again in 120s."))
+      .toBeInTheDocument();
+    expect(communitySummaryCalls).toBe(2);
+    expect(
+      screen.getByRole("button", {
+        name: "Report Claude Code as slow. Current count 2.",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("rolls back an optimistic report even when its recovery fetch fails", async () => {
+    const baseFetchMock = createFetchMock();
+    let communitySummaryCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/summary") {
+        communitySummaryCalls += 1;
+        if (communitySummaryCalls > 1) {
+          return Promise.resolve(new Response("Unavailable", { status: 503 }));
+        }
+      }
+      if (url === "/api/report") {
+        return Promise.resolve(
+          jsonResponse({
+            ok: false,
+            counted: false,
+            reason: "cooldown",
+            cooldownSeconds: 120,
+          }),
+        );
+      }
+      return baseFetchMock(input, init);
+    });
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+    expect(await screen.findByLabelText("7 recent problem signals"))
+      .toBeInTheDocument();
+    await user.click(
+      within(getServiceCard("Claude Code")).getByText("Manual community report"),
+    );
+    await user.click(
+      within(getServiceCard("Claude Code")).getByRole("button", {
+        name: "Report Claude Code as slow. Current count 2.",
+      }),
+    );
+
+    expect(await screen.findByText("Community reports unavailable."))
+      .toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Report Claude Code as slow. Last known count 2.",
+      }),
+    ).toBeInTheDocument();
+    expect(within(getServiceCard("Claude Code")).getByText("3 (stale)"))
+      .toBeInTheDocument();
   });
 });
 
@@ -211,7 +473,7 @@ function getServiceCard(serviceName: string) {
 function createFetchMock(
   options: { failCommunitySummary?: boolean; failSignalSummary?: boolean } = {},
 ) {
-  return vi.fn(async (input: RequestInfo | URL) => {
+  return vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = String(input);
 
     if (url === "/api/summary") {
@@ -253,6 +515,19 @@ function createFetchMock(
 
     throw new Error(`Unhandled fetch: ${url}`);
   });
+}
+
+function countFetches(fetchMock: ReturnType<typeof vi.fn>, url: string) {
+  return fetchMock.mock.calls.filter(([input]) => String(input) === url).length;
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+
+  return { promise, resolve };
 }
 
 function jsonResponse(body: unknown) {
