@@ -135,7 +135,7 @@ export const CATALOG = [
     officialStatusRef: {
       providerId: "openai",
       kind: "statuspage_component",
-      componentName: "App",
+      componentName: "Codex in ChatGPT Desktop",
     },
     reportOptions: REPORT_STATUSES,
   },

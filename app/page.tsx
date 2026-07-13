@@ -37,12 +37,11 @@ const signalSources = [
 ];
 
 const metadataSignalExample = `{
-  "event": "provider_call_failed",
   "serviceId": "anthropic-claude-api",
-  "symptom": "timeout",
+  "source": "api_middleware",
+  "symptom": "network_error",
   "durationMs": 5500,
-  "kept": ["serviceId", "symptom", "durationMs", "statusCode"],
-  "dropped": ["prompt", "body", "headers", "token", "filePath"]
+  "errorCode": "timeout"
 }`;
 
 export default function Home() {

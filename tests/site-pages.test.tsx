@@ -30,8 +30,11 @@ describe("site pages", () => {
     expect(screen.getByText("Is it just me?")).toBeInTheDocument();
     expect(screen.getByText(/Check official status, community reports/))
       .toBeInTheDocument();
-    expect(screen.getByText(/"event": "provider_call_failed"/))
+    expect(screen.getByText(/"source": "api_middleware"/))
       .toBeInTheDocument();
+    expect(screen.getByText(/"symptom": "network_error"/)).toBeInTheDocument();
+    expect(screen.queryByText(/"kept":/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/"dropped":/)).not.toBeInTheDocument();
     expect(screen.getAllByText(/npm install -g @notjustyou\/cli/).length)
       .toBeGreaterThan(0);
     expect(screen.getAllByText(/plugin install notjustyou@notjustyou/).length)

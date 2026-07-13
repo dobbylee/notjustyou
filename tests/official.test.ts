@@ -62,7 +62,7 @@ describe("official status helpers", () => {
       components: [
         {
           id: "openai-app",
-          name: "App",
+          name: "Codex in ChatGPT Desktop",
           status: "operational",
           updatedAt: "2026-05-09T00:00:00.000Z",
         },
@@ -81,7 +81,9 @@ describe("official status helpers", () => {
       ],
     };
 
-    expect(findStatuspageComponent(status, "App")?.status).toBe("operational");
+    expect(
+      findStatuspageComponent(status, "Codex in ChatGPT Desktop")?.status,
+    ).toBe("operational");
     expect(findStatuspageComponent(status, "Conversations")?.status).toBe(
       "operational",
     );

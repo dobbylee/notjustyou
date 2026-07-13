@@ -49,6 +49,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={service}
         summary={summary}
+        communitySummaryStatus="available"
         signalSummary={undefined}
         signalSummaryStatus="available"
         officialStatus={officialStatus}
@@ -84,6 +85,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={service}
         summary={summary}
+        communitySummaryStatus="available"
         signalSummary={undefined}
         signalSummaryStatus="available"
         officialStatus={officialStatus}
@@ -118,6 +120,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={serviceWithoutOfficial}
         summary={{ ...summary, serviceId: "google-antigravity" }}
+        communitySummaryStatus="available"
         signalSummary={undefined}
         signalSummaryStatus="available"
         officialStatus={undefined}
@@ -138,6 +141,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={service}
         summary={summary}
+        communitySummaryStatus="available"
         signalSummary={{
           serviceId: "anthropic-claude-code",
           countsBySource: {
@@ -191,6 +195,7 @@ describe("ServiceCard", () => {
       <ServiceCard
         service={service}
         summary={summary}
+        communitySummaryStatus="available"
         signalSummary={undefined}
         signalSummaryStatus="unavailable"
         officialStatus={officialStatus}
@@ -205,11 +210,44 @@ describe("ServiceCard", () => {
     expect(screen.queryByText("Unique installations")).not.toBeInTheDocument();
   });
 
+  it("does not fabricate community counts while the source is unavailable", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ServiceCard
+        service={service}
+        summary={{
+          ...summary,
+          counts: { slow: 0, error: 0, down: 0 },
+          total: 0,
+        }}
+        communitySummaryStatus="unavailable"
+        signalSummary={undefined}
+        signalSummaryStatus="available"
+        officialStatus={officialStatus}
+        pendingStatus={null}
+        message={undefined}
+        onReport={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByText("Manual community report"));
+
+    expect(screen.getAllByText("—")).toHaveLength(3);
+    expect(
+      screen.getByRole("button", {
+        name: "Report Claude Code as slow. Community count unavailable.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Current count 0/)).not.toBeInTheDocument();
+  });
+
   it("hides installation wording when installed signals are zero", () => {
     render(
       <ServiceCard
         service={service}
         summary={summary}
+        communitySummaryStatus="available"
         signalSummary={{
           serviceId: "anthropic-claude-code",
           countsBySource: {
