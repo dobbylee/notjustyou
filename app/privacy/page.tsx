@@ -35,8 +35,11 @@ export default function PrivacyPage() {
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           To reduce duplicate reports, the app creates a short-lived hash from
-          request metadata such as IP address, user agent, and language. The hash
-          is used for cooldown only and expires after a few minutes.
+          the client address supplied by the trusted Vercel deployment proxy.
+          Self-hosted deployments without that trust boundary share a
+          conservative abuse bucket instead of trusting forwarding headers. The
+          hash is used for cooldown and registration abuse prevention only and
+          expires after a few minutes. User agent and language are not included.
         </p>
       </section>
 
@@ -48,8 +51,9 @@ export default function PrivacyPage() {
           SDK and local-tool collectors are opt in. When enabled, they send
           service-level metadata such as service id, symptom category, duration,
           status code, short error code, client version, and a random local
-          installation id. Server aggregation stores derived installation
-          hashes, not the raw installation id.
+          installation id. SDK delivery retries also include a random signal id.
+          Server aggregation stores derived installation and short-lived signal
+          hashes, not the raw installation or signal ids.
         </p>
       </section>
 
@@ -80,6 +84,11 @@ export default function PrivacyPage() {
           hook payload fields such as prompts, commands, outputs, file paths,
           transcript paths, headers, cookies, tokens, and emails are not stored,
           queued, logged, or sent to Not Just You.
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Hook adapters authenticate to the localhost receiver with a separate
+          random local credential kept in the private local config. That local
+          credential is not sent to or stored by the Not Just You service.
         </p>
       </section>
 

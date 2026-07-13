@@ -3,6 +3,7 @@ import type { SummaryResponse } from "../aggregation";
 import type { ClickSummaryResponse } from "../clicks";
 
 export interface AddReportInput {
+  fingerprint: string;
   serviceId: string;
   status: ReportStatus;
   now?: Date;
@@ -11,11 +12,6 @@ export interface AddReportInput {
 export interface AddClickInput {
   metricId: string;
   now?: Date;
-}
-
-export interface DedupeInput {
-  fingerprint: string;
-  serviceId: string;
 }
 
 export type DedupeResult =
@@ -39,9 +35,8 @@ export interface ClickSummaryQuery {
 }
 
 export interface ReportStorage {
-  addReport(input: AddReportInput): Promise<void>;
+  addReport(input: AddReportInput): Promise<DedupeResult>;
   addClick(input: AddClickInput): Promise<void>;
-  claimDedupe(input: DedupeInput): Promise<DedupeResult>;
   getClickSummary(input: ClickSummaryQuery): Promise<ClickSummaryResponse>;
   getSummary(input: SummaryQuery): Promise<SummaryResponse>;
 }

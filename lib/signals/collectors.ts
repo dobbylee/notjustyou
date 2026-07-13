@@ -54,6 +54,14 @@ export function getInstallationLookupKey(
   return hmacValue(`${collectorId}:${installationId}`, secret);
 }
 
+export function getSignalDedupeLookupKey(
+  collectorId: string,
+  signalId: string,
+  secret: string,
+) {
+  return hmacValue(`${collectorId}:${signalId}`, secret);
+}
+
 export function getSignalSecret() {
   const secret = process.env.NOTJUSTYOU_SIGNAL_SECRET?.trim();
 

@@ -4,6 +4,7 @@ import { POST as registerCollector } from "@/app/api/collectors/register/route";
 import { POST as submitHeartbeat } from "@/app/api/collectors/heartbeat/route";
 import { POST as submitSignal } from "@/app/api/signals/route";
 import { GET as getSignalSummary } from "@/app/api/signals/summary/route";
+import { getRequestFingerprint } from "@/lib/abuse";
 import type { CollectorRecord } from "@/lib/signals/collectors";
 
 const storage = {
@@ -107,6 +108,81 @@ describe("signals API", () => {
       reason: "rate_limited",
       retryAfterSeconds: 60,
     });
+  });
+
+  it("keeps the registration identity stable when client-controlled headers rotate", async () => {
+    const first = jsonRequest(
+      "http://localhost/api/collectors/register",
+      {
+        source: "api_middleware",
+        serviceIds: ["openai-api"],
+        clientName: "notjustyou-sdk-js",
+        clientVersion: "0.1.0",
+      },
+      {
+        "x-forwarded-for": "198.51.100.2, 203.0.113.9",
+        "user-agent": "client-a",
+        "accept-language": "en-US",
+      },
+    );
+    const second = jsonRequest(
+      "http://localhost/api/collectors/register",
+      {
+        source: "api_middleware",
+        serviceIds: ["openai-api"],
+        clientName: "notjustyou-sdk-js",
+        clientVersion: "0.1.0",
+      },
+      {
+        "x-forwarded-for": "192.0.2.44, 203.0.113.9",
+        "user-agent": "client-b",
+        "accept-language": "ko-KR",
+      },
+    );
+
+    expect(getRequestFingerprint(first)).toBe(getRequestFingerprint(second));
+    await registerCollector(first);
+    await registerCollector(second);
+
+    expect(storage.checkRegistrationRateLimit.mock.calls[0]?.[0]).toBe(
+      storage.checkRegistrationRateLimit.mock.calls[1]?.[0],
+    );
+  });
+
+  it("prefers Vercel's protected forwarded address", () => {
+    vi.stubEnv("VERCEL", "1");
+    const request = jsonRequest(
+      "http://localhost/api/collectors/register",
+      {},
+      {
+        "x-vercel-forwarded-for": "203.0.113.20",
+        "x-forwarded-for": "198.51.100.99",
+        "x-real-ip": "192.0.2.5",
+      },
+    );
+
+    expect(getRequestFingerprint(request)).toBe(
+      getRequestFingerprint(
+        jsonRequest("http://localhost/api/collectors/register", {}, {
+          "x-vercel-forwarded-for": "203.0.113.20",
+        }),
+      ),
+    );
+  });
+
+  it("does not trust Vercel or forwarding headers outside Vercel", () => {
+    const first = jsonRequest("http://localhost/api/collectors/register", {}, {
+      "x-vercel-forwarded-for": "203.0.113.20",
+      "x-forwarded-for": "198.51.100.99",
+      "x-real-ip": "192.0.2.5",
+    });
+    const second = jsonRequest("http://localhost/api/collectors/register", {}, {
+      "x-vercel-forwarded-for": "192.0.2.60",
+      "x-forwarded-for": "203.0.113.21",
+      "x-real-ip": "198.51.100.4",
+    });
+
+    expect(getRequestFingerprint(first)).toBe(getRequestFingerprint(second));
   });
 
   it("classifies server config failures separately from Redis failures", async () => {
@@ -288,6 +364,7 @@ describe("signals API", () => {
         errorCode: "rate_limit_exceeded",
         installationId: "random-local-id",
         clientVersion: "0.1.0",
+        signalId: "sig_0123456789abcdef",
       }),
     );
 
@@ -302,6 +379,7 @@ describe("signals API", () => {
           serviceId: "openai-api",
           source: "api_middleware",
           symptom: "rate_limited",
+          signalId: "sig_0123456789abcdef",
         }),
       }),
     );

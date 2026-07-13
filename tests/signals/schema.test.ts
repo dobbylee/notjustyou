@@ -18,9 +18,38 @@ describe("problemSignalInputSchema", () => {
       installationId: "random-local-id",
       clientVersion: "0.1.0",
       regionHint: "us",
+      signalId: "sig_0123456789abcdef",
     });
 
     expect(parsed.success).toBe(true);
+  });
+
+  it("keeps signalId optional for old clients and bounds new idempotency ids", () => {
+    const base = {
+      serviceId: "openai-api",
+      source: "api_middleware",
+      symptom: "error",
+    };
+
+    expect(problemSignalInputSchema.safeParse(base).success).toBe(true);
+    expect(
+      problemSignalInputSchema.safeParse({
+        ...base,
+        signalId: "sig_0123456789abcdef",
+      }).success,
+    ).toBe(true);
+    expect(
+      problemSignalInputSchema.safeParse({ ...base, signalId: "short" }).success,
+    ).toBe(false);
+    expect(
+      problemSignalInputSchema.safeParse({
+        ...base,
+        signalId: "sig with spaces and unsafe punctuation!",
+      }).success,
+    ).toBe(false);
+    expect(
+      problemSignalInputSchema.safeParse({ ...base, signalId: "a".repeat(81) }).success,
+    ).toBe(false);
   });
 
   it("rejects unknown services, non-installed sources, and unknown fields", () => {

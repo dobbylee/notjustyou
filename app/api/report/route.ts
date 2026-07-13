@@ -42,9 +42,10 @@ export async function POST(request: NextRequest) {
   try {
     const storage = await getReportStorage();
     const fingerprint = getRequestFingerprint(request);
-    const dedupe = await storage.claimDedupe({
+    const dedupe = await storage.addReport({
       fingerprint,
       serviceId: validation.service.id,
+      status: validation.status,
     });
 
     if (!dedupe.allowed) {
@@ -60,11 +61,6 @@ export async function POST(request: NextRequest) {
         },
       );
     }
-
-    await storage.addReport({
-      serviceId: validation.service.id,
-      status: validation.status,
-    });
 
     return NextResponse.json({
       ok: true,

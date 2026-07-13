@@ -11,9 +11,17 @@ The current app is a Next.js status board backed by Redis.
 - Official provider status is fetched separately where a reliable mapping exists.
 - Opt-in SDK middleware can submit metadata-only API problem signals for OpenAI API, Claude API, and Gemini API.
 - CLI, MCP, plugins, and SDK collectors are the primary surfaces for checking status or contributing opt-in signals where problems happen.
-- The dashboard polls for recent state and renders provider surface cards with source breakdown visible by default.
+- The dashboard polls each source independently and renders provider surface cards with source breakdown visible by default. A partial source failure must not hide successful data from another source.
 
 Redis is required at runtime. There is no in-memory fallback.
+
+Installed-signal counters use sparse minute hashes. Compact all-service reads
+scale with the requested minute window, skip unique-installation calculation,
+and avoid the full source-by-symptom cross product. Service-specific detail
+reads use approximate unique-installation structures. A persisted v2 cutover
+minute temporarily merges still-live v1 buckets through a bounded one-hour
+rolling-deployment overlap, then naturally stops reading them once the requested
+window moves past that overlap.
 
 ## Source Families
 

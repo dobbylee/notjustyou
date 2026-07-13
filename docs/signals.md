@@ -65,6 +65,7 @@ interface ProblemSignalInput {
   installationId?: string;
   clientVersion?: string;
   regionHint?: string;
+  signalId?: string;
 }
 ```
 
@@ -73,6 +74,11 @@ interface ProblemSignalInput {
 Collector token lookup keys should use a server secret based HMAC. Raw collector tokens should not be stored.
 
 Installation ids should be random local ids. Server-side dedupe and approximate unique counts should store only a derived hash or HMAC, not the raw installation id.
+
+`signalId` is a random delivery id generated independently for each local
+observation. SDK retries reuse the same id so the server can count a delivered
+observation once even when its response is lost. The server stores only a
+short-lived HMAC derived from the collector and signal ids.
 
 ## Validation Rules
 
@@ -116,6 +122,11 @@ Reject payloads that include sensitive keys such as:
 
 The exact key `code` is sensitive, but substrings such as `statusCode` and `errorCode` are allowed.
 
+Allowed key names do not make arbitrary values safe. SDK normalizers must drop
+an `errorCode` value when it resembles a credential, email address, username-
+bearing path, or local file path. Raw provider errors and messages are never
+sent for server-side redaction.
+
 ## SDK Signal Criteria
 
 `recordAiCall` treats a wrapped provider call that throws as a failure signal.
@@ -144,6 +155,11 @@ There is no default slow threshold.
 
 Failure signals are locally coalesced for 30 seconds by service id, source,
 symptom, status code, and sanitized error code. Slow signals are not coalesced.
+
+Retryable deliveries keep one `signalId`. Server-side HMAC dedupe is short lived
+and scoped to the collector, so retries do not inflate installed-signal counts
+and unrelated collectors do not collide. Retry timers are best effort and do
+not keep a short-lived Node process open.
 
 ## Display Rules
 

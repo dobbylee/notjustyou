@@ -12,6 +12,9 @@ export const SIGNAL_COUNTER_TTL_SECONDS = 2 * 60 * 60;
 export const SIGNAL_LAST_TTL_SECONDS = 30 * 60;
 export const HEARTBEAT_TTL_SECONDS = 5 * 60;
 export const RATE_LIMIT_TTL_SECONDS = 5 * 60;
+export const SIGNAL_DEDUPE_TTL_SECONDS = 10 * 60;
+export const SIGNAL_V2_CUTOVER_KEY = "signal:v2:cutover-minute";
+export const SIGNAL_V2_LEGACY_OVERLAP_MINUTES = 60;
 
 export interface LastSignalSummary {
   symptom: SignalSymptom;
@@ -45,6 +48,14 @@ export function getSignalCountKey(
 
 export function getSignalInstallationsKey(serviceId: string, bucket: string) {
   return `signal:v1:installations:${serviceId}:${bucket}`;
+}
+
+export function getSignalBucketKey(bucket: string) {
+  return `signal:v2:bucket:${bucket}`;
+}
+
+export function getSignalInstallationsV2Key(serviceId: string, bucket: string) {
+  return `signal:v2:installations:${serviceId}:${bucket}`;
 }
 
 export function getSignalLastKey(serviceId: string) {
@@ -92,4 +103,3 @@ export function emptySignalSummaries() {
     lastSignal: null,
   }));
 }
-
