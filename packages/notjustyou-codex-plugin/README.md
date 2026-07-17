@@ -1,6 +1,6 @@
 # Not Just You Status Codex Plugin
 
-Status-only plugin for Codex CLI, IDE extension, and app surfaces.
+Status-only plugin for Codex CLI and ChatGPT desktop app surfaces.
 
 ## What It Provides
 

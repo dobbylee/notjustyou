@@ -1,4 +1,4 @@
-import type { ProviderId } from "../catalog";
+import type { ProviderId, StatuspageProviderId } from "../catalog";
 
 export type OfficialOverallStatus =
   | "operational"
@@ -18,12 +18,22 @@ export interface OfficialComponentStatus {
   updatedAt: string;
 }
 
+export interface OfficialProviderAdvisory {
+  providerId: StatuspageProviderId;
+  id: string;
+  name: string;
+  status: string;
+  impact: string;
+  updatedAt: string;
+}
+
 export interface OfficialProviderStatus {
   providerId: ProviderId;
   overall: OfficialOverallStatus;
   source: OfficialStatusSource;
   updatedAt: string;
   components: OfficialComponentStatus[];
+  providerAdvisories?: OfficialProviderAdvisory[];
 }
 
 export interface OfficialServiceStatus {
@@ -48,6 +58,17 @@ export interface StatuspageSummary {
     name: string;
     status: string;
     updated_at?: string;
+  }>;
+  incidents?: Array<{
+    id: string;
+    name: string;
+    status: string;
+    impact: string;
+    updated_at?: string;
+    created_at?: string;
+    components?: Array<{
+      id: string;
+    }>;
   }>;
 }
 

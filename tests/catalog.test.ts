@@ -32,26 +32,32 @@ describe("catalog", () => {
   });
 
   it("maps OpenAI surfaces to official status components", () => {
-    const officialComponentByServiceId = new Map(
+    const officialRefByServiceId = new Map(
       CATALOG.filter((service) => service.providerId === "openai").map((service) => [
         service.id,
-        service.officialStatusRef?.kind === "statuspage_component"
-          ? service.officialStatusRef.componentName
-          : null,
+        service.officialStatusRef,
       ]),
     );
 
-    expect(officialComponentByServiceId).toEqual(
-      new Map([
-        ["openai-codex-cli", "CLI"],
-        ["openai-codex-app", "Codex in ChatGPT Desktop"],
-        ["openai-chatgpt", "Conversations"],
-        ["openai-api", "Chat Completions"],
-      ]),
-    );
-    expect(officialComponentByServiceId.has("openai-codex-desktop")).toBe(false);
-    expect(officialComponentByServiceId.has("openai-chatgpt-web")).toBe(false);
-    expect(officialComponentByServiceId.has("openai-chatgpt-desktop")).toBe(false);
+    expect(officialRefByServiceId.get("openai-codex-cli")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "CLI",
+    });
+    expect(officialRefByServiceId.get("openai-codex-app")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "Codex in ChatGPT Desktop",
+    });
+    expect(officialRefByServiceId.get("openai-chatgpt")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "Conversations",
+    });
+    expect(officialRefByServiceId.get("openai-api")).toMatchObject({
+      kind: "statuspage_components",
+      componentNames: ["Chat Completions", "Responses"],
+    });
+    expect(officialRefByServiceId.has("openai-codex-desktop")).toBe(false);
+    expect(officialRefByServiceId.has("openai-chatgpt-web")).toBe(false);
+    expect(officialRefByServiceId.has("openai-chatgpt-desktop")).toBe(false);
   });
 
   it("keeps the Google service catalog organized by current surfaces", () => {
@@ -69,7 +75,7 @@ describe("catalog", () => {
       },
       {
         id: "google-antigravity",
-        name: "Antigravity",
+        name: "Antigravity 2.0",
         surfaceType: "app",
       },
       {
@@ -84,9 +90,26 @@ describe("catalog", () => {
       },
       {
         id: "google-gemini-api",
-        name: "Gemini API",
+        name: "Gemini Developer API",
+        surfaceType: "api",
+      },
+      {
+        id: "google-vertex-gemini-api",
+        name: "Vertex Gemini API",
         surfaceType: "api",
       },
     ]);
+
+    expect(
+      CATALOG.find((service) => service.id === "google-gemini-api")
+        ?.officialStatusRef,
+    ).toBeUndefined();
+    expect(
+      CATALOG.find((service) => service.id === "google-vertex-gemini-api")
+        ?.officialStatusRef,
+    ).toMatchObject({
+      kind: "google_cloud_product",
+      productName: "Vertex Gemini API",
+    });
   });
 });

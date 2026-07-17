@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getGoogleProductStatus, type GoogleStatusIncident } from "@/lib/official/google";
-import { findStatuspageComponent } from "@/lib/official/statuspage";
+import {
+  findStatuspageComponent,
+  findStatuspageComponents,
+  getStatuspageProviderAdvisories,
+  getWorstStatuspageComponent,
+} from "@/lib/official/statuspage";
 import type { OfficialProviderStatus } from "@/lib/official/types";
 
 describe("official status helpers", () => {
@@ -78,6 +83,12 @@ describe("official status helpers", () => {
           status: "operational",
           updatedAt: "2026-05-09T00:00:00.000Z",
         },
+        {
+          id: "openai-responses",
+          name: "Responses",
+          status: "degraded",
+          updatedAt: "2026-05-09T00:01:00.000Z",
+        },
       ],
     };
 
@@ -90,6 +101,58 @@ describe("official status helpers", () => {
     expect(findStatuspageComponent(status, "Chat Completions")?.status).toBe(
       "operational",
     );
+    const apiComponents = findStatuspageComponents(status, [
+      "Chat Completions",
+      "Responses",
+    ]);
+    expect(apiComponents).toHaveLength(2);
+    expect(getWorstStatuspageComponent(apiComponents ?? [])?.name).toBe(
+      "Responses",
+    );
+  });
+
+  it("preserves active provider advisories without assigning them to a component", () => {
+    expect(
+      getStatuspageProviderAdvisories(
+        "openai",
+        {
+          incidents: [
+            {
+              id: "provider-advisory",
+              name: "Enterprise access advisory",
+              status: "identified",
+              impact: "none",
+              updated_at: "2026-07-18T00:01:00.000Z",
+              components: [],
+            },
+            {
+              id: "component-incident",
+              name: "Responses errors",
+              status: "investigating",
+              impact: "minor",
+              components: [{ id: "openai-responses" }],
+            },
+            {
+              id: "resolved-provider-advisory",
+              name: "Resolved advisory",
+              status: "resolved",
+              impact: "none",
+              components: [],
+            },
+          ],
+        },
+        "2026-07-18T00:00:00.000Z",
+      ),
+    ).toEqual([
+      {
+        providerId: "openai",
+        id: "provider-advisory",
+        name: "Enterprise access advisory",
+        status: "identified",
+        impact: "none",
+        updatedAt: "2026-07-18T00:01:00.000Z",
+      },
+    ]);
   });
 
   it("maps active Google service disruptions to degraded", () => {

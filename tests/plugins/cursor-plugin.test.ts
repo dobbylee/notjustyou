@@ -263,6 +263,14 @@ describe("Cursor status plugin", () => {
       access: "public",
     });
   });
+
+  it("distinguishes Cursor Marketplace availability from this plugin's listing state", () => {
+    const readme = readFileSync(join(pluginRoot, "README.md"), "utf8");
+
+    expect(readme).toContain("Not Just You is not yet listed on the Cursor Marketplace");
+    expect(readme).toContain("listings require Cursor review");
+    expect(readme).not.toContain("marketplace distribution is not available yet");
+  });
 });
 
 function readJson(relativePath: string) {

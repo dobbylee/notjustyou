@@ -14,8 +14,13 @@ import {
   type GoogleStatusIncident,
 } from "./google";
 import { fetchOpenAIStatus } from "./openai";
-import { findStatuspageComponent } from "./statuspage";
+import {
+  findStatuspageComponent,
+  findStatuspageComponents,
+  getWorstStatuspageComponent,
+} from "./statuspage";
 import type {
+  OfficialProviderAdvisory,
   OfficialProviderStatus,
   OfficialServiceStatus,
 } from "./types";
@@ -25,6 +30,7 @@ const OFFICIAL_CACHE_TTL_SECONDS = 120;
 interface OfficialSummaryResponse {
   updatedAt: string;
   services: OfficialServiceStatus[];
+  providerAdvisories: OfficialProviderAdvisory[];
 }
 
 export async function getOfficialSummary(): Promise<OfficialSummaryResponse> {
@@ -33,10 +39,12 @@ export async function getOfficialSummary(): Promise<OfficialSummaryResponse> {
   const services = await Promise.all(
     CATALOG.map((service) => getOfficialServiceStatus(service, sourceCache)),
   );
+  const providerAdvisories = await getProviderAdvisories(sourceCache);
 
   return {
     updatedAt: new Date().toISOString(),
     services,
+    providerAdvisories,
   };
 }
 
@@ -117,6 +125,32 @@ async function getOfficialServiceStatusForRef(
         source: "official",
         updatedAt: component.updatedAt,
         matchedComponent: component.name,
+      };
+    }
+    case "statuspage_components": {
+      const providerStatus = await sourceCache.getStatuspageStatus(
+        statusRef.providerId,
+      );
+      const components = findStatuspageComponents(
+        providerStatus,
+        statusRef.componentNames,
+      );
+      const worstComponent = components
+        ? getWorstStatuspageComponent(components)
+        : undefined;
+
+      if (!components || !worstComponent) {
+        return createUnknownServiceStatus(serviceId, providerStatus.updatedAt);
+      }
+
+      return {
+        serviceId,
+        overall: worstComponent.status,
+        source: "official",
+        updatedAt: worstComponent.updatedAt,
+        matchedComponent: components
+          .map((component) => component.name)
+          .join(", "),
       };
     }
     case "google_workspace_product": {
@@ -208,4 +242,21 @@ function createNotConnectedServiceStatus(serviceId: string): OfficialServiceStat
 
 function getStatuspageCacheKey(providerId: StatuspageProviderId) {
   return `official:v2:statuspage:${providerId}`;
+}
+
+async function getProviderAdvisories(
+  sourceCache: ReturnType<typeof createRequestSourceCache>,
+) {
+  const advisoryGroups = await Promise.all(
+    (["anthropic", "openai", "cursor"] as const).map(async (providerId) => {
+      try {
+        const providerStatus = await sourceCache.getStatuspageStatus(providerId);
+        return providerStatus.providerAdvisories ?? [];
+      } catch {
+        return [];
+      }
+    }),
+  );
+
+  return advisoryGroups.flat();
 }

@@ -1,6 +1,7 @@
 import type {
   CommunityServiceSummary,
   InstalledSignalServiceSummary,
+  OfficialProviderAdvisory,
   OfficialServiceStatus,
   StatusData,
 } from "./types.js";
@@ -12,7 +13,7 @@ export function formatStatus(data: StatusData, serviceId?: string) {
     return `No status found for ${serviceId}.`;
   }
 
-  return serviceIds
+  const serviceBlocks = serviceIds
     .map((id) =>
       formatServiceStatus({
         serviceId: id,
@@ -24,6 +25,14 @@ export function formatStatus(data: StatusData, serviceId?: string) {
         installedSignalsAvailable: Boolean(data.installedSignals),
       }),
     )
+    .join("\n\n");
+  const displayedProviderIds = new Set(serviceIds.map(getProviderId));
+  const providerAdvisories = (data.official?.providerAdvisories ?? []).filter(
+    (advisory) => displayedProviderIds.has(advisory.providerId),
+  );
+
+  return [serviceBlocks, formatProviderAdvisories(providerAdvisories)]
+    .filter(Boolean)
     .join("\n\n");
 }
 
@@ -73,6 +82,22 @@ function formatServiceStatus(input: {
   }
 
   return lines.join("\n");
+}
+
+function formatProviderAdvisories(advisories: OfficialProviderAdvisory[]) {
+  if (advisories.length === 0) return "";
+
+  return [
+    "Official provider advisories",
+    ...advisories.map(
+      (advisory) =>
+        `${advisory.providerId}: ${advisory.name} (${formatValue(advisory.status)}, ${formatValue(advisory.impact)})`,
+    ),
+  ].join("\n");
+}
+
+function getProviderId(serviceId: string) {
+  return serviceId.split("-")[0] ?? "unknown";
 }
 
 function formatValue(value: string) {

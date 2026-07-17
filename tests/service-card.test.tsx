@@ -111,7 +111,7 @@ describe("ServiceCard", () => {
     const serviceWithoutOfficial: ServiceSurface = {
       id: "google-antigravity",
       providerId: "google",
-      name: "Antigravity",
+      name: "Antigravity 2.0",
       surfaceType: "app",
       reportOptions: REPORT_STATUSES,
     };

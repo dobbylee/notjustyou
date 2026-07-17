@@ -334,6 +334,7 @@ describe("Antigravity plugin", () => {
 
     expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.4");
     expect(readme).toContain("agy plugin install");
+    expect(readme).toContain("Antigravity CLI, Antigravity 2.0, and Antigravity IDE");
     expect(readme).toContain("Do not use `npm install -g`");
     expect(readme).toContain("preserving other already-enabled Claude Code or Cursor reporting surfaces");
     expect(readme).toContain("Within the Antigravity family, choose one active surface at a time");

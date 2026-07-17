@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readConfig, writeConfig } from "@/packages/notjustyou-cli/src/config";
 import { main, parseCliArgs } from "@/packages/notjustyou-cli/src/index";
+import { REPORTING_SURFACES } from "@/packages/notjustyou-cli/src/reporting-setup";
 
 const originalConfigPath = process.env.NOTJUSTYOU_CONFIG_PATH;
 
@@ -21,6 +22,10 @@ afterEach(() => {
 });
 
 describe("CLI setup and registration", () => {
+  it("uses the current Antigravity 2.0 display name", () => {
+    expect(REPORTING_SURFACES.antigravity.displayName).toBe("Antigravity 2.0");
+  });
+
   it("defaults setup to api_middleware and openai-api", () => {
     expect(parseCliArgs(["setup"])).toMatchObject({
       command: "setup",
@@ -455,6 +460,48 @@ describe("CLI setup and registration", () => {
     const output = log.mock.calls.flat().join("\n");
     expect(output).toContain("Antigravity CLI reporting enabled.");
     expect(output).toContain("Local hook receiver: skipped");
+    expect(output).not.toContain("njy_raw_secret");
+  });
+
+  it("uses the Antigravity 2.0 name when enabling app reporting", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/collectors/register")) {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          source: "cli_hook",
+          serviceIds: ["google-antigravity"],
+          clientName: "notjustyou-cli",
+          clientVersion: "0.3.6",
+        });
+
+        return jsonResponse({
+          collectorId: "col_antigravity_app",
+          collectorToken: "njy_raw_secret",
+          expiresAt: null,
+        });
+      }
+
+      throw new Error(`Unhandled URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      main([
+        "enable",
+        "antigravity",
+        "--base-url",
+        "http://localhost:3000",
+        "--skip-receiver",
+      ]),
+    ).resolves.toBe(0);
+
+    expect(readConfig()).toMatchObject({
+      source: "cli_hook",
+      serviceIds: ["google-antigravity"],
+      localHookSignalOptIn: true,
+    });
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("Antigravity 2.0 reporting enabled.");
     expect(output).not.toContain("njy_raw_secret");
   });
 

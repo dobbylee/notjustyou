@@ -24,6 +24,11 @@ export type OfficialStatusRef =
       componentName: string;
     }
   | {
+      providerId: StatuspageProviderId;
+      kind: "statuspage_components";
+      componentNames: readonly string[];
+    }
+  | {
       providerId: "google";
       kind: "google_workspace_product" | "google_cloud_product";
       productId: string;
@@ -158,8 +163,8 @@ export const CATALOG = [
     surfaceType: "api",
     officialStatusRef: {
       providerId: "openai",
-      kind: "statuspage_component",
-      componentName: "Chat Completions",
+      kind: "statuspage_components",
+      componentNames: ["Chat Completions", "Responses"],
     },
     reportOptions: REPORT_STATUSES,
   },
@@ -173,7 +178,7 @@ export const CATALOG = [
   {
     id: "google-antigravity",
     providerId: "google",
-    name: "Antigravity",
+    name: "Antigravity 2.0",
     surfaceType: "app",
     reportOptions: REPORT_STATUSES,
   },
@@ -200,7 +205,14 @@ export const CATALOG = [
   {
     id: "google-gemini-api",
     providerId: "google",
-    name: "Gemini API",
+    name: "Gemini Developer API",
+    surfaceType: "api",
+    reportOptions: REPORT_STATUSES,
+  },
+  {
+    id: "google-vertex-gemini-api",
+    providerId: "google",
+    name: "Vertex Gemini API",
     surfaceType: "api",
     officialStatusRef: {
       providerId: "google",

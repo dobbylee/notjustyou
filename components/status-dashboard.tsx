@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Provider, ProviderId, ReportStatus, ServiceSurface } from "@/lib/catalog";
 import type { SummaryResponse } from "@/lib/aggregation";
 import type { ClickEventInput } from "@/lib/clicks";
-import type { OfficialServiceStatus } from "@/lib/official/types";
+import type {
+  OfficialProviderAdvisory,
+  OfficialServiceStatus,
+} from "@/lib/official/types";
 import type { SignalSummaryResponse } from "@/lib/signals/aggregation";
 import { getCommunityState, getTotalReports } from "@/lib/scoring";
 import { SiteShell } from "./site-shell";
@@ -20,6 +23,7 @@ interface StatusDashboardProps {
 interface OfficialSummaryResponse {
   updatedAt: string;
   services: OfficialServiceStatus[];
+  providerAdvisories: OfficialProviderAdvisory[];
 }
 
 type PendingMap = Record<string, ReportStatus | null>;
@@ -257,6 +261,13 @@ export function StatusDashboard({
   const selectedServices = services.filter(
     (service) => service.providerId === selectedProviderId,
   );
+  const selectedProvider = providers.find(
+    (provider) => provider.id === selectedProviderId,
+  );
+  const selectedProviderAdvisories =
+    official?.providerAdvisories?.filter(
+      (advisory) => advisory.providerId === selectedProviderId,
+    ) ?? [];
 
   function handleSelectProvider(providerId: ProviderId) {
     recordClick({
@@ -375,6 +386,23 @@ export function StatusDashboard({
         selectedProviderId={selectedProviderId}
         onSelect={handleSelectProvider}
       />
+
+      {selectedProviderAdvisories.length > 0 && (
+        <section
+          role="status"
+          aria-label={`${selectedProvider?.name ?? selectedProviderId} official provider advisories`}
+          className="mt-4 rounded-lg border border-amber-200 bg-amber-50/70 px-4 py-3 text-amber-900"
+        >
+          <div className="text-xs font-bold uppercase tracking-wide text-amber-700">
+            Official provider advisory
+          </div>
+          {selectedProviderAdvisories.map((advisory) => (
+            <div key={advisory.id} className="mt-1 text-sm font-semibold">
+              {advisory.name}
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="grid gap-3 py-5 md:grid-cols-2">
         {selectedServices.map((service) => {

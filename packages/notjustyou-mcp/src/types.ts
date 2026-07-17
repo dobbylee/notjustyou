@@ -41,9 +41,19 @@ export interface OfficialServiceStatus {
   updatedAt: string;
 }
 
+export interface OfficialProviderAdvisory {
+  providerId: string;
+  id: string;
+  name: string;
+  status: string;
+  impact: string;
+  updatedAt: string;
+}
+
 export interface OfficialSummaryResponse {
   updatedAt: string;
   services: OfficialServiceStatus[];
+  providerAdvisories?: OfficialProviderAdvisory[];
 }
 
 export interface StatusData {

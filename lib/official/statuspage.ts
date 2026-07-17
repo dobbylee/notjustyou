@@ -2,6 +2,7 @@ import type { StatuspageProviderId } from "../catalog";
 import type {
   OfficialComponentStatus,
   OfficialOverallStatus,
+  OfficialProviderAdvisory,
   OfficialProviderStatus,
   StatuspageComponentsResponse,
   StatuspageSummary,
@@ -35,6 +36,11 @@ export async function fetchStatuspageProvider(
       status: mapStatuspageComponentStatus(component.status),
       updatedAt: component.updated_at ?? updatedAt,
     })),
+    providerAdvisories: getStatuspageProviderAdvisories(
+      providerId,
+      payload,
+      updatedAt,
+    ),
   };
 }
 
@@ -72,6 +78,61 @@ export function findStatuspageComponent(
   return status.components.find(
     (component) => normalizeComponentName(component.name) === expectedName,
   );
+}
+
+export function findStatuspageComponents(
+  status: OfficialProviderStatus,
+  componentNames: readonly string[],
+): OfficialComponentStatus[] | undefined {
+  const components = componentNames.map((componentName) =>
+    findStatuspageComponent(status, componentName),
+  );
+
+  return components.every(
+    (component): component is OfficialComponentStatus => component !== undefined,
+  )
+    ? components
+    : undefined;
+}
+
+export function getWorstStatuspageComponent(
+  components: readonly OfficialComponentStatus[],
+): OfficialComponentStatus | undefined {
+  return components.reduce<OfficialComponentStatus | undefined>(
+    (worst, component) => {
+      if (!worst) return component;
+
+      const rankDifference =
+        getStatusRank(component.status) - getStatusRank(worst.status);
+      if (rankDifference > 0) return component;
+      if (rankDifference < 0) return worst;
+
+      return Date.parse(component.updatedAt) > Date.parse(worst.updatedAt)
+        ? component
+        : worst;
+    },
+    undefined,
+  );
+}
+
+export function getStatuspageProviderAdvisories(
+  providerId: StatuspageProviderId,
+  payload: StatuspageSummary,
+  fallbackUpdatedAt: string,
+): OfficialProviderAdvisory[] {
+  return (payload.incidents ?? [])
+    .filter(
+      (incident) =>
+        incident.status !== "resolved" && (incident.components?.length ?? 0) === 0,
+    )
+    .map((incident) => ({
+      providerId,
+      id: incident.id,
+      name: incident.name,
+      status: incident.status,
+      impact: incident.impact,
+      updatedAt: incident.updated_at ?? incident.created_at ?? fallbackUpdatedAt,
+    }));
 }
 
 function normalizeComponentName(name: string) {
@@ -113,5 +174,24 @@ export function mapStatuspageComponentStatus(
       return "maintenance";
     default:
       return "unknown";
+  }
+}
+
+function getStatusRank(status: OfficialOverallStatus) {
+  switch (status) {
+    case "operational":
+      return 0;
+    case "service_information":
+      return 1;
+    case "maintenance":
+      return 2;
+    case "degraded":
+      return 3;
+    case "partial_outage":
+      return 4;
+    case "major_outage":
+      return 5;
+    case "unknown":
+      return 6;
   }
 }
