@@ -10,6 +10,7 @@ import { fetchInstalledSignalSummary, fetchStatusData } from "./api.js";
 import type {
   CommunityServiceSummary,
   InstalledSignalServiceSummary,
+  OfficialProviderAdvisory,
   OfficialServiceStatus,
   StatusData,
 } from "./types.js";
@@ -240,6 +241,7 @@ export async function callTool(
 
     return jsonToolResult({
       surfaces,
+      providerAdvisories: getProviderAdvisories(data, provider),
       sources: sourceAvailability(data),
     });
   }
@@ -255,6 +257,7 @@ export async function callTool(
       serviceId,
       found: Boolean(status.community || status.installedSignals || status.official),
       ...status,
+      providerAdvisories: getProviderAdvisories(data, getProviderId(serviceId)),
       sources: sourceAvailability(data),
     });
   }
@@ -481,6 +484,23 @@ function formatOfficial(service: OfficialServiceStatus) {
     overall: service.overall,
     source: service.source,
     updatedAt: service.updatedAt,
+  };
+}
+
+function getProviderAdvisories(data: StatusData, providerId?: string) {
+  return (data.official?.providerAdvisories ?? [])
+    .filter((advisory) => !providerId || advisory.providerId === providerId)
+    .map(formatProviderAdvisory);
+}
+
+function formatProviderAdvisory(advisory: OfficialProviderAdvisory) {
+  return {
+    providerId: advisory.providerId,
+    id: advisory.id,
+    name: advisory.name,
+    status: advisory.status,
+    impact: advisory.impact,
+    updatedAt: advisory.updatedAt,
   };
 }
 

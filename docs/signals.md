@@ -17,6 +17,7 @@ Official status:
 - fetched from provider status sources
 - handled by `/api/official`
 - displayed as a separate official status row
+- componentless incidents stay provider-level advisories instead of being assigned to every service surface
 
 Installed-client signals:
 

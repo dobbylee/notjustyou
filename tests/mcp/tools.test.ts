@@ -60,7 +60,17 @@ describe("MCP tools", () => {
           },
         },
       ],
+      providerAdvisories: [
+        {
+          providerId: "openai",
+          id: "openai-advisory",
+          name: "Enterprise access advisory",
+        },
+      ],
     });
+    expect(JSON.stringify(result.structuredContent)).not.toContain(
+      "Claude access advisory",
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost:3000/api/summary",
       expect.objectContaining({
@@ -119,6 +129,31 @@ describe("MCP tools", () => {
     );
     expect(JSON.stringify(fetchMock.mock.calls)).not.toContain(
       "serviceId=not-in-catalog",
+    );
+  });
+
+  it("returns provider advisories relevant to the requested surface", async () => {
+    stubStatusFetch();
+
+    const result = await callTool(
+      "get_surface_status",
+      {
+        serviceId: "openai-api",
+      },
+      "http://localhost:3000",
+    );
+
+    expect(result.structuredContent).toMatchObject({
+      providerAdvisories: [
+        {
+          providerId: "openai",
+          id: "openai-advisory",
+          name: "Enterprise access advisory",
+        },
+      ],
+    });
+    expect(JSON.stringify(result.structuredContent)).not.toContain(
+      "Claude access advisory",
     );
   });
 
@@ -622,6 +657,24 @@ function stubStatusFetch() {
     if (url.endsWith("/api/official")) {
       return jsonResponse({
         updatedAt: "2026-06-20T01:00:00.000Z",
+        providerAdvisories: [
+          {
+            providerId: "openai",
+            id: "openai-advisory",
+            name: "Enterprise access advisory",
+            status: "identified",
+            impact: "minor",
+            updatedAt: "2026-06-20T01:00:00.000Z",
+          },
+          {
+            providerId: "anthropic",
+            id: "anthropic-advisory",
+            name: "Claude access advisory",
+            status: "monitoring",
+            impact: "minor",
+            updatedAt: "2026-06-20T01:00:00.000Z",
+          },
+        ],
         services: [
           {
             serviceId: "openai-api",

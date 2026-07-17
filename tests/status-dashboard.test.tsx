@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { StatusDashboard } from "@/components/status-dashboard";
 import type { SummaryResponse } from "@/lib/aggregation";
 import { CATALOG, PROVIDERS } from "@/lib/catalog";
-import type { OfficialServiceStatus } from "@/lib/official/types";
+import type {
+  OfficialProviderAdvisory,
+  OfficialServiceStatus,
+} from "@/lib/official/types";
 import type { SignalSummaryResponse } from "@/lib/signals/aggregation";
 
 const summaryResponse: SummaryResponse = {
@@ -38,6 +41,7 @@ const summaryResponse: SummaryResponse = {
 
 const officialResponse = {
   updatedAt: "2026-05-09T00:00:00.000Z",
+  providerAdvisories: [],
   services: [
     {
       serviceId: "anthropic-claude-code",
@@ -50,6 +54,7 @@ const officialResponse = {
 } satisfies {
   updatedAt: string;
   services: OfficialServiceStatus[];
+  providerAdvisories: OfficialProviderAdvisory[];
 };
 
 const signalSummaryResponse: SignalSummaryResponse = {
@@ -123,6 +128,7 @@ describe("StatusDashboard", () => {
     await user.click(screen.getByRole("button", { name: "Google" }));
 
     expect(screen.getByText("Antigravity IDE")).toBeInTheDocument();
+    expect(screen.getByText("Antigravity 2.0")).toBeInTheDocument();
     expect(screen.queryByText("Claude Code")).not.toBeInTheDocument();
   });
 
@@ -160,6 +166,42 @@ describe("StatusDashboard", () => {
         }),
       }),
     );
+  });
+
+  it("shows componentless incidents once at provider scope", async () => {
+    const fetchMock = createFetchMock({
+      official: {
+        ...officialResponse,
+        providerAdvisories: [
+          {
+            providerId: "openai",
+            id: "provider-advisory",
+            name: "Enterprise access advisory",
+            status: "identified",
+            impact: "none",
+            updatedAt: "2026-07-18T00:00:00.000Z",
+          },
+        ],
+      },
+    });
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+
+    expect(await screen.findByLabelText("7 recent problem signals"))
+      .toBeInTheDocument();
+    expect(screen.queryByText("Enterprise access advisory")).not
+      .toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "OpenAI" }));
+
+    const advisory = screen.getByRole("status", {
+      name: "OpenAI official provider advisories",
+    });
+    expect(within(advisory).getByText("Enterprise access advisory"))
+      .toBeInTheDocument();
+    expect(screen.queryByText("Operational · Advisory")).not.toBeInTheDocument();
   });
 
   it("keeps community reports visible when installed signal summary fails", async () => {
@@ -471,7 +513,11 @@ function getServiceCard(serviceName: string) {
 }
 
 function createFetchMock(
-  options: { failCommunitySummary?: boolean; failSignalSummary?: boolean } = {},
+  options: {
+    failCommunitySummary?: boolean;
+    failSignalSummary?: boolean;
+    official?: typeof officialResponse;
+  } = {},
 ) {
   return vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = String(input);
@@ -487,7 +533,7 @@ function createFetchMock(
     }
 
     if (url === "/api/official") {
-      return jsonResponse(officialResponse);
+      return jsonResponse(options.official ?? officialResponse);
     }
 
     if (url === "/api/signals/summary") {

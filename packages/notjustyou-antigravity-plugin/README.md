@@ -1,6 +1,6 @@
 # Not Just You Antigravity Plugin
 
-Plugin for Antigravity CLI, Antigravity, and Antigravity IDE.
+Plugin for Antigravity CLI, Antigravity 2.0, and Antigravity IDE.
 
 ## What It Provides
 
@@ -31,7 +31,7 @@ From a workspace checkout:
 agy plugin install /path/to/notjustyou/packages/notjustyou-antigravity-plugin
 ```
 
-Then start Antigravity CLI or open the Antigravity desktop app and ask a status
+Then start Antigravity CLI or open the Antigravity 2.0 desktop app and ask a status
 question:
 
 ```text

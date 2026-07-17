@@ -109,4 +109,38 @@ describe("formatStatus", () => {
       ].join("\n"),
     );
   });
+
+  it("shows only provider advisories relevant to the requested service", () => {
+    const data: StatusData = {
+      ...statusData,
+      official: {
+        ...statusData.official!,
+        providerAdvisories: [
+          {
+            providerId: "openai",
+            id: "openai-advisory",
+            name: "Enterprise access advisory",
+            status: "identified",
+            impact: "minor",
+            updatedAt: "2026-06-19T01:00:00.000Z",
+          },
+          {
+            providerId: "anthropic",
+            id: "anthropic-advisory",
+            name: "Claude access advisory",
+            status: "monitoring",
+            impact: "minor",
+            updatedAt: "2026-06-19T01:00:00.000Z",
+          },
+        ],
+      },
+    };
+
+    const output = formatStatus(data, "openai-api");
+
+    expect(output).toContain(
+      "Official provider advisories\nopenai: Enterprise access advisory (identified, minor)",
+    );
+    expect(output).not.toContain("Claude access advisory");
+  });
 });

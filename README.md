@@ -60,8 +60,9 @@ codex plugin add notjustyou@notjustyou
 Codex installs from this GitHub repository as a Codex marketplace source. It is
 not distributed as an npm plugin package.
 
-Cursor and Antigravity plugins are distributed as packages and currently use
-manual local plugin installation. See:
+The Cursor Marketplace now accepts community submissions, but Not Just You is
+not listed there yet. Cursor and Antigravity plugins are distributed as packages
+and currently use manual local plugin installation. See:
 
 - [Cursor plugin](packages/notjustyou-cursor-plugin)
 - [Antigravity plugin](packages/notjustyou-antigravity-plugin)

@@ -11,9 +11,10 @@ Plugin for Cursor IDE surfaces.
 
 ## Install
 
-Cursor marketplace distribution is not available yet. Until then, install the
-published package into Cursor's local plugin directory, then restart Cursor or
-run **Developer: Reload Window**.
+Not Just You is not yet listed on the Cursor Marketplace. Cursor now accepts
+community plugin submissions, but listings require Cursor review. Until the
+listing is approved, install the published package into Cursor's local plugin
+directory, then restart Cursor or run **Developer: Reload Window**.
 
 ```bash
 mkdir -p ~/.cursor/plugins/local/notjustyou

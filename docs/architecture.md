@@ -8,7 +8,7 @@ The current app is a Next.js status board backed by Redis.
 
 - The public dashboard is a compact shared status view with secondary fallback controls for `Slow`, `Error`, or `Down` community reports.
 - Reports are deduped for the same service over a short window.
-- Official provider status is fetched separately where a reliable mapping exists.
+- Official provider status is fetched separately where a reliable mapping exists. Componentless provider incidents remain provider-level advisories and do not overwrite individual surface status.
 - Opt-in SDK middleware can submit metadata-only API problem signals for OpenAI API, Claude API, and Gemini API.
 - CLI, MCP, plugins, and SDK collectors are the primary surfaces for checking status or contributing opt-in signals where problems happen.
 - The dashboard polls each source independently and renders provider surface cards with source breakdown visible by default. A partial source failure must not hide successful data from another source.
@@ -30,7 +30,7 @@ The product has three source families:
 | Source family | API | Storage | UI role |
 | --- | --- | --- | --- |
 | Manual community reports | `POST /api/report`, `GET /api/summary` | report counters | user-submitted recent reports |
-| Official status | `GET /api/official` | official status cache | labeled official status row |
+| Official status | `GET /api/official` | official status cache | labeled surface status row and provider advisories |
 | Installed-client signals | `/api/signals` APIs | signal counters | opt-in metadata-only problem signals |
 
 These families must stay separate in storage, API contracts, tests, and backend aggregation.

@@ -70,7 +70,7 @@ export const REPORTING_SURFACES = {
   },
   antigravity: {
     serviceId: ANTIGRAVITY_REPORTING_SERVICE,
-    displayName: "Antigravity",
+    displayName: "Antigravity 2.0",
   },
   "antigravity-ide": {
     serviceId: ANTIGRAVITY_IDE_REPORTING_SERVICE,

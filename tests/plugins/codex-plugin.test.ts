@@ -59,6 +59,13 @@ describe("Codex status plugin", () => {
     expect(serializedPlugin).not.toContain("collectorToken");
   });
 
+  it("documents only Codex surfaces that support plugins", () => {
+    const readme = readFileSync(join(pluginRoot, "README.md"), "utf8");
+
+    expect(readme).toContain("Codex CLI and ChatGPT desktop app surfaces");
+    expect(readme).not.toContain("IDE extension");
+  });
+
   it("limits the status skill to Not Just You read-only MCP tools", () => {
     const skill = readFileSync(join(pluginRoot, "skills/status/SKILL.md"), "utf8");
 
