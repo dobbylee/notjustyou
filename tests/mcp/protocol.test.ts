@@ -37,6 +37,7 @@ describe("MCP JSON-RPC protocol", () => {
         },
         serverInfo: {
           name: "notjustyou-mcp",
+          version: "0.2.7",
         },
       },
     });

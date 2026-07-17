@@ -13,7 +13,7 @@ describe("Codex status plugin", () => {
       name: "notjustyou",
       description:
         "Adds a read-only Not Just You status skill and MCP status tools for Codex surfaces.",
-      version: "0.1.0",
+      version: "0.1.1",
       license: "MIT",
       skills: "./skills/",
       mcpServers: "./.mcp.json",
@@ -35,7 +35,7 @@ describe("Codex status plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.1.0"],
+          args: ["-y", "@notjustyou/mcp@0.2.7"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
