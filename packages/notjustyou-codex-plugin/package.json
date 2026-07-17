@@ -1,6 +1,6 @@
 {
   "name": "@notjustyou/codex-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Status-only plugin for Not Just You on Codex surfaces.",
   "license": "MIT",
   "repository": {

@@ -10,7 +10,7 @@ import type { SignalSource } from "./types.js";
 
 export const DEFAULT_BASE_URL = "https://notjustyou.dev";
 export const CLIENT_NAME = "notjustyou-cli";
-export const CLIENT_VERSION = "0.3.6";
+export const CLIENT_VERSION = "0.3.7";
 export const CLAUDE_CODE_REPORTING_SERVICE = "anthropic-claude-code";
 export const CURSOR_REPORTING_SERVICE = "cursor-ide";
 export const ANTIGRAVITY_CLI_REPORTING_SERVICE = "google-antigravity-cli";

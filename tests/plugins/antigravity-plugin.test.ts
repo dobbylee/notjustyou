@@ -27,7 +27,7 @@ describe("Antigravity plugin", () => {
       mcpServers: {
         status: {
           command: "npx",
-          args: ["-y", "@notjustyou/mcp@0.2.6"],
+          args: ["-y", "@notjustyou/mcp@0.2.7"],
           env: {
             NOTJUSTYOU_BASE_URL: "https://notjustyou.dev",
           },
@@ -314,7 +314,7 @@ describe("Antigravity plugin", () => {
     expect(skill).toContain("antigravity-cli");
     expect(skill).toContain("antigravity-ide");
     expect(skill).toContain("confirmed: true");
-    expect(skill).toContain("npx -y @notjustyou/cli@0.3.6 enable antigravity-cli --quiet");
+    expect(skill).toContain("npx -y @notjustyou/cli@0.3.7 enable antigravity-cli --quiet");
     expect(skill).toContain("Do not use Bash, setup, register, hook receiver");
   });
 
@@ -332,7 +332,7 @@ describe("Antigravity plugin", () => {
   it("documents published package installation for Antigravity", () => {
     const readme = readFileSync(join(pluginRoot, "README.md"), "utf8");
 
-    expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.4");
+    expect(readme).toContain("npm pack @notjustyou/antigravity-plugin@0.2.5");
     expect(readme).toContain("agy plugin install");
     expect(readme).toContain("Antigravity CLI, Antigravity 2.0, and Antigravity IDE");
     expect(readme).toContain("Do not use `npm install -g`");

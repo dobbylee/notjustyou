@@ -2,7 +2,7 @@
   "name": "notjustyou",
   "displayName": "Not Just You",
   "description": "Adds Not Just You status tools and optional local hook reporting for Claude Code surfaces.",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "author": {
     "name": "Not Just You"
   },
