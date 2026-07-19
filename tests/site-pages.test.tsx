@@ -61,6 +61,19 @@ describe("site pages", () => {
       .toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Browse docs/ })).not
       .toBeInTheDocument();
+
+    const heroGitHubLink = screen.getByRole("link", {
+      name: "View on GitHub",
+    });
+    expect(heroGitHubLink).toHaveAttribute(
+      "href",
+      "https://github.com/dobbylee/notjustyou",
+    );
+    expect(heroGitHubLink.querySelector("svg[aria-hidden='true']")).not
+      .toBeNull();
+
+    const headerGitHubLink = screen.getByRole("link", { name: "GitHub" });
+    expect(headerGitHubLink.querySelector(".lucide-star")).not.toBeNull();
   });
 
   it("renders privacy inside the shared site navigation", () => {

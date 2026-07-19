@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { Star } from "lucide-react";
 import { HomeLogoLink } from "@/components/home-logo-link";
 
 type ActiveSection = "home" | "dashboard" | "docs" | "privacy";
@@ -83,8 +84,9 @@ export function SiteShell({
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
-            className="justify-self-end whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 border border-slate-200 bg-white/60 hover:bg-white/85 shadow-sm backdrop-blur"
+            className="inline-flex items-center gap-2 justify-self-end whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 border border-slate-200 bg-white/60 hover:bg-white/85 shadow-sm backdrop-blur"
           >
+            <Star aria-hidden="true" className="h-4 w-4 text-amber-500" />
             GitHub
           </a>
         </div>
