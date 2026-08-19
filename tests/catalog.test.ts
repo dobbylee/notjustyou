@@ -47,6 +47,18 @@ describe("catalog", () => {
       kind: "statuspage_component",
       componentName: "Codex in ChatGPT Desktop",
     });
+    expect(officialRefByServiceId.get("openai-codex-web")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "Codex Web",
+    });
+    expect(officialRefByServiceId.get("openai-codex-vscode")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "VS Code extension",
+    });
+    expect(officialRefByServiceId.get("openai-codex-api")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "Codex API",
+    });
     expect(officialRefByServiceId.get("openai-chatgpt")).toMatchObject({
       kind: "statuspage_component",
       componentName: "Conversations",
@@ -95,7 +107,7 @@ describe("catalog", () => {
       },
       {
         id: "google-vertex-gemini-api",
-        name: "Vertex Gemini API",
+        name: "Gemini on Agent Platform",
         surfaceType: "api",
       },
     ]);
@@ -109,7 +121,60 @@ describe("catalog", () => {
         ?.officialStatusRef,
     ).toMatchObject({
       kind: "google_cloud_product",
-      productName: "Vertex Gemini API",
+      productName: "Gemini on Agent Platform",
     });
+  });
+
+  it("maps current Cursor agent surfaces to official status components", () => {
+    expect(
+      CATALOG.filter((service) => service.providerId === "cursor").map(
+        (service) => ({
+          id: service.id,
+          name: service.name,
+          surfaceType: service.surfaceType,
+          componentName:
+            service.officialStatusRef?.kind === "statuspage_component"
+              ? service.officialStatusRef.componentName
+              : null,
+        }),
+      ),
+    ).toEqual([
+      {
+        id: "cursor-ide",
+        name: "Cursor IDE",
+        surfaceType: "ide",
+        componentName: "IDE",
+      },
+      {
+        id: "cursor-cli",
+        name: "Cursor CLI",
+        surfaceType: "cli",
+        componentName: "CLI",
+      },
+      {
+        id: "cursor-cloud-agents",
+        name: "Cursor Cloud Agents",
+        surfaceType: "code",
+        componentName: "Cloud Agents",
+      },
+      {
+        id: "cursor-review-agents",
+        name: "Cursor Review Agents",
+        surfaceType: "code",
+        componentName: "Review Agents",
+      },
+      {
+        id: "cursor-automations",
+        name: "Cursor Automations",
+        surfaceType: "code",
+        componentName: "Automations",
+      },
+      {
+        id: "cursor-origin",
+        name: "Cursor Origin",
+        surfaceType: "collaboration",
+        componentName: "Origin",
+      },
+    ]);
   });
 });
