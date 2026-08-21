@@ -33,12 +33,17 @@ export async function fetchStatusData(
       fetchJson<OfficialSummaryResponse>(`${normalizedBaseUrl}/api/official`),
     ]);
 
-  if (communityResult.status === "rejected") {
+  if (
+    communityResult.status === "rejected" &&
+    installedSignalsResult.status === "rejected" &&
+    officialResult.status === "rejected"
+  ) {
     throw communityResult.reason;
   }
 
   return {
-    community: communityResult.value,
+    community:
+      communityResult.status === "fulfilled" ? communityResult.value : null,
     installedSignals:
       installedSignalsResult.status === "fulfilled"
         ? installedSignalsResult.value

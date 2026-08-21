@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { callTool, TOOLS } from "@/packages/notjustyou-mcp/src/tools";
+import {
+  callTool,
+  STATUS_TOOLS,
+  TOOLS,
+} from "@/packages/notjustyou-mcp/src/tools";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -29,6 +33,23 @@ describe("MCP tools", () => {
       false,
       false,
     ]);
+    expect(STATUS_TOOLS.map((tool) => tool.name)).toEqual([
+      "list_surfaces",
+      "get_surface_status",
+      "get_recent_signals",
+      "explain_privacy",
+    ]);
+    expect(TOOLS.map((tool) => tool.annotations.destructiveHint)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+    ]);
+    expect(TOOLS.every((tool) => tool.annotations.openWorldHint === false))
+      .toBe(true);
     expect(TOOLS.map((tool) => tool.name)).not.toContain("submit_signal");
   });
 

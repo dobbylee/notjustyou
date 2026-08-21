@@ -22,18 +22,8 @@ Rules:
 - Do not include internal phase names in commit or PR titles.
 - Describe the actual change.
 
-Good examples:
-
-- `Update Google surfaces and license holder`
-- `Add signal schema validation`
-- `Add Redis signal counters`
-- `Show installed signal source breakdown`
-
-Avoid:
-
-- `docs: update README`
-- `Phase 1 signal schema`
-- `chore: cleanup`
+Prefer a title such as `Add Redis signal counters` over an internal label such as
+`Phase 1 signal schema`.
 
 ## Verification
 
@@ -58,20 +48,9 @@ Backend rule:
 
 - Do not merge manual reports, official status, and installed-client signals into a single stored counter or API field.
 
-Do not collect:
-
-- prompts
-- request or response bodies
-- headers
-- API keys
-- cookies
-- source files or diffs
-- clipboard content
-- exact IP addresses
-- account emails
-- machine names or local usernames
-
-Any PR that adds or changes collected fields must document the field, explain why it is needed, and include focused tests.
+Follow the data boundary in [docs/signals.md](docs/signals.md). Any PR that adds
+or changes collected fields must document the field, explain why it is needed,
+and include focused tests.
 
 ## Documentation
 

@@ -1,111 +1,61 @@
-# AGENTS.md
+# Repository Agent Guidance
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+## Start Here
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+- Treat this repository as fully public. Never commit secrets, private operational details, personal identifiers, or local machine paths.
+- Before non-trivial work, inspect `git status`, read `agent-harness/workflow.md`, and read `local-docs/plan.md` when that ignored local file exists.
+- Follow only the current task routed by `local-docs/plan.md`. Historical notes under `local-docs/archive/` are evidence, not active instructions.
 
-## 1. Think Before Coding
+## Execution Boundaries
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- Make the smallest change that satisfies the requested outcome.
+- Preserve existing contracts and naming unless the task explicitly changes them.
+- Do not mix unrelated cleanup into a scoped change.
+- Work on a branch for committed changes. Do not commit directly to `main`.
+- Do not push, open a PR, merge, publish, deploy, submit a marketplace form, or otherwise change remote state without explicit user authorization.
 
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+## Product Invariants
 
-## 2. Simplicity First
+Not Just You must remain privacy-safe and source-aware.
 
-**Minimum code that solves the problem. Nothing speculative.**
+- Keep manual community reports, official provider status, and installed-client signals separate in storage, API contracts, tests, and backend aggregation.
+- A presentation-only combined summary is allowed only when the source breakdown remains visible.
+- Do not extend `/api/report` into automatic telemetry. Installed-client telemetry uses dedicated signal contracts and endpoints.
+- Do not collect prompt text, messages, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, machine names, or local usernames.
+- If collected fields change, update the public data boundary and add focused tests in the same change.
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+## Documentation Ownership
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+- `README.md` is for product introduction, supported user surfaces, usage, and the public privacy boundary.
+- `CONTRIBUTING.md` is the public contributor guide.
+- `docs/development.md` owns local setup, self-hosting, scripts, deployment, and public API details.
+- `docs/architecture.md` owns durable system boundaries.
+- `docs/signals.md` owns signal contracts, validation, privacy rules, and display semantics.
+- `agent-harness/workflow.md` owns the implementation, review, validation, and handoff loop.
+- `agent-harness/prompts/implementation-review.md` owns the independent review contract.
+- Ignored `local-docs/plan.md` routes current work; ignored task and archive notes must not be linked from public docs.
 
-## 3. Surgical Changes
+## Verification
 
-**Touch only what you must. Clean up only your own mess.**
+Run focused checks while iterating. Before a PR, run the baseline repository verification unless the change cannot affect code and the user accepts a narrower check:
 
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
+```bash
+pnpm lint
+pnpm test
+pnpm run build
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+Also run relevant package, plugin, protocol, browser, or published-consumer checks for the changed surface. Record skipped checks and blockers explicitly.
 
----
+## Review
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+For non-trivial changes, use an independent reviewer after focused checks and before baseline verification. Give the reviewer `git status`, the complete tracked diff, the full content of every intended untracked file, and `agent-harness/prompts/implementation-review.md`; do not ask it to modify files. A plain unstaged `git diff` is insufficient when the intended change contains untracked files. Address findings and repeat until the reviewer returns exactly `No Findings` or the user explicitly accepts a documented residual risk.
 
-## 5. Repository Workflow
+If an independent reviewer is unavailable or disallowed by the active tool policy, perform a structured direct review with the same prompt and record that limitation. Do not describe direct self-review as independent review.
 
-Use the repository workflow even for small changes unless the user explicitly asks otherwise.
+## Commits And Pull Requests
 
-- Work on a branch, open a PR, and merge through GitHub for committed changes.
-- Do not commit directly to `main`.
-- Do not use Conventional Commit prefixes in commit or PR titles. Avoid prefixes such as `feat:`, `fix:`, `docs:`, `chore:`, or `test:`.
-- Do not put internal phase names in commit or PR titles.
-- Title commits and PRs by the user-visible or maintainer-visible change.
-- Good examples:
-  - `Update Google surfaces and license holder`
-  - `Add signal schema validation`
-  - `Add Redis signal counters`
-- Bad examples:
-  - `docs: update README`
-  - `Phase 1 signal schema`
-  - `chore: cleanup`
-- PR bodies should include Summary, Verification, and Privacy impact when relevant.
-
-## 6. Product Boundaries
-
-Not Just You must stay privacy-safe and source-aware.
-
-- Treat the repository as fully public open source. Assume any committed code, docs, examples, test fixtures, logs, URLs, tokens, credentials, operational procedures, and comments can be read by anyone.
-- Do not commit real secrets, private operational runbooks, private endpoint details, internal monitoring tokens, personal account identifiers, local machine paths, or security-sensitive instructions that would help misuse production systems.
-- Public docs should stay audience-specific. `README.md` should explain what the service is, how users can use it, current supported surfaces, and the public privacy boundary. Put contributor setup, self-hosting, stack, scripts, deployment, and detailed public API references in `docs/development.md` or other focused docs. Do not use `README.md` as an implementation diary, QA log, private operations guide, or place to accumulate per-change manual test notes.
-- Keep manual community reports, official status, and installed-client signals separate in storage, API contracts, tests, and backend aggregation.
-- Do not extend `/api/report` into automatic telemetry.
-- Add installed-client telemetry through dedicated signal contracts and endpoints.
-- It is acceptable for the dashboard to show a unified "recent problem signals" summary, but it must preserve source breakdown such as community reports, installed signals, and official status.
-- Do not collect prompt text, request or response bodies, headers, API keys, cookies, source files, diffs, clipboard content, exact IP addresses, account emails, or machine/user names.
-- If a change adds or changes collected fields, document the data boundary and add focused tests.
-
-## 7. Project Harness
-
-Before implementation work expands, keep the harness current.
-
-- `AGENTS.md` is the source for Codex and other LLM-agent behavior in this repository.
-- `CONTRIBUTING.md` is the public contributor workflow.
-- `.github/pull_request_template.md` is the PR checklist.
-- `README.md` should remain useful to someone evaluating or using Not Just You.
-- `docs/development.md` should remain useful to contributors, fork maintainers, and self-hosted deployments.
-- `docs/architecture.md` and `docs/signals.md` hold durable public design notes.
-- Run `pnpm lint`, `pnpm test`, and `pnpm run build` before PRs unless the change clearly cannot affect code and the user accepts a narrower check.
-- Keep the baseline verification command list in this file only. Other documents should refer to `AGENTS.md` for baseline verification and list only additional focused tests, package checks, manual checks, skipped checks, blockers, or actual results.
+- Use plain, user-visible or maintainer-visible commit and PR titles.
+- Do not use Conventional Commit prefixes or internal phase names.
+- Keep logical concerns in separate commits when they can be reviewed independently.
+- PR bodies should summarize scope, verification, and privacy impact when relevant.

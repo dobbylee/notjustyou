@@ -91,6 +91,25 @@ pnpm lint    # eslint
 pnpm test    # vitest
 ```
 
+## Remote MCP
+
+`POST /mcp` exposes the public, authentication-free status-only MCP server used
+for Plugins Directory review. It uses stateless Streamable HTTP and advertises
+only four read-only tools. Local reporting setup remains available only through
+the separately installed stdio MCP package.
+
+The application applies per-client and per-instance one-minute request budgets
+using the trusted Vercel address boundary. Before enabling the endpoint in
+production, also configure and verify a Vercel Firewall rate-limit rule for
+`/mcp`; the in-process budget is defense in depth, not a distributed global
+limit.
+
+`GET /mcp` and `DELETE /mcp` return method-not-allowed responses because the
+remote server does not keep sessions or provide a standalone SSE stream.
+
+Submission metadata, prompts, test cases, and approval-gated prerequisites are
+kept in [plugin-directory-submission.md](plugin-directory-submission.md).
+
 Run the CLI from a workspace checkout:
 
 ```bash

@@ -4,6 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import Home from "@/app/page";
 import PrivacyPage from "@/app/privacy/page";
+import TermsPage from "@/app/terms/page";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -83,6 +84,31 @@ describe("site pages", () => {
     expect(screen.getAllByRole("link", { name: /Dashboard/ })[0])
       .toHaveAttribute("href", "/#dashboard");
     expect(screen.getByText("Source separation")).toBeInTheDocument();
+    expect(screen.getByText("Remote status tools")).toBeInTheDocument();
+    expect(screen.getByText(/raw address is not stored/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
+  });
+
+  it("renders public terms with the service confidence boundary", () => {
+    render(<TermsPage />);
+
+    expect(screen.getByRole("heading", { name: "Terms of Use" }))
+      .toBeInTheDocument();
+    expect(screen.getByText("No availability guarantee")).toBeInTheDocument();
+    expect(screen.getByText(/does not guarantee that a service is operational/))
+      .toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+    expect(screen.getByRole("link", { name: "GitHub issue tracker" }))
+      .toHaveAttribute(
+        "href",
+        "https://github.com/dobbylee/notjustyou/issues",
+      );
   });
 });
 

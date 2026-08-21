@@ -105,9 +105,14 @@ Collector registration also needs abuse protection. Token and installation limit
 
 ## Sensitive Data Rules
 
+The collection boundary excludes prompt text, messages, request or response
+bodies and headers, credentials, cookies, source files and diffs, clipboard
+content, exact IP addresses, account emails, machine names, and local usernames.
+
 Reject payloads that include sensitive keys such as:
 
 - `prompt`
+- `message`
 - `body`
 - `request`
 - `response`
@@ -119,6 +124,12 @@ Reject payloads that include sensitive keys such as:
 - `email`
 - `diff`
 - `fileContent`
+- `filePath`
+- `clipboard`
+- `ipAddress`
+- `accountEmail`
+- `machineName`
+- `username`
 - exact key `code`
 
 The exact key `code` is sensitive, but substrings such as `statusCode` and `errorCode` are allowed.
