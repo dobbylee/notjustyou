@@ -22,6 +22,8 @@ export interface McpTool {
   inputSchema: JsonSchema;
   annotations: {
     readOnlyHint: boolean;
+    destructiveHint: boolean;
+    openWorldHint: boolean;
   };
 }
 
@@ -43,7 +45,7 @@ type JsonSchema = {
   additionalProperties: false;
 };
 
-export const TOOLS = [
+export const STATUS_TOOLS = [
   {
     name: "list_surfaces",
     title: "List Not Just You Surfaces",
@@ -61,6 +63,8 @@ export const TOOLS = [
     },
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
   },
   {
@@ -81,6 +85,8 @@ export const TOOLS = [
     },
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
   },
   {
@@ -107,12 +113,14 @@ export const TOOLS = [
     },
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
   },
   {
     name: "explain_privacy",
     title: "Explain Privacy Boundary",
-    description: "Explain the public privacy boundary for Not Just You local tools.",
+    description: "Explain the public privacy boundary for Not Just You status tools.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -120,8 +128,15 @@ export const TOOLS = [
     },
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
   },
+] as const satisfies readonly McpTool[];
+
+export type StatusToolName = (typeof STATUS_TOOLS)[number]["name"];
+
+export const LOCAL_SETUP_TOOLS = [
   {
     name: "get_reporting_setup_state",
     title: "Get Reporting Setup State",
@@ -147,6 +162,8 @@ export const TOOLS = [
     },
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
   },
   {
@@ -187,6 +204,8 @@ export const TOOLS = [
     },
     annotations: {
       readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: false,
     },
   },
   {
@@ -219,9 +238,13 @@ export const TOOLS = [
     },
     annotations: {
       readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: false,
     },
   },
 ] as const satisfies readonly McpTool[];
+
+export const TOOLS = [...STATUS_TOOLS, ...LOCAL_SETUP_TOOLS] as const;
 
 export function getBaseUrl() {
   return process.env.NOTJUSTYOU_BASE_URL ?? DEFAULT_BASE_URL;
@@ -424,7 +447,7 @@ function listSurfaceSummaries(data: StatusData, provider?: string) {
 }
 
 function getSurfaceSummary(data: StatusData, serviceId: string) {
-  const community = data.community.services.find(
+  const community = data.community?.services.find(
     (service) => service.serviceId === serviceId,
   );
   const installedSignals = data.installedSignals?.services.find(
@@ -444,7 +467,7 @@ function getSurfaceSummary(data: StatusData, serviceId: string) {
 function getServiceIds(data: StatusData) {
   return [
     ...new Set([
-      ...data.community.services.map((service) => service.serviceId),
+      ...(data.community?.services.map((service) => service.serviceId) ?? []),
       ...(data.installedSignals?.services.map((service) => service.serviceId) ?? []),
       ...(data.official?.services.map((service) => service.serviceId) ?? []),
     ]),
@@ -506,7 +529,7 @@ function formatProviderAdvisory(advisory: OfficialProviderAdvisory) {
 
 function sourceAvailability(data: StatusData) {
   return {
-    community: true,
+    community: Boolean(data.community),
     installedSignals: Boolean(data.installedSignals),
     official: Boolean(data.official),
   };

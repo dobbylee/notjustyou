@@ -4,7 +4,7 @@ import { clsx } from "clsx";
 import { Star } from "lucide-react";
 import { HomeLogoLink } from "@/components/home-logo-link";
 
-type ActiveSection = "home" | "dashboard" | "docs" | "privacy";
+type ActiveSection = "home" | "dashboard" | "docs" | "privacy" | "terms";
 type MaxWidth = "3xl" | "5xl" | "6xl";
 
 interface SiteShellProps {
@@ -114,12 +114,20 @@ export function SiteShell({
         <span className="col-start-2 font-semibold text-slate-400">
           © 2026 Not Just You
         </span>
-        <Link
-          href="/privacy"
-          className="col-start-3 justify-self-end text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
-        >
-          Privacy
-        </Link>
+        <div className="col-start-3 flex items-center gap-3 justify-self-end">
+          <Link
+            href="/privacy"
+            className="text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+          >
+            Privacy
+          </Link>
+          <Link
+            href="/terms"
+            className="text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+          >
+            Terms
+          </Link>
+        </div>
       </footer>
     </div>
   );

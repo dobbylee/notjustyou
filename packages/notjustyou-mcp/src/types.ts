@@ -57,7 +57,7 @@ export interface OfficialSummaryResponse {
 }
 
 export interface StatusData {
-  community: CommunitySummaryResponse;
+  community: CommunitySummaryResponse | null;
   installedSignals: InstalledSignalSummaryResponse | null;
   official: OfficialSummaryResponse | null;
 }

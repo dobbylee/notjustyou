@@ -1,13 +1,12 @@
 import { createHash } from "node:crypto";
-import type { NextRequest } from "next/server";
 
-export function getRequestFingerprint(request: NextRequest) {
+export function getRequestFingerprint(request: Pick<Request, "headers">) {
   const address = getTrustedClientAddress(request);
 
   return createHash("sha256").update(address).digest("hex");
 }
 
-export function getTrustedClientAddress(request: NextRequest) {
+export function getTrustedClientAddress(request: Pick<Request, "headers">) {
   if (process.env.VERCEL === "1") {
     const vercelForwardedFor = request.headers
       .get("x-vercel-forwarded-for")

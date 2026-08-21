@@ -59,6 +59,18 @@ export default function PrivacyPage() {
 
       <section className="mt-6">
         <h2 className="text-base font-semibold text-slate-950">
+          Remote status tools
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          The public MCP endpoint is read-only and requires no account. To limit
+          abuse, it keeps short-lived in-process request counters keyed by a hash
+          of the client address supplied by the trusted Vercel deployment proxy.
+          The raw address is not stored, and the counters reset after one minute.
+        </p>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-base font-semibold text-slate-950">
           Collector setup
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
