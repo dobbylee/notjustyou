@@ -76,6 +76,26 @@ describe("catalog", () => {
     expect(officialRefByServiceId.has("openai-chatgpt-desktop")).toBe(false);
   });
 
+  it("orders the primary OpenAI dashboard surfaces by user workflow", () => {
+    const primarySurfaceIds = new Set([
+      "openai-chatgpt",
+      "openai-chatgpt-work",
+      "openai-codex-api",
+      "openai-api",
+    ]);
+
+    expect(
+      CATALOG.filter((service) => primarySurfaceIds.has(service.id)).map(
+        (service) => service.id,
+      ),
+    ).toEqual([
+      "openai-chatgpt",
+      "openai-chatgpt-work",
+      "openai-codex-api",
+      "openai-api",
+    ]);
+  });
+
   it("keeps the Google service catalog organized by current surfaces", () => {
     expect(
       CATALOG.filter((service) => service.providerId === "google").map((service) => ({

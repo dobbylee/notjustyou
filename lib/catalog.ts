@@ -169,18 +169,6 @@ export const CATALOG = [
     reportOptions: REPORT_STATUSES,
   },
   {
-    id: "openai-codex-api",
-    providerId: "openai",
-    name: "Codex API",
-    surfaceType: "api",
-    officialStatusRef: {
-      providerId: "openai",
-      kind: "statuspage_component",
-      componentName: "Codex API",
-    },
-    reportOptions: REPORT_STATUSES,
-  },
-  {
     id: "openai-chatgpt",
     providerId: "openai",
     name: "ChatGPT",
@@ -201,6 +189,18 @@ export const CATALOG = [
       providerId: "openai",
       kind: "statuspage_component",
       componentName: "ChatGPT Work",
+    },
+    reportOptions: REPORT_STATUSES,
+  },
+  {
+    id: "openai-codex-api",
+    providerId: "openai",
+    name: "Codex API",
+    surfaceType: "api",
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "Codex API",
     },
     reportOptions: REPORT_STATUSES,
   },
