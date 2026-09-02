@@ -107,7 +107,7 @@ describe("catalog", () => {
       },
       {
         id: "google-vertex-gemini-api",
-        name: "Gemini on Agent Platform",
+        name: "Vertex Gemini API",
         surfaceType: "api",
       },
     ]);
@@ -121,7 +121,7 @@ describe("catalog", () => {
         ?.officialStatusRef,
     ).toMatchObject({
       kind: "google_cloud_product",
-      productName: "Gemini on Agent Platform",
+      productName: "Vertex Gemini API",
     });
   });
 
@@ -174,6 +174,12 @@ describe("catalog", () => {
         name: "Cursor Origin",
         surfaceType: "collaboration",
         componentName: "Origin",
+      },
+      {
+        id: "cursor-grok-bot",
+        name: "Grok Bot",
+        surfaceType: "collaboration",
+        componentName: "Grok Bot",
       },
     ]);
   });
