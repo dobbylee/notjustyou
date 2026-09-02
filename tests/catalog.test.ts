@@ -63,6 +63,10 @@ describe("catalog", () => {
       kind: "statuspage_component",
       componentName: "Conversations",
     });
+    expect(officialRefByServiceId.get("openai-chatgpt-work")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "ChatGPT Work",
+    });
     expect(officialRefByServiceId.get("openai-api")).toMatchObject({
       kind: "statuspage_components",
       componentNames: ["Chat Completions", "Responses"],

@@ -97,6 +97,12 @@ describe("official status helpers", () => {
           updatedAt: "2026-05-09T00:00:00.000Z",
         },
         {
+          id: "openai-chatgpt-work",
+          name: "ChatGPT Work",
+          status: "operational",
+          updatedAt: "2026-09-02T00:00:00.000Z",
+        },
+        {
           id: "openai-chat-completions",
           name: "Chat Completions",
           status: "operational",
@@ -115,6 +121,9 @@ describe("official status helpers", () => {
       findStatuspageComponent(status, "Codex in ChatGPT Desktop")?.status,
     ).toBe("operational");
     expect(findStatuspageComponent(status, "Conversations")?.status).toBe(
+      "operational",
+    );
+    expect(findStatuspageComponent(status, "ChatGPT Work")?.status).toBe(
       "operational",
     );
     expect(findStatuspageComponent(status, "Chat Completions")?.status).toBe(

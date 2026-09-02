@@ -193,6 +193,18 @@ export const CATALOG = [
     reportOptions: REPORT_STATUSES,
   },
   {
+    id: "openai-chatgpt-work",
+    providerId: "openai",
+    name: "ChatGPT Work",
+    surfaceType: "collaboration",
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "ChatGPT Work",
+    },
+    reportOptions: REPORT_STATUSES,
+  },
+  {
     id: "openai-api",
     providerId: "openai",
     name: "OpenAI API",
