@@ -12,6 +12,8 @@ export type SurfaceType =
 
 export type ReportStatus = "slow" | "error" | "down";
 
+export type DashboardVisibility = "hidden";
+
 export type StatuspageProviderId = Extract<
   ProviderId,
   "anthropic" | "openai" | "cursor"
@@ -46,6 +48,7 @@ export interface ServiceSurface {
   name: string;
   surfaceType: SurfaceType;
   officialStatusRef?: OfficialStatusRef;
+  dashboardVisibility?: DashboardVisibility;
   reportOptions: readonly ReportStatus[];
 }
 
@@ -135,7 +138,7 @@ export const CATALOG = [
   {
     id: "openai-codex-app",
     providerId: "openai",
-    name: "Codex App",
+    name: "Codex (ChatGPT Desktop)",
     surfaceType: "app",
     officialStatusRef: {
       providerId: "openai",
@@ -154,6 +157,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Codex Web",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -165,6 +169,31 @@ export const CATALOG = [
       providerId: "openai",
       kind: "statuspage_component",
       componentName: "VS Code extension",
+    },
+    dashboardVisibility: "hidden",
+    reportOptions: REPORT_STATUSES,
+  },
+  {
+    id: "openai-chatgpt",
+    providerId: "openai",
+    name: "ChatGPT",
+    surfaceType: "app",
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "Conversations",
+    },
+    reportOptions: REPORT_STATUSES,
+  },
+  {
+    id: "openai-chatgpt-work",
+    providerId: "openai",
+    name: "ChatGPT Work",
+    surfaceType: "collaboration",
+    officialStatusRef: {
+      providerId: "openai",
+      kind: "statuspage_component",
+      componentName: "ChatGPT Work",
     },
     reportOptions: REPORT_STATUSES,
   },
@@ -178,18 +207,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Codex API",
     },
-    reportOptions: REPORT_STATUSES,
-  },
-  {
-    id: "openai-chatgpt",
-    providerId: "openai",
-    name: "ChatGPT",
-    surfaceType: "app",
-    officialStatusRef: {
-      providerId: "openai",
-      kind: "statuspage_component",
-      componentName: "Conversations",
-    },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -248,13 +266,13 @@ export const CATALOG = [
   {
     id: "google-vertex-gemini-api",
     providerId: "google",
-    name: "Gemini on Agent Platform",
+    name: "Vertex Gemini API",
     surfaceType: "api",
     officialStatusRef: {
       providerId: "google",
       kind: "google_cloud_product",
       productId: "Z0FZJAMvEB4j3NbCJs6B",
-      productName: "Gemini on Agent Platform",
+      productName: "Vertex Gemini API",
     },
     reportOptions: REPORT_STATUSES,
   },
@@ -304,6 +322,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Review Agents",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -316,6 +335,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Automations",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -327,6 +347,19 @@ export const CATALOG = [
       providerId: "cursor",
       kind: "statuspage_component",
       componentName: "Origin",
+    },
+    dashboardVisibility: "hidden",
+    reportOptions: REPORT_STATUSES,
+  },
+  {
+    id: "cursor-grok-bot",
+    providerId: "cursor",
+    name: "Grok Bot",
+    surfaceType: "collaboration",
+    officialStatusRef: {
+      providerId: "cursor",
+      kind: "statuspage_component",
+      componentName: "Grok Bot",
     },
     reportOptions: REPORT_STATUSES,
   },

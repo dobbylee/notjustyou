@@ -259,7 +259,9 @@ export function StatusDashboard({
   }, [signalSummary]);
 
   const selectedServices = services.filter(
-    (service) => service.providerId === selectedProviderId,
+    (service) =>
+      service.providerId === selectedProviderId &&
+      service.dashboardVisibility !== "hidden",
   );
   const selectedProvider = providers.find(
     (provider) => provider.id === selectedProviderId,
@@ -404,7 +406,7 @@ export function StatusDashboard({
         </section>
       )}
 
-      <section className="grid gap-3 py-5 md:grid-cols-2">
+      <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 py-5 md:grid-cols-2">
         {selectedServices.map((service) => {
           const serviceSummary =
             summariesByServiceId.get(service.id) ??

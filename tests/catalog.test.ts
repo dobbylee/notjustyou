@@ -63,6 +63,10 @@ describe("catalog", () => {
       kind: "statuspage_component",
       componentName: "Conversations",
     });
+    expect(officialRefByServiceId.get("openai-chatgpt-work")).toMatchObject({
+      kind: "statuspage_component",
+      componentName: "ChatGPT Work",
+    });
     expect(officialRefByServiceId.get("openai-api")).toMatchObject({
       kind: "statuspage_components",
       componentNames: ["Chat Completions", "Responses"],
@@ -70,6 +74,50 @@ describe("catalog", () => {
     expect(officialRefByServiceId.has("openai-codex-desktop")).toBe(false);
     expect(officialRefByServiceId.has("openai-chatgpt-web")).toBe(false);
     expect(officialRefByServiceId.has("openai-chatgpt-desktop")).toBe(false);
+  });
+
+  it("orders the primary OpenAI dashboard surfaces by user workflow", () => {
+    const primarySurfaceIds = new Set([
+      "openai-chatgpt",
+      "openai-chatgpt-work",
+      "openai-codex-api",
+      "openai-api",
+    ]);
+
+    expect(
+      CATALOG.filter((service) => primarySurfaceIds.has(service.id)).map(
+        (service) => service.id,
+      ),
+    ).toEqual([
+      "openai-chatgpt",
+      "openai-chatgpt-work",
+      "openai-codex-api",
+      "openai-api",
+    ]);
+  });
+
+  it("keeps supporting OpenAI and Cursor surfaces out of dashboard defaults", () => {
+    expect(
+      CATALOG.filter(
+        (service) =>
+          service.providerId === "openai" &&
+          service.dashboardVisibility !== "hidden",
+      ).map((service) => service.name),
+    ).toEqual([
+      "Codex CLI",
+      "Codex (ChatGPT Desktop)",
+      "ChatGPT",
+      "ChatGPT Work",
+      "OpenAI API",
+    ]);
+
+    expect(
+      CATALOG.filter(
+        (service) =>
+          service.providerId === "cursor" &&
+          service.dashboardVisibility !== "hidden",
+      ).map((service) => service.name),
+    ).toEqual(["Cursor IDE", "Cursor CLI", "Cursor Cloud Agents", "Grok Bot"]);
   });
 
   it("keeps the Google service catalog organized by current surfaces", () => {
@@ -107,7 +155,7 @@ describe("catalog", () => {
       },
       {
         id: "google-vertex-gemini-api",
-        name: "Gemini on Agent Platform",
+        name: "Vertex Gemini API",
         surfaceType: "api",
       },
     ]);
@@ -121,7 +169,7 @@ describe("catalog", () => {
         ?.officialStatusRef,
     ).toMatchObject({
       kind: "google_cloud_product",
-      productName: "Gemini on Agent Platform",
+      productName: "Vertex Gemini API",
     });
   });
 
@@ -174,6 +222,12 @@ describe("catalog", () => {
         name: "Cursor Origin",
         surfaceType: "collaboration",
         componentName: "Origin",
+      },
+      {
+        id: "cursor-grok-bot",
+        name: "Grok Bot",
+        surfaceType: "collaboration",
+        componentName: "Grok Bot",
       },
     ]);
   });

@@ -41,6 +41,29 @@ const officialStatus: OfficialServiceStatus = {
 };
 
 describe("ServiceCard", () => {
+  it("keeps a long service name available in the card heading", () => {
+    render(
+      <ServiceCard
+        service={{
+          ...service,
+          name: "Codex (ChatGPT Desktop)",
+        }}
+        summary={summary}
+        communitySummaryStatus="available"
+        signalSummary={undefined}
+        signalSummaryStatus="available"
+        officialStatus={officialStatus}
+        pendingStatus={null}
+        message={undefined}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Codex (ChatGPT Desktop)" }),
+    ).toBeInTheDocument();
+  });
+
   it("renders service status and sends report clicks with service and status", async () => {
     const onReport = vi.fn();
     const user = userEvent.setup();

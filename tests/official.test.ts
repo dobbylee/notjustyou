@@ -28,6 +28,25 @@ describe("official status helpers", () => {
     expect(findStatuspageComponent(status, "ide")?.name).toBe("IDE");
   });
 
+  it("matches the Cursor Grok Bot component by name", () => {
+    const status: OfficialProviderStatus = {
+      providerId: "cursor",
+      overall: "operational",
+      source: "official",
+      updatedAt: "2026-09-02T00:00:00.000Z",
+      components: [
+        {
+          id: "cursor-grok-bot",
+          name: "Grok Bot",
+          status: "operational",
+          updatedAt: "2026-09-02T00:00:00.000Z",
+        },
+      ],
+    };
+
+    expect(findStatuspageComponent(status, "grok bot")?.name).toBe("Grok Bot");
+  });
+
   it("matches Claude official components by name", () => {
     const status: OfficialProviderStatus = {
       providerId: "anthropic",
@@ -78,6 +97,12 @@ describe("official status helpers", () => {
           updatedAt: "2026-05-09T00:00:00.000Z",
         },
         {
+          id: "openai-chatgpt-work",
+          name: "ChatGPT Work",
+          status: "operational",
+          updatedAt: "2026-09-02T00:00:00.000Z",
+        },
+        {
           id: "openai-chat-completions",
           name: "Chat Completions",
           status: "operational",
@@ -96,6 +121,9 @@ describe("official status helpers", () => {
       findStatuspageComponent(status, "Codex in ChatGPT Desktop")?.status,
     ).toBe("operational");
     expect(findStatuspageComponent(status, "Conversations")?.status).toBe(
+      "operational",
+    );
+    expect(findStatuspageComponent(status, "ChatGPT Work")?.status).toBe(
       "operational",
     );
     expect(findStatuspageComponent(status, "Chat Completions")?.status).toBe(
