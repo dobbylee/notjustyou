@@ -64,10 +64,13 @@ export function ServiceCard({
   const recentProblemSignalTotal = communityReportTotal + installedSignalTotal;
 
   return (
-    <article className="rounded-xl border border-slate-200/80 bg-white/50 backdrop-blur-md p-6 transition-all duration-300 hover:border-slate-300 hover:bg-white/85 hover:shadow-md hover:shadow-slate-100">
-      <div className="flex min-h-12 items-center justify-between gap-3">
+    <article className="min-w-0 rounded-xl border border-slate-200/80 bg-white/50 p-4 backdrop-blur-md transition-all duration-300 hover:border-slate-300 hover:bg-white/85 hover:shadow-md hover:shadow-slate-100 sm:p-6">
+      <div className="flex min-h-12 items-center justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
-          <h2 className="truncate text-xl font-bold tracking-tight text-slate-800">
+          <h2
+            title={service.name}
+            className="truncate text-lg font-bold tracking-tight text-slate-800 sm:text-xl"
+          >
             {service.name}
           </h2>
         </div>
@@ -158,14 +161,15 @@ function RecentProblemTotal({ total }: { total: number }) {
   return (
     <div
       className={clsx(
-        "flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-center transition-all",
+        "flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-center transition-all sm:gap-2 sm:px-3 sm:py-1.5",
         hasSignals
           ? "border-rose-250 bg-rose-50/70 text-rose-600 glow-rose"
           : "border-slate-200 bg-slate-50 text-slate-450",
       )}
     >
       <div className="text-xs font-bold leading-none whitespace-nowrap">
-        recent signals
+        <span className="sm:hidden">signals</span>
+        <span className="hidden sm:inline">recent signals</span>
       </div>
       <div className="text-lg font-extrabold font-mono leading-none tabular-nums text-slate-700">
         {total}

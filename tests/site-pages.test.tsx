@@ -63,18 +63,23 @@ describe("site pages", () => {
     expect(screen.queryByRole("link", { name: /Browse docs/ })).not
       .toBeInTheDocument();
 
-    const heroGitHubLink = screen.getByRole("link", {
-      name: "View on GitHub",
-    });
-    expect(heroGitHubLink).toHaveAttribute(
+    expect(screen.queryByRole("link", { name: "View live dashboard" }))
+      .not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "View on GitHub" }))
+      .not.toBeInTheDocument();
+
+    const headerGitHubLink = screen.getByRole("link", { name: "GitHub" });
+    expect(headerGitHubLink).toHaveAttribute(
       "href",
       "https://github.com/dobbylee/notjustyou",
     );
-    expect(heroGitHubLink.querySelector("svg[aria-hidden='true']")).not
-      .toBeNull();
-
-    const headerGitHubLink = screen.getByRole("link", { name: "GitHub" });
-    expect(headerGitHubLink.querySelector(".lucide-star")).not.toBeNull();
+    expect(headerGitHubLink.querySelector("svg[aria-hidden='true']"))
+      .not.toBeNull();
+    expect(headerGitHubLink.querySelector("path")).not.toBeNull();
+    expect(within(headerGitHubLink).getByText("GitHub")).toHaveClass(
+      "sr-only",
+      "sm:not-sr-only",
+    );
   });
 
   it("renders privacy inside the shared site navigation", () => {
