@@ -12,6 +12,8 @@ export type SurfaceType =
 
 export type ReportStatus = "slow" | "error" | "down";
 
+export type DashboardVisibility = "hidden";
+
 export type StatuspageProviderId = Extract<
   ProviderId,
   "anthropic" | "openai" | "cursor"
@@ -46,6 +48,7 @@ export interface ServiceSurface {
   name: string;
   surfaceType: SurfaceType;
   officialStatusRef?: OfficialStatusRef;
+  dashboardVisibility?: DashboardVisibility;
   reportOptions: readonly ReportStatus[];
 }
 
@@ -135,7 +138,7 @@ export const CATALOG = [
   {
     id: "openai-codex-app",
     providerId: "openai",
-    name: "Codex App",
+    name: "Codex (ChatGPT Desktop)",
     surfaceType: "app",
     officialStatusRef: {
       providerId: "openai",
@@ -154,6 +157,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Codex Web",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -166,6 +170,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "VS Code extension",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -202,6 +207,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Codex API",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -316,6 +322,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Review Agents",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -328,6 +335,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Automations",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {
@@ -340,6 +348,7 @@ export const CATALOG = [
       kind: "statuspage_component",
       componentName: "Origin",
     },
+    dashboardVisibility: "hidden",
     reportOptions: REPORT_STATUSES,
   },
   {

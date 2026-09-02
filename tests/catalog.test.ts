@@ -96,6 +96,30 @@ describe("catalog", () => {
     ]);
   });
 
+  it("keeps supporting OpenAI and Cursor surfaces out of dashboard defaults", () => {
+    expect(
+      CATALOG.filter(
+        (service) =>
+          service.providerId === "openai" &&
+          service.dashboardVisibility !== "hidden",
+      ).map((service) => service.name),
+    ).toEqual([
+      "Codex CLI",
+      "Codex (ChatGPT Desktop)",
+      "ChatGPT",
+      "ChatGPT Work",
+      "OpenAI API",
+    ]);
+
+    expect(
+      CATALOG.filter(
+        (service) =>
+          service.providerId === "cursor" &&
+          service.dashboardVisibility !== "hidden",
+      ).map((service) => service.name),
+    ).toEqual(["Cursor IDE", "Cursor CLI", "Cursor Cloud Agents", "Grok Bot"]);
+  });
+
   it("keeps the Google service catalog organized by current surfaces", () => {
     expect(
       CATALOG.filter((service) => service.providerId === "google").map((service) => ({

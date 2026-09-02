@@ -132,6 +132,43 @@ describe("StatusDashboard", () => {
     expect(screen.queryByText("Claude Code")).not.toBeInTheDocument();
   });
 
+  it("shows focused dashboard surfaces while keeping supporting surfaces hidden", async () => {
+    const fetchMock = createFetchMock();
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StatusDashboard providers={PROVIDERS} services={CATALOG} />);
+
+    await screen.findByLabelText("7 recent problem signals");
+    await user.click(screen.getByRole("button", { name: "OpenAI" }));
+
+    expect(screen.getByText("Codex CLI")).toBeInTheDocument();
+    expect(screen.getByText("Codex (ChatGPT Desktop)")).toBeInTheDocument();
+    expect(screen.getByText("ChatGPT")).toBeInTheDocument();
+    expect(screen.getByText("ChatGPT Work")).toBeInTheDocument();
+    expect(screen.getByText("OpenAI API")).toBeInTheDocument();
+    expect(screen.queryByText("Codex Web")).not.toBeInTheDocument();
+    expect(screen.queryByText("Codex VS Code extension")).not.toBeInTheDocument();
+    expect(screen.queryByText("Codex API")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cursor" }));
+
+    expect(screen.getByText("Cursor IDE")).toBeInTheDocument();
+    expect(screen.getByText("Cursor CLI")).toBeInTheDocument();
+    expect(screen.getByText("Cursor Cloud Agents")).toBeInTheDocument();
+    expect(screen.getByText("Grok Bot")).toBeInTheDocument();
+    expect(screen.queryByText("Cursor Review Agents")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cursor Automations")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cursor Origin")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Anthropic" }));
+    expect(screen.getByText("Claude Cowork")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Google" }));
+    expect(screen.getByText("Antigravity IDE")).toBeInTheDocument();
+    expect(screen.getByText("Vertex Gemini API")).toBeInTheDocument();
+  });
+
   it("submits reports and applies the optimistic count update", async () => {
     const fetchMock = createFetchMock();
     const user = userEvent.setup();

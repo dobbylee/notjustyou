@@ -259,7 +259,9 @@ export function StatusDashboard({
   }, [signalSummary]);
 
   const selectedServices = services.filter(
-    (service) => service.providerId === selectedProviderId,
+    (service) =>
+      service.providerId === selectedProviderId &&
+      service.dashboardVisibility !== "hidden",
   );
   const selectedProvider = providers.find(
     (provider) => provider.id === selectedProviderId,
