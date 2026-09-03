@@ -68,6 +68,10 @@ describe("site pages", () => {
     expect(screen.queryByRole("link", { name: "View on GitHub" }))
       .not.toBeInTheDocument();
 
+    const footer = screen.getByText("© 2026 Not Just You").closest("footer");
+    expect(footer).toHaveClass("flex", "justify-between");
+    expect(footer).not.toHaveClass("grid");
+
     const headerGitHubLink = screen.getByRole("link", { name: "GitHub" });
     expect(headerGitHubLink).toHaveAttribute(
       "href",

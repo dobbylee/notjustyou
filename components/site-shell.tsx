@@ -107,17 +107,14 @@ export function SiteShell({
 
       <footer
         className={clsx(
-          "mx-auto grid w-full items-center border-t border-slate-200/60 px-4 py-6 text-sm text-slate-500 sm:px-6 lg:px-8 bg-white/10 backdrop-blur-sm",
+          "mx-auto flex w-full items-center justify-between gap-4 border-t border-slate-200/60 bg-white/10 px-4 py-6 text-sm text-slate-500 backdrop-blur-sm sm:px-6 lg:px-8",
           maxWidthClassNames[maxWidth],
         )}
-        style={{
-          gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
-        }}
       >
-        <span className="col-start-2 font-semibold text-slate-400">
+        <span className="font-semibold text-slate-400">
           © 2026 Not Just You
         </span>
-        <div className="col-start-3 flex items-center gap-3 justify-self-end">
+        <div className="flex shrink-0 items-center gap-3">
           <Link
             href="/privacy"
             className="text-slate-500 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
