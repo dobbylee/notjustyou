@@ -15,7 +15,9 @@
     "build:sdk": "pnpm --filter @notjustyou/sdk-js build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:redis": "vitest run --config vitest.redis.config.ts",
+    "verify": "pnpm lint && pnpm test && pnpm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",

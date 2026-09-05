@@ -1,22 +1,19 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { createTempDir } from "@/tests/helpers/temp-dir";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readConfig, writeConfig } from "@/packages/notjustyou-cli/src/config";
 import { main, parseCliArgs } from "@/packages/notjustyou-cli/src/index";
 import { REPORTING_SURFACES } from "@/packages/notjustyou-cli/src/reporting-setup";
 
-const originalConfigPath = process.env.NOTJUSTYOU_CONFIG_PATH;
-
 beforeEach(() => {
-  process.env.NOTJUSTYOU_CONFIG_PATH = join(
-    mkdtempSync(join(tmpdir(), "njy-registration-test-")),
+  vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", join(
+    createTempDir("njy-registration-test-"),
     "config.json",
-  );
+  ));
 });
 
 afterEach(() => {
-  process.env.NOTJUSTYOU_CONFIG_PATH = originalConfigPath;
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });

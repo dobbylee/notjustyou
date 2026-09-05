@@ -295,6 +295,7 @@ describe("ServiceCard", () => {
           },
           total: 0,
           uniqueInstallationsApprox: 0,
+          lastSignal: null,
         }}
         signalSummaryStatus="available"
         officialStatus={officialStatus}

@@ -1,6 +1,6 @@
-import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { createTempDir } from "@/tests/helpers/temp-dir";
+import { readFileSync, statSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,17 +13,15 @@ import {
 } from "@/packages/notjustyou-sdk-js/src/queue";
 import type { ProblemSignalPayload } from "@/packages/notjustyou-sdk-js/src/types";
 
-const originalConfigPath = process.env.NOTJUSTYOU_CONFIG_PATH;
-
 beforeEach(() => {
-  process.env.NOTJUSTYOU_CONFIG_PATH = join(
-    mkdtempSync(join(tmpdir(), "njy-sdk-test-")),
+  vi.stubEnv("NOTJUSTYOU_CONFIG_PATH", join(
+    createTempDir("njy-sdk-test-"),
     "config.json",
-  );
+  ));
 });
 
 afterEach(() => {
-  process.env.NOTJUSTYOU_CONFIG_PATH = originalConfigPath;
+  vi.unstubAllEnvs();
   resetSignalQueueForTests();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -44,7 +42,7 @@ describe("recordAiCall", () => {
   });
 
   it("rethrows the original provider error and sends a rate limited signal", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
     const providerError = Object.assign(new Error("do not send this message"), {
@@ -307,7 +305,7 @@ describe("recordAiCall", () => {
   });
 
   it("sends an opt-in slow signal when duration crosses the threshold", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
 
@@ -405,7 +403,7 @@ describe("recordAiCall", () => {
   });
 
   it("creates and reuses a random installation id in local config", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
 
@@ -660,7 +658,7 @@ describe("recordAiCall", () => {
   });
 
   it("coalesces repeated identical local failures within the suppression window", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
     const firstError = Object.assign(new Error("first"), {
@@ -689,7 +687,7 @@ describe("recordAiCall", () => {
   });
 
   it("does not coalesce opt-in slow signals", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
 
@@ -866,7 +864,7 @@ describe("recordAiCall", () => {
   });
 
   it("defers config writes until after returning the wrapped value", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
 
@@ -886,7 +884,7 @@ describe("recordAiCall", () => {
   });
 
   it("defers config writes until after rethrowing the original provider error", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchMock);
     writeConfig();
     const providerError = Object.assign(new Error("not collected"), {
@@ -918,7 +916,7 @@ async function captureFailurePayload(
   serviceId: "anthropic-claude-api" | "google-gemini-api" | "openai-api" = "openai-api",
   serviceIds: string[] = ["openai-api"],
 ) {
-  const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
+  const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true })));
   vi.stubGlobal("fetch", fetchMock);
   writeConfig({ serviceIds });
   const providerError = Object.assign(new Error("not collected"), errorShape);

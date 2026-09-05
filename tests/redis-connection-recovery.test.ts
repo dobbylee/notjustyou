@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => {
 
   return {
     client,
-    createClient: vi.fn(() => client),
+    createClient: vi.fn<(options: { socket: { reconnectStrategy: (retries: number) => number | Error } }) => typeof client>(() => client),
   };
 });
 

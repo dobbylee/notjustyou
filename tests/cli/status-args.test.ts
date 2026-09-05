@@ -1,6 +1,6 @@
+import { createTempDir } from "@/tests/helpers/temp-dir";
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isDirectRun, parseCliArgs } from "@/packages/notjustyou-cli/src/index";
@@ -16,8 +16,8 @@ describe("parseCliArgs", () => {
   });
 
   it("recognizes npm bin symlinks as direct runs", () => {
-    const target = join(mkdtempSync(join(tmpdir(), "njy-cli-test-")), "index.js");
-    const link = join(mkdtempSync(join(tmpdir(), "njy-cli-bin-test-")), "njy");
+    const target = join(createTempDir("njy-cli-test-"), "index.js");
+    const link = join(createTempDir("njy-cli-bin-test-"), "njy");
 
     writeFileSync(target, "");
     symlinkSync(target, link);
@@ -26,7 +26,7 @@ describe("parseCliArgs", () => {
   });
 
   it("does not throw when an importing process has a missing argv path", () => {
-    const target = join(mkdtempSync(join(tmpdir(), "njy-cli-test-")), "index.js");
+    const target = join(createTempDir("njy-cli-test-"), "index.js");
 
     writeFileSync(target, "");
 

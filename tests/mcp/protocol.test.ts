@@ -1,6 +1,6 @@
+import { createTempDir } from "@/tests/helpers/temp-dir";
 import { describe, expect, it, vi } from "vitest";
-import { mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isDirectRun } from "@/packages/notjustyou-mcp/src/index";
@@ -240,9 +240,9 @@ describe("MCP JSON-RPC protocol", () => {
   });
 
   it("recognizes npm bin symlinks as direct runs", () => {
-    const target = join(mkdtempSync(join(tmpdir(), "njy-mcp-test-")), "index.js");
+    const target = join(createTempDir("njy-mcp-test-"), "index.js");
     const link = join(
-      mkdtempSync(join(tmpdir(), "njy-mcp-bin-test-")),
+      createTempDir("njy-mcp-bin-test-"),
       "notjustyou-mcp",
     );
 
@@ -253,7 +253,7 @@ describe("MCP JSON-RPC protocol", () => {
   });
 
   it("does not throw when an importing process has a missing argv path", () => {
-    const target = join(mkdtempSync(join(tmpdir(), "njy-mcp-test-")), "index.js");
+    const target = join(createTempDir("njy-mcp-test-"), "index.js");
 
     writeFileSync(target, "");
 

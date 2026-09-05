@@ -1,5 +1,5 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { createTempDir } from "@/tests/helpers/temp-dir";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { scanForSensitiveKeys as scanServerPayload } from "@/lib/signals/privacy";
@@ -362,7 +362,7 @@ describe("CLI payload preview", () => {
 });
 
 function writeFixture(body: unknown) {
-  const path = join(mkdtempSync(join(tmpdir(), "njy-preview-test-")), "fixture.json");
+  const path = join(createTempDir("njy-preview-test-"), "fixture.json");
   writeFileSync(path, JSON.stringify(body));
   return path;
 }
