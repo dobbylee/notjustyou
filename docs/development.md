@@ -84,12 +84,49 @@ The app is designed for Vercel. Enable Vercel Web Analytics if you want traffic 
 ## Scripts
 
 ```bash
-pnpm dev     # start local dev server
-pnpm build   # production build
-pnpm start   # start production server after build
-pnpm lint    # eslint
-pnpm test    # vitest
+pnpm dev         # start local dev server
+pnpm build       # production build, including CLI/MCP/SDK packages
+pnpm start       # start production server after build
+pnpm lint        # eslint
+pnpm test        # app, package, and plugin tests
+pnpm verify      # lint, tests, and production build
+pnpm test:redis  # separate integration suite; requires Docker
 ```
+
+## Verification
+
+`pnpm verify` runs the baseline commands owned by `AGENTS.md` in order and stops
+on failure. `pnpm test` includes app, CLI, MCP, SDK, and plugin tests. The Redis
+integration suite runs separately through `pnpm test:redis` and is not included
+in `pnpm verify`. The build compiles CLI before MCP because MCP consumes the CLI
+reporting-setup export.
+
+| Changed surface | Focused checks in addition to the baseline |
+| --- | --- |
+| API/privacy/storage | Relevant route and `tests/signals`/Redis tests; test malformed input and failure paths |
+| Redis Lua or atomic writes | `pnpm test:redis` (requires Docker); mocks or Lua text assertions alone do not prove execution/atomicity |
+| Dashboard | Relevant component tests; inspect affected desktop/mobile behavior in a browser |
+| CLI/MCP/SDK | Relevant package tests and build; check packed artifacts when exports or packaging change |
+| Plugins | Relevant `tests/plugins` tests; validate manifest, hooks, and pinned consumer versions |
+| Harness/docs | Check references and public/private boundaries; keep baseline unless an agreed narrower check applies |
+
+`pnpm test:redis` starts and removes its own Redis container on a random loopback
+port with persistence disabled. It never reads `REDIS_URL` or uses an existing
+Redis instance. The first run downloads `redis:8.2.5-alpine` if the image is not
+already available. Docker/image availability failures fail this check explicitly.
+
+Tests must use synthetic data, mock external network calls, and isolate local
+configuration. Use `tests/helpers/temp-dir.ts` for automatically cleaned temporary
+directories and `vi.stubEnv` for environment overrides. Restore fake timers and
+close local servers in teardown, including failure paths. Prefer controlled
+promises or fake time over arbitrary sleeps. Loopback permission failures are
+environment blockers, not successful integration checks. Never use a developer's
+running server or production Redis as a test fixture.
+
+Dependency audit results are time-specific. Run `pnpm audit` to include build
+and test dependencies, or `pnpm audit --prod` to inspect runtime dependencies
+only. Record registry/network failures explicitly; passing tests are not a
+dependency vulnerability assessment.
 
 ## Remote MCP
 
@@ -109,6 +146,8 @@ remote server does not keep sessions or provide a standalone SSE stream.
 
 Submission metadata, prompts, test cases, and approval-gated prerequisites are
 kept in [plugin-directory-submission.md](plugin-directory-submission.md).
+
+## Workspace Packages
 
 Run the CLI from a workspace checkout:
 
@@ -142,6 +181,7 @@ node packages/notjustyou-cli/dist/index.js register --source api_middleware --se
 Run the MCP server from a workspace checkout:
 
 ```bash
+pnpm --filter @notjustyou/cli build
 pnpm --filter @notjustyou/mcp build
 NOTJUSTYOU_BASE_URL=http://localhost:3000 node packages/notjustyou-mcp/dist/index.js
 ```
@@ -151,6 +191,27 @@ Build the SDK package from a workspace checkout:
 ```bash
 pnpm --filter @notjustyou/sdk-js build
 ```
+
+## Request Limits
+
+Request bodies are limited by bytes read from the stream, including requests
+without `Content-Length` or with an incorrect smaller declared length.
+
+| POST endpoint | Maximum body | Oversized response |
+| --- | --- | --- |
+| `/api/report`, `/api/clicks` | 8 KiB (8,192 bytes) | HTTP `413`, `reason: "body_too_large"` |
+| `/api/signals`, `/api/collectors/register`, `/api/collectors/heartbeat` | 8 KiB (8,192 bytes) | HTTP `400`, `reason: "body_too_large"` |
+| `/mcp` | 32 KiB (32,768 bytes) | HTTP `413`, JSON-RPC error code `-32000` |
+
+Signal validation and error responses are described in [Signals](signals.md#validation-rules).
+
+CLI and installed stdio MCP requests to the public Not Just You APIs have a
+10-second deadline covering response headers and body. This is a per-request
+limit, not a timeout for the user's AI provider call. The CLI and installed MCP
+do not automatically retry failed API requests. Their source-specific failure
+behavior is documented in the [CLI README](../packages/notjustyou-cli/README.md#request-failures)
+and [MCP README](../packages/notjustyou-mcp/README.md#request-failures).
+The SDK has its own [bounded signal retry policy](../packages/notjustyou-sdk-js/README.md#retry-and-coalescing).
 
 ## Public API Surface
 

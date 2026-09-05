@@ -69,6 +69,22 @@ This package does not expose a signal submission tool. Automatic reports still
 flow through supported local hooks, the localhost receiver, and the
 metadata-only normalizer.
 
+## Request Failures
+
+This installed stdio package gives each request to the public Not Just You APIs
+a 10-second deadline covering response headers and body, with no automatic
+retry.
+
+`list_surfaces` and `get_surface_status` fetch community, installed-signal, and
+official summaries concurrently. They preserve available source data when
+another source fails, and report a tool execution error if all three fail.
+`get_recent_signals` depends on the installed-signal summary and reports a tool
+execution error if that request fails. Timeouts follow these same rules.
+
+Local reporting setup uses the CLI's API request deadline for registration.
+The deadline does not limit AI provider calls and is not a session timeout for
+the separate public `/mcp` endpoint.
+
 ## Privacy Boundary
 
 The MCP server reads public status summaries:

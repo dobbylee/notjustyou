@@ -83,9 +83,9 @@ short-lived HMAC derived from the collector and signal ids.
 
 ## Validation Rules
 
-Planned validation order:
+`POST /api/signals` uses this validation order:
 
-1. Apply request size limit.
+1. Enforce the 8 KiB (8,192-byte) limit while reading the request stream.
 2. Parse JSON.
 3. Run a recursive sensitive-key scan.
 4. Validate against a strict schema.
@@ -97,11 +97,31 @@ Planned validation order:
 10. Write aggregate counters.
 11. Return success without echoing raw event data.
 
-Unknown fields should be rejected.
+Unknown fields are rejected.
 
-`observedAt` should not be trusted blindly. The first implementation should reject stale values older than 15 minutes and reject values more than 2 minutes in the future.
+`observedAt` values older than 15 minutes or more than 2 minutes in the future
+are rejected. If omitted, the server uses its receive time.
 
-Collector registration also needs abuse protection. Token and installation limits can be hard limits; service-wide aggregate guards should start as soft guards so an attacker cannot block legitimate signals for a service.
+Registration and heartbeat bodies use the same streaming size limit, JSON
+parsing, sensitive-key scan, and strict schema validation. Registration is
+rate-limited; heartbeat requires an active collector token and applies collector
+and installation limits. Signal collector and installation limits are hard
+limits; the service-wide guard is soft and does not reject otherwise valid
+signals.
+
+Signal, registration, and heartbeat errors use `{ ok: false, reason }`:
+
+| HTTP status | Reason |
+| --- | --- |
+| `400` | `body_too_large`, `invalid_json`, `sensitive_payload`, `invalid_request`, or a failed allowlist/timestamp check |
+| `401` | `missing_token` or `invalid_token` (signal and heartbeat) |
+| `403` | `revoked_token` (signal and heartbeat) |
+| `429` | `rate_limited`; the body also includes `retryAfterSeconds` |
+| `500` | `internal_error` |
+| `503` | `redis_unavailable` or `server_config_error` |
+
+Oversized signal-family requests return `400` for compatibility. Limits and
+responses for other endpoints are in the [development guide](development.md#request-limits).
 
 ## Sensitive Data Rules
 

@@ -62,6 +62,20 @@ remains status-only.
 The CLI does not submit reports or installed-client signals unless an opt-in
 collector path is enabled.
 
+## Request Failures
+
+Requests to the public Not Just You APIs have a 10-second deadline, including
+reading the response body. The CLI does not automatically retry a failed
+status, registration, heartbeat, or signal submission request.
+
+`status` fetches the three source summaries concurrently. Community summary
+failure makes the status check fail. Official-status or installed-signal
+failure leaves that source unavailable while preserving the other results.
+A timeout follows the same rules as any other failed request.
+
+This deadline applies to Not Just You API requests; it does not limit your AI
+provider calls or set the polling interval for `--watch`.
+
 ## Advanced Diagnostics
 
 ```bash
@@ -97,10 +111,11 @@ If local hook reporting is enabled, a local adapter may receive vendor hook
 payloads in memory to derive metadata-only signals. Raw vendor payload fields
 are not stored, queued, logged, or sent to Not Just You.
 
-The local config stores only `baseUrl`, `collectorId`, `collectorToken`, allowed
-`source`, allowed service ids, client name, and client version. v1 stores the
-token in a local file with private file permissions; OS keychain storage is
-later work.
+The local config stores a config version, `baseUrl`, `collectorId`,
+`collectorToken`, allowed `source` and service ids, client name, and client
+version. Hook configuration also records the sending opt-in and local receiver
+token. The SDK may add a random installation id to the same file. Tokens are
+stored with private file permissions; OS keychain storage is later work.
 
 Opt-in hook configs also contain a separate random localhost receiver token.
 Hook adapters use it only to authenticate local `/health` and `/hook` requests;

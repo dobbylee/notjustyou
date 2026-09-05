@@ -49,9 +49,7 @@ Also run relevant package, plugin, protocol, browser, or published-consumer chec
 
 ## Review
 
-For non-trivial changes, use an independent reviewer after focused checks and before baseline verification. Give the reviewer `git status`, the complete tracked diff, the full content of every intended untracked file, and `agent-harness/prompts/implementation-review.md`; do not ask it to modify files. A plain unstaged `git diff` is insufficient when the intended change contains untracked files. Address findings and repeat until the reviewer returns exactly `No Findings` or the user explicitly accepts a documented residual risk.
-
-If an independent reviewer is unavailable or disallowed by the active tool policy, perform a structured direct review with the same prompt and record that limitation. Do not describe direct self-review as independent review.
+For non-trivial changes, follow the review gate in `agent-harness/workflow.md` and the input/output contract in `agent-harness/prompts/implementation-review.md`. Use an independent reviewer; if unavailable or disallowed by tool policy, record that limitation and perform structured direct review with the same contract. Do not describe self-review as independent review.
 
 ## Commits And Pull Requests
 
