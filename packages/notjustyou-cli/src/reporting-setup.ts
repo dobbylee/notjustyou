@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { SERVICE_IDS, SIGNAL_SOURCES } from "./reporting-contract.js";
 import { registerCollector } from "./api.js";
 import { readConfig, writeConfig } from "./config.js";
 import { LOCAL_HOOK_RECEIVER_HEALTH } from "./receiver.js";
@@ -29,32 +30,6 @@ const ANTIGRAVITY_REPORTING_SERVICES = new Set([
   ANTIGRAVITY_REPORTING_SERVICE,
   ANTIGRAVITY_IDE_REPORTING_SERVICE,
 ]);
-const SIGNAL_SOURCES = new Set([
-  "api_middleware",
-  "cli_hook",
-  "ide_extension",
-  "browser_extension",
-  "mcp_monitor",
-  "local_probe",
-]);
-const SERVICE_IDS = new Set([
-  "anthropic-claude-code",
-  "anthropic-claude-ai",
-  "anthropic-claude-cowork",
-  "anthropic-claude-api",
-  "openai-codex-cli",
-  "openai-codex-app",
-  "openai-chatgpt",
-  "openai-api",
-  "google-antigravity-cli",
-  "google-antigravity",
-  "google-antigravity-ide",
-  "google-gemini-web",
-  "google-gemini-api",
-  "cursor-ide",
-  "cursor-cli",
-]);
-
 export const REPORTING_SURFACES = {
   "claude-code": {
     serviceId: CLAUDE_CODE_REPORTING_SERVICE,

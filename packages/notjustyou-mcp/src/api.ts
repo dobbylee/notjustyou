@@ -76,13 +76,20 @@ export function normalizeBaseUrl(baseUrl: string) {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
-    cache: "no-store",
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    throw new Error(`Request failed: ${url} (${response.status})`);
+    if (!response.ok) {
+      throw new Error(`Request failed: ${url} (${response.status})`);
+    }
+
+    return await response.json() as T;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return (await response.json()) as T;
 }

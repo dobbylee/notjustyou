@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/read-json-body";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { getRequestFingerprint } from "@/lib/abuse";
 import { createRemoteStatusMcpServer } from "@/lib/mcp/remote-status-server";
@@ -16,8 +17,12 @@ export async function POST(request: Request) {
     return response;
   }
 
-  const body = await readBody(request);
-  if (!body.ok) return body.response;
+  const body = await readJsonBody(request, MAX_MCP_BODY_BYTES);
+  if (!body.ok) {
+    return body.reason === "body_too_large"
+      ? mcpError(413, -32000, "MCP request body is too large.")
+      : mcpError(400, -32700, "Parse error.");
+  }
 
   const server = createRemoteStatusMcpServer();
   const transport = new WebStandardStreamableHTTPServerTransport({
@@ -27,7 +32,7 @@ export async function POST(request: Request) {
 
   await server.connect(transport);
   const response = await transport.handleRequest(request, {
-    parsedBody: body.value,
+    parsedBody: body.json,
   });
 
   return withCors(response);
@@ -52,57 +57,6 @@ function unsupportedMethod() {
   const response = mcpError(405, -32000, "Method not allowed.");
   response.headers.set("allow", "POST");
   return response;
-}
-
-async function readBody(request: Request) {
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_MCP_BODY_BYTES) {
-    return {
-      ok: false as const,
-      response: mcpError(413, -32000, "MCP request body is too large."),
-    };
-  }
-
-  const reader = request.body?.getReader();
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
-
-  if (reader) {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      totalBytes += value.byteLength;
-      if (totalBytes > MAX_MCP_BODY_BYTES) {
-        await reader.cancel();
-        return {
-          ok: false as const,
-          response: mcpError(413, -32000, "MCP request body is too large."),
-        };
-      }
-      chunks.push(value);
-    }
-  }
-
-  const bodyBytes = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bodyBytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  const text = new TextDecoder().decode(bodyBytes);
-
-  try {
-    return {
-      ok: true as const,
-      value: JSON.parse(text) as unknown,
-    };
-  } catch {
-    return {
-      ok: false as const,
-      response: mcpError(400, -32700, "Parse error."),
-    };
-  }
 }
 
 function mcpError(status: number, code: number, message: string) {

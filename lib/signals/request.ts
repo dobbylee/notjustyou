@@ -1,10 +1,10 @@
-import type { NextRequest } from "next/server";
 import { getRequestFingerprint } from "@/lib/abuse";
 import {
   getSignalSecret,
   type CollectorRecord,
 } from "@/lib/signals/collectors";
-import { isBodyWithinSignalLimit, scanForSensitiveKeys } from "@/lib/signals/privacy";
+import { SIGNAL_BODY_LIMIT_BYTES, scanForSensitiveKeys } from "@/lib/signals/privacy";
+import { readJsonBody as readLimitedJsonBody } from "@/lib/http/read-json-body";
 import {
   collectorHeartbeatSchema,
   collectorRegistrationSchema,
@@ -31,31 +31,11 @@ export type SignalErrorReason =
   | "redis_unavailable"
   | "server_config_error";
 
-export async function readJsonBody(request: NextRequest) {
-  const text = await request.text();
-
-  if (!isBodyWithinSignalLimit(text)) {
-    return {
-      ok: false as const,
-      reason: "body_too_large" as const,
-    };
-  }
-
-  try {
-    const json = text ? (JSON.parse(text) as unknown) : {};
-    return {
-      ok: true as const,
-      json,
-    };
-  } catch {
-    return {
-      ok: false as const,
-      reason: "invalid_json" as const,
-    };
-  }
+export function readJsonBody(request: Request) {
+  return readLimitedJsonBody(request, SIGNAL_BODY_LIMIT_BYTES, {});
 }
 
-export function getBearerToken(request: NextRequest) {
+export function getBearerToken(request: Request) {
   const authorization = request.headers.get("authorization") ?? "";
   const [scheme, token] = authorization.split(/\s+/);
 
@@ -66,7 +46,7 @@ export function getBearerToken(request: NextRequest) {
   return token;
 }
 
-export async function getAuthorizedCollector(request: NextRequest) {
+export async function getAuthorizedCollector(request: Request) {
   const token = getBearerToken(request);
 
   if (!token) {
@@ -103,7 +83,7 @@ export async function getAuthorizedCollector(request: NextRequest) {
   };
 }
 
-export async function validateSignalRequest(request: NextRequest) {
+export async function validateSignalRequest(request: Request) {
   const body = await readJsonBody(request);
   if (!body.ok) return body;
 
@@ -162,7 +142,7 @@ export async function validateSignalRequest(request: NextRequest) {
   };
 }
 
-export async function validateRegistrationRequest(request: NextRequest) {
+export async function validateRegistrationRequest(request: Request) {
   const body = await readJsonBody(request);
   if (!body.ok) return body;
 
@@ -204,7 +184,7 @@ export async function validateRegistrationRequest(request: NextRequest) {
   };
 }
 
-export async function validateHeartbeatRequest(request: NextRequest) {
+export async function validateHeartbeatRequest(request: Request) {
   const body = await readJsonBody(request);
   if (!body.ok) return body;
 
