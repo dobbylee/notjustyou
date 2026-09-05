@@ -9,10 +9,8 @@ import {
 } from "@/lib/clicks";
 import type { RedisClient } from "@/lib/redis";
 import {
-  RECORD_REPORT_SCRIPT,
   RedisReportStorage,
 } from "@/lib/storage/redis";
-import { RECORD_SIGNAL_SCRIPT } from "@/lib/signals/storage";
 import { getRequestFingerprint } from "@/lib/abuse";
 
 describe("RedisReportStorage", () => {
@@ -28,8 +26,8 @@ describe("RedisReportStorage", () => {
       mGet: vi.fn(async (keys: string[]) =>
         keys.map((key) => values.get(key) ?? null),
       ),
-    } as unknown as RedisClient;
-    const storage = new RedisReportStorage(redis);
+    };
+    const storage = new RedisReportStorage(redis as unknown as RedisClient);
 
     const summary = await storage.getSummary({
       windowMinutes: 10,
@@ -66,8 +64,8 @@ describe("RedisReportStorage", () => {
       mGet: vi.fn(async (keys: string[]) =>
         keys.map((key) => values.get(key) ?? null),
       ),
-    } as unknown as RedisClient;
-    const storage = new RedisReportStorage(redis);
+    };
+    const storage = new RedisReportStorage(redis as unknown as RedisClient);
 
     const summary = await storage.getClickSummary({
       windowHours: 2,
@@ -87,8 +85,8 @@ describe("RedisReportStorage", () => {
   it("claims cooldown and increments a report in one atomic operation", async () => {
     const redis = {
       eval: vi.fn().mockResolvedValueOnce([1, 180]).mockResolvedValueOnce([0, 42]),
-    } as unknown as RedisClient;
-    const storage = new RedisReportStorage(redis);
+    };
+    const storage = new RedisReportStorage(redis as unknown as RedisClient);
     const input = {
       fingerprint: "stable-client-hash",
       serviceId: "openai-api" as const,
@@ -108,54 +106,11 @@ describe("RedisReportStorage", () => {
     expect(redis.eval.mock.calls[0]?.[1].keys).toHaveLength(2);
   });
 
-  it("validates the report counter before incrementing and claiming cooldown", () => {
-    const cooldownClaim = scriptPosition(
-      RECORD_REPORT_SCRIPT,
-      'redis.call("SET", KEYS[1], "1"',
-    );
-
-    expect(scriptPosition(RECORD_REPORT_SCRIPT, 'redis.call("TYPE", KEYS[2])'))
-      .toBeLessThan(scriptPosition(RECORD_REPORT_SCRIPT, 'redis.call("INCR", KEYS[2])'));
-    expect(scriptPosition(RECORD_REPORT_SCRIPT, 'redis.call("GET", KEYS[2])'))
-      .toBeLessThan(scriptPosition(RECORD_REPORT_SCRIPT, 'redis.call("INCR", KEYS[2])'));
-    expect(scriptPosition(RECORD_REPORT_SCRIPT, 'redis.call("INCR", KEYS[2])'))
-      .toBeLessThan(cooldownClaim);
-    expect(scriptPosition(RECORD_REPORT_SCRIPT, 'redis.call("EXPIRE", KEYS[2]'))
-      .toBeLessThan(cooldownClaim);
-  });
-
-  it("validates signal Redis values before counters and claims dedupe last", () => {
-    const firstCounterWrite = scriptPosition(
-      RECORD_SIGNAL_SCRIPT,
-      'redis.call("HINCRBY", KEYS[2]',
-    );
-    const dedupeClaim = scriptPosition(
-      RECORD_SIGNAL_SCRIPT,
-      'redis.call("SET", KEYS[1], "1"',
-    );
-
-    expect(scriptPosition(RECORD_SIGNAL_SCRIPT, 'redis.call("TYPE", KEYS[2])'))
-      .toBeLessThan(firstCounterWrite);
-    expect(scriptPosition(RECORD_SIGNAL_SCRIPT, 'redis.call("HGET", KEYS[2]'))
-      .toBeLessThan(firstCounterWrite);
-    expect(scriptPosition(RECORD_SIGNAL_SCRIPT, 'redis.call("TYPE", KEYS[4])'))
-      .toBeLessThan(firstCounterWrite);
-    expect(scriptPosition(RECORD_SIGNAL_SCRIPT, 'redis.pcall("PFCOUNT", KEYS[3])'))
-      .toBeLessThan(firstCounterWrite);
-    expect(firstCounterWrite).toBeLessThan(dedupeClaim);
-    expect(scriptPosition(RECORD_SIGNAL_SCRIPT, 'redis.call("PFADD", KEYS[3]'))
-      .toBeLessThan(dedupeClaim);
-    expect(scriptPosition(RECORD_SIGNAL_SCRIPT, 'redis.call("HSET", KEYS[4]'))
-      .toBeLessThan(dedupeClaim);
-    expect(scriptPosition(RECORD_SIGNAL_SCRIPT, 'redis.call("EXPIRE", KEYS[4]'))
-      .toBeLessThan(dedupeClaim);
-  });
-
   it("keeps report cooldown identity stable across user-agent rotation", async () => {
     const redis = {
       eval: vi.fn().mockResolvedValueOnce([1, 180]).mockResolvedValueOnce([0, 180]),
-    } as unknown as RedisClient;
-    const storage = new RedisReportStorage(redis);
+    };
+    const storage = new RedisReportStorage(redis as unknown as RedisClient);
     const firstFingerprint = getRequestFingerprint(
       requestWithHeaders({
         "x-forwarded-for": "198.51.100.2, 203.0.113.9",
@@ -191,10 +146,4 @@ describe("RedisReportStorage", () => {
 
 function requestWithHeaders(headers: Record<string, string>) {
   return new NextRequest("http://localhost/api/report", { headers });
-}
-
-function scriptPosition(script: string, fragment: string) {
-  const position = script.indexOf(fragment);
-  expect(position, `Missing Lua fragment: ${fragment}`).toBeGreaterThanOrEqual(0);
-  return position;
 }

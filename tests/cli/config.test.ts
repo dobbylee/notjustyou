@@ -1,5 +1,5 @@
-import { mkdtempSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { createTempDir } from "@/tests/helpers/temp-dir";
+import { statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -10,7 +10,7 @@ import {
 
 describe("CLI config", () => {
   it("reads and writes the local collector config with private file permissions", () => {
-    const path = join(mkdtempSync(join(tmpdir(), "njy-config-test-")), "config.json");
+    const path = join(createTempDir("njy-config-test-"), "config.json");
 
     writeConfig(
       {
@@ -38,19 +38,21 @@ describe("CLI config", () => {
   it("uses XDG_CONFIG_HOME unless an explicit config path is set", () => {
     expect(
       getConfigPath({
+        NODE_ENV: "test",
         XDG_CONFIG_HOME: "/tmp/config-home",
-      } as NodeJS.ProcessEnv),
+      }),
     ).toBe("/tmp/config-home/notjustyou/config.json");
     expect(
       getConfigPath({
         NOTJUSTYOU_CONFIG_PATH: "/tmp/njy.json",
+        NODE_ENV: "test",
         XDG_CONFIG_HOME: "/tmp/config-home",
-      } as NodeJS.ProcessEnv),
+      }),
     ).toBe("/tmp/njy.json");
   });
 
   it("rejects unsupported source and unknown service ids", () => {
-    const path = join(mkdtempSync(join(tmpdir(), "njy-config-test-")), "config.json");
+    const path = join(createTempDir("njy-config-test-"), "config.json");
 
     writeFileSync(
       path,

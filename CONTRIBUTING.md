@@ -27,8 +27,11 @@ Prefer a title such as `Add Redis signal counters` over an internal label such a
 
 ## Verification
 
-Use `AGENTS.md` as the source of truth for baseline repository verification.
-If a check is skipped or narrowed, state why in the PR.
+Run `pnpm verify` for the baseline repository verification defined in
+[AGENTS.md](AGENTS.md). Add the relevant checks from the
+[verification matrix](docs/development.md#verification), including `pnpm test:redis`
+for Redis Lua or atomic-write changes. If a check is skipped or narrowed, state
+why in the PR.
 
 ## Development
 
@@ -36,27 +39,8 @@ For local setup, environment variables, self-hosting notes, workspace package co
 
 ## Privacy And Data Boundaries
 
-Manual community reports, official status, and installed-client signals have different trust levels and must stay separate in storage and API contracts.
-
-Allowed UI behavior:
-
-- Show a unified recent problem summary.
-- Show exact counts when useful.
-- Keep source breakdown visible.
-
-Backend rule:
-
-- Do not merge manual reports, official status, and installed-client signals into a single stored counter or API field.
-
-Follow the data boundary in [docs/signals.md](docs/signals.md). Any PR that adds
-or changes collected fields must document the field, explain why it is needed,
-and include focused tests.
+Follow the source-separation and public-data rules in [AGENTS.md](AGENTS.md) and the field contracts in [docs/signals.md](docs/signals.md). Changes to collected fields require a documented reason and focused privacy tests.
 
 ## Documentation
 
-Keep public documentation practical:
-
-- `README.md` should help a user understand and use Not Just You.
-- `docs/development.md` should describe local development, self-hosting, package commands, and public API details.
-- `docs/architecture.md` should describe durable system boundaries.
-- `docs/signals.md` should describe signal contracts and privacy rules.
+Use the documentation ownership map in [AGENTS.md](AGENTS.md). Keep product usage, contributor setup, architecture, and signal contracts with their respective audiences.

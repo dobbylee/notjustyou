@@ -39,7 +39,11 @@ const summaryResponse: SummaryResponse = {
   ],
 };
 
-const officialResponse = {
+const officialResponse: {
+  updatedAt: string;
+  services: OfficialServiceStatus[];
+  providerAdvisories: OfficialProviderAdvisory[];
+} = {
   updatedAt: "2026-05-09T00:00:00.000Z",
   providerAdvisories: [],
   services: [
@@ -51,10 +55,6 @@ const officialResponse = {
       matchedComponent: "Claude Code",
     },
   ],
-} satisfies {
-  updatedAt: string;
-  services: OfficialServiceStatus[];
-  providerAdvisories: OfficialProviderAdvisory[];
 };
 
 const signalSummaryResponse: SignalSummaryResponse = {

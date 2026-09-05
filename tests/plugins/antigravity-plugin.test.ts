@@ -1,5 +1,5 @@
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { createTempDir } from "@/tests/helpers/temp-dir";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
@@ -155,7 +155,7 @@ describe("Antigravity plugin", () => {
   it("checks local Antigravity opt-in config before hook forwarding can read raw input", async () => {
     const { getConfiguredAntigravityServiceId } = await importHookModule();
     const configPath = join(
-      mkdtempSync(join(tmpdir(), "njy-antigravity-plugin-")),
+      createTempDir("njy-antigravity-plugin-"),
       "config.json",
     );
 
@@ -191,7 +191,7 @@ describe("Antigravity plugin", () => {
   it("does not choose an Antigravity service when multiple Antigravity surfaces are configured", async () => {
     const { getConfiguredAntigravityServiceId } = await importHookModule();
     const configPath = join(
-      mkdtempSync(join(tmpdir(), "njy-antigravity-plugin-ambiguous-")),
+      createTempDir("njy-antigravity-plugin-ambiguous-"),
       "config.json",
     );
 
@@ -219,7 +219,7 @@ describe("Antigravity plugin", () => {
 
   it("does not print raw hook payloads when receiver forwarding is unavailable", () => {
     const configPath = join(
-      mkdtempSync(join(tmpdir(), "njy-antigravity-plugin-missing-")),
+      createTempDir("njy-antigravity-plugin-missing-"),
       "config.json",
     );
     writeFileSync(
@@ -255,7 +255,7 @@ describe("Antigravity plugin", () => {
 
   it("does not read or print hook input when local Antigravity opt-in is missing", () => {
     const configPath = join(
-      mkdtempSync(join(tmpdir(), "njy-antigravity-plugin-disabled-")),
+      createTempDir("njy-antigravity-plugin-disabled-"),
       "config.json",
     );
     writeFileSync(

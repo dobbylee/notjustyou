@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/read-json-body";
 import { NextResponse, type NextRequest } from "next/server";
 import { getRequestFingerprint } from "@/lib/abuse";
 import { DEDUPE_TTL_SECONDS, validateReportRequest } from "@/lib/report";
@@ -7,24 +8,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
+  const body = await readJsonBody(request, 8 * 1024);
+  if (!body.ok) {
     return NextResponse.json(
-      {
-        ok: false,
-        counted: false,
-        reason: "invalid_json",
-      },
-      {
-        status: 400,
-      },
+      { ok: false, counted: false, reason: body.reason },
+      { status: body.reason === "body_too_large" ? 413 : 400 },
     );
   }
 
-  const validation = validateReportRequest(body);
+  const validation = validateReportRequest(body.json);
 
   if (!validation.ok) {
     return NextResponse.json(

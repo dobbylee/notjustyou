@@ -5,13 +5,14 @@ import { POST as submitHeartbeat } from "@/app/api/collectors/heartbeat/route";
 import { POST as submitSignal } from "@/app/api/signals/route";
 import { GET as getSignalSummary } from "@/app/api/signals/summary/route";
 import { getRequestFingerprint } from "@/lib/abuse";
+import type { SignalSummaryResponse } from "@/lib/signals/aggregation";
 import type { CollectorRecord } from "@/lib/signals/collectors";
 
 const storage = {
   registerCollector: vi.fn(async () => undefined),
   findCollectorByToken: vi.fn(async () => null as CollectorRecord | null),
   recordHeartbeat: vi.fn(async () => undefined),
-  checkRegistrationRateLimit: vi.fn(async () => ({
+  checkRegistrationRateLimit: vi.fn<(fingerprint: string) => Promise<{ allowed: boolean; retryAfterSeconds: number }>>(async () => ({
     allowed: true,
     retryAfterSeconds: 60,
   })),
@@ -24,7 +25,7 @@ const storage = {
     retryAfterSeconds: 60,
   })),
   recordSignal: vi.fn(async () => undefined),
-  getSignalSummary: vi.fn(async () => ({
+  getSignalSummary: vi.fn(async (): Promise<SignalSummaryResponse> => ({
     windowMinutes: 10,
     updatedAt: "2026-06-19T01:00:00.000Z",
     services: [],

@@ -275,13 +275,13 @@ function createRedisMock(overrides: Record<string, unknown> = {}) {
   return {
     hSet: vi.fn(async () => 1),
     hGetAll: vi.fn(async () => ({})),
-    incr: vi.fn(async () => 1),
+    incr: vi.fn<(key: string) => Promise<number>>(async () => 1),
     expire: vi.fn(async () => true),
     sAdd: vi.fn(async () => 1),
     sMembers: vi.fn(async () => []),
     mGet: vi.fn(async (keys: string[]) => keys.map(() => null)),
     pfCount: vi.fn(async () => 0),
-    eval: vi.fn(async () => 1),
+    eval: vi.fn<(script: string, options: { keys: string[]; arguments: string[] }) => Promise<number>>(async () => 1),
     ...overrides,
   };
 }

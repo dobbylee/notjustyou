@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isBodyWithinSignalLimit, scanForSensitiveKeys } from "@/lib/signals/privacy";
+import { scanForSensitiveKeys } from "@/lib/signals/privacy";
 
 describe("signal privacy scanner", () => {
   it("allows statusCode and errorCode metadata", () => {
@@ -21,9 +21,4 @@ describe("signal privacy scanner", () => {
     }
   });
 
-  it("enforces the 8 KB body limit", () => {
-    expect(isBodyWithinSignalLimit("x".repeat(8 * 1024))).toBe(true);
-    expect(isBodyWithinSignalLimit("x".repeat(8 * 1024 + 1))).toBe(false);
-  });
 });
-

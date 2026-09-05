@@ -1,5 +1,5 @@
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { createTempDir } from "@/tests/helpers/temp-dir";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
@@ -114,7 +114,7 @@ describe("Cursor status plugin", () => {
 
   it("checks local cursor-ide opt-in config before hook forwarding can read raw input", async () => {
     const { isCursorReportingConfigured } = await importHookModule();
-    const configPath = join(mkdtempSync(join(tmpdir(), "njy-cursor-plugin-")), "config.json");
+    const configPath = join(createTempDir("njy-cursor-plugin-"), "config.json");
 
     expect(
       isCursorReportingConfigured({
@@ -161,7 +161,7 @@ describe("Cursor status plugin", () => {
 
   it("does not print raw hook payloads when receiver forwarding is unavailable", () => {
     const configPath = join(
-      mkdtempSync(join(tmpdir(), "njy-cursor-plugin-missing-")),
+      createTempDir("njy-cursor-plugin-missing-"),
       "config.json",
     );
     const result = runHookScript("hooks/forward-local-hook.mjs", {

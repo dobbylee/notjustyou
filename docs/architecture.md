@@ -81,19 +81,27 @@ Do not collect:
 
 If a new feature needs a new field, document the field in `docs/signals.md`, explain why it is needed, and add focused tests.
 
-## Implementation Order
+## Module Boundaries
 
-The durable order is:
+| Module | Responsibility |
+| --- | --- |
+| `app/api`, `app/mcp` | HTTP adaptation, status codes, and transport setup |
+| `lib/http` | Bounded request-body parsing shared by HTTP entry points |
+| `lib/catalog.ts` | Stable service ids and provider/surface mappings |
+| `lib/storage`, `lib/signals/storage.ts` | Separate community and installed-signal persistence |
+| `lib/signals` | Signal validation, authentication, privacy, and aggregation |
+| `lib/official` | Provider adapters, component mapping, and official cache |
+| `lib/mcp` | Public status-only tools and source-separated read models |
+| `components` | Dashboard polling and presentation; combined counts stay here |
+| `packages/notjustyou-cli` | Local configuration, explicit consent, receiver, and CLI |
+| `packages/notjustyou-mcp` | Installed stdio tools; depends on the CLI reporting-setup export |
+| `packages/notjustyou-sdk-js` | Metadata normalization, bounded queue, and sending |
+| `packages/*-plugin` | Vendor-specific instructions, manifests, and local hook adapters |
 
-1. Keep catalog, README, and public docs aligned.
-2. Add installed-signal schema and privacy validation before collector code.
-3. Add Redis hot counters and summary APIs.
-4. Add dashboard source breakdown.
-5. Add CLI and MCP status lookup with explicit local reporting setup tools.
-6. Add API middleware collectors, starting with OpenAI API, Claude API, and Gemini API.
-7. Add vendor plugins only after local preview, redaction, and consent flows are clear.
-
-Browser extensions, WebSocket transport, and durable event warehouses are later work.
+Published packages must work from their packed artifacts without root app imports.
+Vendor plugin instruction files are independently distributed; similar privacy
+rules there are intentional. Keep runtime helpers shared within their owning
+module before introducing a new cross-package dependency.
 
 ## Expansion Gates
 

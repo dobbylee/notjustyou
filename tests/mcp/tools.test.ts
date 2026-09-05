@@ -1,7 +1,8 @@
+import { createTempDir } from "@/tests/helpers/temp-dir";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import {
   callTool,
   STATUS_TOOLS,
@@ -605,7 +606,7 @@ describe("MCP tools", () => {
 });
 
 function tempConfigPath() {
-  return join(mkdtempSync(join(tmpdir(), "njy-mcp-config-")), "config.json");
+  return join(createTempDir("njy-mcp-config-"), "config.json");
 }
 
 function writeConfigFile(path: string, value: object) {

@@ -1,13 +1,12 @@
+import { createTempDir } from "@/tests/helpers/temp-dir";
 import {
   chmodSync,
   existsSync,
-  mkdtempSync,
   mkdirSync,
   readFileSync,
   readdirSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, it, vi } from "vitest";
@@ -116,7 +115,7 @@ describe("Claude Code status plugin", () => {
   });
 
   it("does not disable reporting that was enabled manually without an option marker", () => {
-    const root = mkdtempSync(join(tmpdir(), "njy-claude-manual-"));
+    const root = createTempDir("njy-claude-manual-");
     const configPath = join(root, "config.json");
     writeFileSync(configPath, JSON.stringify({
       source: "cli_hook",
@@ -141,7 +140,7 @@ describe("Claude Code status plugin", () => {
   });
 
   it("disables option-managed reporting once and preserves another enabled surface", async () => {
-    const root = mkdtempSync(join(tmpdir(), "njy-claude-managed-"));
+    const root = createTempDir("njy-claude-managed-");
     const configPath = join(root, "config.json");
     const pluginData = join(root, "plugin-data");
     const markerPath = join(pluginData, "notjustyou-reporting-managed");

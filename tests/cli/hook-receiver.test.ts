@@ -11,8 +11,8 @@ import type { CliConfig } from "@/packages/notjustyou-cli/src/types";
 const receivers: Array<ReturnType<typeof createLocalHookReceiver>> = [];
 
 afterEach(async () => {
-  await Promise.all(receivers.map((receiver) => receiver.close()));
-  receivers.length = 0;
+  const pending = receivers.splice(0);
+  await Promise.all(pending.filter((receiver) => receiver.server.listening).map((receiver) => receiver.close()));
   vi.restoreAllMocks();
 });
 

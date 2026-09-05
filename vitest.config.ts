@@ -12,6 +12,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    unstubEnvs: true,
+    unstubGlobals: true,
+    restoreMocks: true,
     environmentOptions: {
       jsdom: {
         url: "http://localhost:3000/",

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { CATALOG, PROVIDERS } from "@/lib/catalog";
+import { CATALOG as catalogDefinition, PROVIDERS, type ServiceSurface } from "@/lib/catalog";
+
+const CATALOG: readonly ServiceSurface[] = catalogDefinition;
 
 describe("catalog", () => {
   it("has unique service ids", () => {

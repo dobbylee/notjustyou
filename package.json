@@ -15,14 +15,16 @@
     "build:sdk": "pnpm --filter @notjustyou/sdk-js build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:redis": "vitest run --config vitest.redis.config.ts",
+    "verify": "pnpm lint && pnpm test && pnpm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
     "@vercel/analytics": "2.0.1",
     "clsx": "2.1.1",
     "lucide-react": "1.14.0",
-    "next": "16.2.6",
+    "next": "16.3.4",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "redis": "5.12.1",
@@ -37,11 +39,12 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.4",
     "jsdom": "26.1.0",
-    "postcss": "8.5.14",
+    "postcss": "8.5.28",
     "tailwindcss": "4.3.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.5"
+    "vite": "8.0.16",
+    "vitest": "4.1.11"
   }
 }

@@ -1,6 +1,6 @@
 # Independent Implementation Review
 
-Review the supplied intended change as an independent maintainer. The input must include repository status, the tracked diff, and the full content of intended untracked files. Call out an incomplete review input instead of assuming untracked files are out of scope. Do not modify files.
+Review the supplied intended change as an independent maintainer. The input must include scope and acceptance checks, `git status --short --branch`, the complete intended tracked diff (including staged changes), the full content of intended untracked files, and validation results. For already committed slices, compare against the task base revision; `git diff` alone cannot review them. Call out an incomplete review input instead of assuming untracked files are out of scope. Do not modify files.
 
 Check only the requested scope and its direct contracts:
 

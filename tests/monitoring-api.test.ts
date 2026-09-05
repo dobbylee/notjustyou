@@ -82,7 +82,7 @@ vi.mock("@/lib/storage", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.ANALYTICS_READ_TOKEN = "test-token";
+  vi.stubEnv("ANALYTICS_READ_TOKEN", "test-token");
 });
 
 describe("health API", () => {

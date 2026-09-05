@@ -41,10 +41,6 @@ export function scanForSensitiveKeys(input: unknown): SensitiveScanResult {
   return scanValue(input);
 }
 
-export function isBodyWithinSignalLimit(body: string) {
-  return Buffer.byteLength(body, "utf8") <= SIGNAL_BODY_LIMIT_BYTES;
-}
-
 function scanValue(value: unknown): SensitiveScanResult {
   if (!value || typeof value !== "object") {
     return { ok: true };
