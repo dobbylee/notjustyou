@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient } from "redis";
+import type { RedisClient } from "@/lib/redis";
 import { RedisReportStorage } from "@/lib/storage/redis";
 import { RedisSignalStorage } from "@/lib/signals/storage";
 import { getCountKey } from "@/lib/aggregation";
@@ -10,7 +11,7 @@ import { getSignalBucketKey, getSignalInstallationsV2Key } from "@/lib/signals/a
 
 const run = promisify(execFile);
 const containerName = `njy-redis-test-${randomUUID()}`;
-let redis: ReturnType<typeof createClient>;
+let redis: RedisClient;
 let started = false;
 const now = new Date("2026-09-05T00:00:00.000Z");
 
@@ -26,6 +27,7 @@ beforeAll(async () => {
   if (!/^127\.0\.0\.1:\d+$/.test(address)) throw new Error("Expected an isolated loopback Redis port");
   redis = createClient({
     url: `redis://${address}`,
+    RESP: 2,
     socket: { connectTimeout: 3000, reconnectStrategy: (n) => n < 10 ? 50 : false },
   });
   redis.on("error", () => { /* connect rejects after the bounded retry budget */ });

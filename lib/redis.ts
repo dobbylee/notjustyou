@@ -1,6 +1,6 @@
 import { createClient } from "redis";
 
-export type RedisClient = ReturnType<typeof createClient>;
+export type RedisClient = Awaited<ReturnType<typeof connectRedis>>;
 
 let redis: Promise<RedisClient> | undefined;
 
@@ -41,6 +41,8 @@ async function connectRedis() {
 
   const client = createClient({
     url,
+    // Preserve the existing wire protocol when upgrading the Redis client.
+    RESP: 2,
     socket: {
       connectTimeout: 3_000,
       reconnectStrategy: (retries) =>
