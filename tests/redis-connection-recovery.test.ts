@@ -68,6 +68,7 @@ describe("Redis connection recovery", () => {
     expect(mocks.client.connect).toHaveBeenCalledTimes(2);
     expect(mocks.createClient).toHaveBeenCalledWith(
       expect.objectContaining({
+        RESP: 2,
         socket: expect.objectContaining({
           connectTimeout: 3_000,
           reconnectStrategy: expect.any(Function),

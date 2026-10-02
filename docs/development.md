@@ -15,11 +15,11 @@ For contribution workflow and review rules, read [CONTRIBUTING.md](../CONTRIBUTI
 
 ## Requirements
 
-- Node 24 for the app runtime and repository-level development. The repository
-  includes `.nvmrc` with `24`.
+- Node 24.15 or newer within Node 24 for the app runtime and repository-level
+  development. The repository includes `.nvmrc` with `24`.
 - Package manifests in this checkout allow Node `>=22 <25` where packages are
   designed to run outside the app.
-- pnpm `10.30.3`
+- pnpm `12.8.1`
 - Redis
 
 The package manager is pinned in `package.json`.
@@ -53,6 +53,9 @@ NOTJUSTYOU_SIGNAL_SECRET=replace-with-local-random-secret
 ## Redis
 
 Redis is required at runtime. The app does not use an in-memory fallback.
+
+The Redis 6 client explicitly uses RESP2 to preserve the existing wire protocol
+and reply behavior across the client upgrade.
 
 Local development uses Docker Compose with `redis:8.2.5-alpine`:
 
